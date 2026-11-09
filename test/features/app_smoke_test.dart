@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:al_savdogar/app.dart';
 import 'package:al_savdogar/core/database/app_database.dart';
+import 'package:al_savdogar/core/domain/shop_role.dart';
+import 'package:al_savdogar/features/profile/shop_profile_repository.dart';
 import 'package:al_savdogar/core/settings/settings_providers.dart';
 import 'package:al_savdogar/core/settings/settings_repository.dart';
 
@@ -25,6 +27,10 @@ void main() {
   }
 
   testWidgets('splash → вкладки, переключение и смена языка', (tester) async {
+    // Онбординг уже пройден.
+    await tester.runAsync(
+      () => ShopProfileRepository(db).create(name: 'Baraka', roles: {ShopRole.wholesaler}),
+    );
     await pumpApp(tester, locale: const Locale('ru'));
 
     // Splash.
@@ -44,7 +50,15 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.text('Debts'), findsWidgets);
 
+    // Карточка профиля на вкладке «Ещё».
+    expect(find.text('Baraka'), findsOneWidget);
+
     // Выбор сохранён в БД.
-    expect((await SettingsRepository(db).load()).locale, const Locale('en'));
+    final saved = await tester.runAsync(() => SettingsRepository(db).load());
+    expect(saved!.locale, const Locale('en'));
+
+    // drift при закрытии stream создаёт zero-таймер: размонтируем и сбрасываем его.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(Duration.zero);
   });
 }

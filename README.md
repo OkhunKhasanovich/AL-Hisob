@@ -18,7 +18,7 @@ lib/
     settings/   язык и тема (хранятся в БД)
     theme/      Material 3, светлая/тёмная
     widgets/    общие виджеты (shimmer и т.д.)
-  features/     feature-first: splash, shell, debts, orders, catalog, more
+  features/     feature-first: splash, onboarding, profile, shell, debts, orders, catalog, more
 drift_schemas/  дампы схемы БД по версиям (для тестов миграций)
 ```
 
@@ -44,13 +44,17 @@ flutter test
 
 ### Изменение схемы БД
 
-1. Поменять таблицы в `lib/core/database/app_database.dart`, увеличить `schemaVersion`.
-2. Снять дамп новой версии и написать шаги миграции:
+1. Поменять таблицы, увеличить `schemaVersion` в `lib/core/database/app_database.dart`.
+2. Снять дамп новой версии, обновить шаги миграции и тестовые хелперы:
 
 ```bash
 dart run drift_dev schema dump lib/core/database/app_database.dart drift_schemas/
 dart run drift_dev schema steps drift_schemas/ lib/core/database/schema_versions.dart
+dart run drift_dev schema generate drift_schemas/ test/generated_migrations/
 ```
+
+3. Добавить шаг `fromNToM` в `onUpgrade: stepByStep(...)` и проверить миграцию
+   в `test/core/migration_test.dart` (`SchemaVerifier`).
 
 ## CI/CD: GitHub → APK в Telegram
 
@@ -139,5 +143,5 @@ flutter build apk --release --split-per-abi
 
 ## Этапы
 
-0. Фундамент ✅ · 1. Онбординг · 2. Книга должников · 3. Умный поиск · 4. SMS ·
+0. Фундамент ✅ · 1. Онбординг ✅ · 2. Книга должников · 3. Умный поиск · 4. SMS ·
 5. Каталог · 6. Заказы · 7. Грузчик и доставка · 8. Бэкенд · 9. Синхронизация · 10. Полировка → iOS
