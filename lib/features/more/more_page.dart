@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/l10n/l10n.dart';
 import '../../core/settings/settings_providers.dart';
+import '../profile/profile_card.dart';
 
 class MorePage extends ConsumerWidget {
   const MorePage({super.key});
@@ -21,6 +22,8 @@ class MorePage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const ProfileCard(),
+          const SizedBox(height: 32),
           Text(l10n.settingsLanguage, style: theme.textTheme.titleMedium),
           const SizedBox(height: 12),
           Wrap(

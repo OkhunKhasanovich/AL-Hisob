@@ -1,5 +1,6 @@
 abstract final class Routes {
   static const splash = '/splash';
+  static const onboarding = '/onboarding';
   static const debts = '/debts';
   static const orders = '/orders';
   static const catalog = '/catalog';

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/catalog/catalog_page.dart';
 import '../../features/debts/debts_page.dart';
 import '../../features/more/more_page.dart';
+import '../../features/onboarding/onboarding_page.dart';
 import '../../features/orders/orders_page.dart';
 import '../../features/shell/home_shell.dart';
 import '../../features/splash/splash_page.dart';
@@ -19,6 +20,16 @@ GoRouter createRouter({String initialLocation = Routes.splash}) {
           key: state.pageKey,
           child: const SplashPage(),
           transitionDuration: const Duration(milliseconds: 400),
+          transitionsBuilder: (context, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        path: Routes.onboarding,
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: const OnboardingPage(),
+          transitionDuration: const Duration(milliseconds: 500),
           transitionsBuilder: (context, animation, _, child) =>
               FadeTransition(opacity: animation, child: child),
         ),

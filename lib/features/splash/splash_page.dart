@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
 import '../../core/router/routes.dart';
+import '../profile/profile_providers.dart';
 
-class SplashPage extends StatefulWidget {
+class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key, this.duration = const Duration(milliseconds: 1800)});
 
   /// Сколько показывать splash до перехода на главный экран.
   final Duration duration;
 
   @override
-  State<SplashPage> createState() => _SplashPageState();
+  ConsumerState<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
+class _SplashPageState extends ConsumerState<SplashPage> with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1100),
@@ -32,9 +34,17 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    Future<void>.delayed(widget.duration, () {
-      if (mounted) context.go(Routes.debts);
-    });
+    _routeAfterSplash();
+  }
+
+  /// Профиль есть — на главный экран, иначе — на онбординг.
+  Future<void> _routeAfterSplash() async {
+    final results = await Future.wait<Object?>([
+      Future<void>.delayed(widget.duration),
+      ref.read(shopProfileRepositoryProvider).current(),
+    ]);
+    if (!mounted) return;
+    context.go(results.last == null ? Routes.onboarding : Routes.debts);
   }
 
   @override

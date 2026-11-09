@@ -15,5 +15,22 @@
   "settingsTheme": "Appearance",
   "themeSystem": "System",
   "themeLight": "Light",
-  "themeDark": "Dark"
+  "themeDark": "Dark",
+  "onboardingTitle": "Welcome!",
+  "onboardingSubtitle": "Tell us about your business. No sign-up needed.",
+  "shopNameLabel": "Shop or company name",
+  "shopNameHint": "For example, Baraka Trade",
+  "shopNameError": "Enter 2 to 60 characters",
+  "roleLabel": "Your role",
+  "roleWholesaler": "Wholesaler",
+  "roleWholesalerDesc": "I sell goods in bulk to shops",
+  "roleBuyer": "Buyer",
+  "roleBuyerDesc": "A shop or outlet that buys from wholesalers",
+  "roleLoader": "Loader",
+  "roleCourier": "Courier",
+  "continueButton": "Continue",
+  "profileSectionTitle": "Your business",
+  "editButton": "Edit",
+  "saveButton": "Save",
+  "saveError": "Could not save. Please try again."
 }

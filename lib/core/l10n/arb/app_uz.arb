@@ -15,5 +15,22 @@
   "settingsTheme": "Ko‘rinish",
   "themeSystem": "Tizim bo‘yicha",
   "themeLight": "Yorug‘",
-  "themeDark": "Qorong‘i"
+  "themeDark": "Qorong‘i",
+  "onboardingTitle": "Xush kelibsiz!",
+  "onboardingSubtitle": "Biznesingiz haqida ayting. Ro‘yxatdan o‘tish shart emas.",
+  "shopNameLabel": "Do‘kon yoki firma nomi",
+  "shopNameHint": "Masalan, Baraka Trade",
+  "shopNameError": "2 dan 60 gacha belgi kiriting",
+  "roleLabel": "Sizning rolingiz",
+  "roleWholesaler": "Ulgurji sotuvchi",
+  "roleWholesalerDesc": "Tovarni do‘konlarga ulgurji sotaman",
+  "roleBuyer": "Xaridor",
+  "roleBuyerDesc": "Ulgurji sotuvchilardan xarid qiladigan do‘kon yoki savdo nuqtasi",
+  "roleLoader": "Yuk ortuvchi",
+  "roleCourier": "Yetkazib beruvchi",
+  "continueButton": "Davom etish",
+  "profileSectionTitle": "Biznesingiz",
+  "editButton": "Tahrirlash",
+  "saveButton": "Saqlash",
+  "saveError": "Saqlab bo‘lmadi. Qayta urinib ko‘ring."
 }

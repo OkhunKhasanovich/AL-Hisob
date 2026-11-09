@@ -15,5 +15,22 @@
   "settingsTheme": "Оформление",
   "themeSystem": "Как в системе",
   "themeLight": "Светлая",
-  "themeDark": "Тёмная"
+  "themeDark": "Тёмная",
+  "onboardingTitle": "Добро пожаловать!",
+  "onboardingSubtitle": "Расскажите о вашем бизнесе. Регистрация не нужна.",
+  "shopNameLabel": "Название магазина или фирмы",
+  "shopNameHint": "Например, Baraka Trade",
+  "shopNameError": "Введите от 2 до 60 символов",
+  "roleLabel": "Ваша роль",
+  "roleWholesaler": "Оптовик",
+  "roleWholesalerDesc": "Продаю товар оптом магазинам",
+  "roleBuyer": "Покупатель",
+  "roleBuyerDesc": "Магазин или точка, закупаю у оптовиков",
+  "roleLoader": "Грузчик",
+  "roleCourier": "Доставщик",
+  "continueButton": "Продолжить",
+  "profileSectionTitle": "Ваш бизнес",
+  "editButton": "Изменить",
+  "saveButton": "Сохранить",
+  "saveError": "Не удалось сохранить. Попробуйте ещё раз."
 }

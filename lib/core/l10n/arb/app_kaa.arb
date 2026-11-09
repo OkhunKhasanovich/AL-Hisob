@@ -15,5 +15,22 @@
   "settingsTheme": "Kórinis",
   "themeSystem": "Sistema boyınsha",
   "themeLight": "Jaqtı",
-  "themeDark": "Qarańǵı"
+  "themeDark": "Qarańǵı",
+  "onboardingTitle": "Xosh keldińiz!",
+  "onboardingSubtitle": "Biznesińiz haqqında aytıń. Dizimnen ótiw shárt emes.",
+  "shopNameLabel": "Dúkan yamasa firma atı",
+  "shopNameHint": "Mısalı, Baraka Trade",
+  "shopNameError": "2 den 60 qa shekem belgi kiritiń",
+  "roleLabel": "Sizdiń rolińiz",
+  "roleWholesaler": "Ulıwma satıwshı",
+  "roleWholesalerDesc": "Tovardı dúkanlarǵa ulıwma sataman",
+  "roleBuyer": "Satıp alıwshı",
+  "roleBuyerDesc": "Ulıwma satıwshılardan satıp alatuǵın dúkan yamasa orın",
+  "roleLoader": "Júk tasıwshı",
+  "roleCourier": "Jetkizip beriwshi",
+  "continueButton": "Dawam etiw",
+  "profileSectionTitle": "Biznesińiz",
+  "editButton": "Ózgertiw",
+  "saveButton": "Saqlaw",
+  "saveError": "Saqlaw ámelge aspadı. Qayta urınıp kóriń."
 }
