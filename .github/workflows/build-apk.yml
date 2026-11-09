@@ -1,0 +1,131 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Лимит Telegram Bot API на файл — 50 МБ.
+  MAX_APK_BYTES: 52428800
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Dependencies
+        run: flutter pub get
+
+      - name: Code generation (drift)
+        run: dart run build_runner build
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Restore release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for v in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!v}" ]; then echo "::error::Secret $v is not set"; exit 1; fi
+          done
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.jks
+          {
+            echo "storeFile=app/release.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > android/key.properties
+
+      - name: Read version
+        id: ver
+        run: |
+          VERSION=$(grep -m1 '^version:' pubspec.yaml | sed -E 's/version:[[:space:]]*//; s/\+.*//')
+          echo "name=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build release APK
+        run: |
+          flutter build apk --release --split-per-abi \
+            --build-name="${{ steps.ver.outputs.name }}" \
+            --build-number="${{ github.run_number }}"
+
+      - name: Check APK size (< 50 MB)
+        id: apk
+        run: |
+          APK=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          SIZE=$(stat -c %s "$APK")
+          echo "path=$APK" >> "$GITHUB_OUTPUT"
+          echo "size_mb=$(awk "BEGIN{printf \"%.1f\", $SIZE/1048576}")" >> "$GITHUB_OUTPUT"
+          if [ "$SIZE" -ge "$MAX_APK_BYTES" ]; then
+            echo "::error::APK is $SIZE bytes, Telegram limit is $MAX_APK_BYTES"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ steps.ver.outputs.name }}+${{ github.run_number }}
+          path: build/app/outputs/flutter-apk/*-release.apk
+          retention-days: 14
+
+      - name: Send APK to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          APK_PATH: ${{ steps.apk.outputs.path }}
+          APK_SIZE_MB: ${{ steps.apk.outputs.size_mb }}
+          VERSION: ${{ steps.ver.outputs.name }}
+        run: |
+          set -euo pipefail
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          COMMIT_MSG=$(git log -1 --pretty=%s | cut -c1-300)
+          CAPTION=$(printf 'Al-Savdogar %s (сборка %s)\nCommit: %s\n%s\narm64-v8a, %s MB' \
+            "$VERSION" "${{ github.run_number }}" "$SHORT_SHA" "$COMMIT_MSG" "$APK_SIZE_MB")
+          RESPONSE=$(curl -sS --fail-with-body \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
+            -F chat_id="$TELEGRAM_CHAT_ID" \
+            -F document=@"$APK_PATH" \
+            -F caption="$CAPTION")
+          echo "$RESPONSE" | grep -q '"ok":true' || { echo "::error::Telegram rejected the upload"; exit 1; }
+
+      - name: Notify Telegram about failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ] || exit 0
+          SHORT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "?")
+          TEXT=$(printf '❌ Сборка Al-Savdogar #%s упала (%s)\n%s/%s/actions/runs/%s' \
+            "${{ github.run_number }}" "$SHORT_SHA" \
+            "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
+          curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode chat_id="$TELEGRAM_CHAT_ID" \
+            --data-urlencode text="$TEXT" \
+            --data-urlencode disable_web_page_preview=true || true
