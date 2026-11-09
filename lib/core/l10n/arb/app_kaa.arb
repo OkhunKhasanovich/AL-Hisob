@@ -1,0 +1,19 @@
+{
+  "@@locale": "kaa",
+  "appName": "Al-Savdogar",
+  "splashTagline": "Ulıwma satıw hám qarızdarlar dápteri",
+  "tabDebts": "Qarızlar",
+  "tabOrders": "Buyırtpalar",
+  "tabCatalog": "Katalog",
+  "tabMore": "Taǵı",
+  "comingSoon": "Tez arada",
+  "debtsPlaceholder": "Bul jerde qarızdarlar dápteri payda boladı",
+  "ordersPlaceholder": "Bul jerde satıwshı hám satıp alıwshı buyırtpaları payda boladı",
+  "catalogPlaceholder": "Bul jerde tovarlar katalogı payda boladı",
+  "moreTitle": "Taǵı",
+  "settingsLanguage": "Til",
+  "settingsTheme": "Kórinis",
+  "themeSystem": "Sistema boyınsha",
+  "themeLight": "Jaqtı",
+  "themeDark": "Qarańǵı"
+}

@@ -1,0 +1,19 @@
+{
+  "@@locale": "uz",
+  "appName": "Al-Savdogar",
+  "splashTagline": "Ulgurji savdo va qarzdorlar daftari",
+  "tabDebts": "Qarzlar",
+  "tabOrders": "Buyurtmalar",
+  "tabCatalog": "Katalog",
+  "tabMore": "Yana",
+  "comingSoon": "Tez orada",
+  "debtsPlaceholder": "Bu yerda qarzdorlar daftari paydo bo‘ladi",
+  "ordersPlaceholder": "Bu yerda xaridor va sotuvchi buyurtmalari paydo bo‘ladi",
+  "catalogPlaceholder": "Bu yerda mahsulotlar katalogi paydo bo‘ladi",
+  "moreTitle": "Yana",
+  "settingsLanguage": "Til",
+  "settingsTheme": "Ko‘rinish",
+  "themeSystem": "Tizim bo‘yicha",
+  "themeLight": "Yorug‘",
+  "themeDark": "Qorong‘i"
+}

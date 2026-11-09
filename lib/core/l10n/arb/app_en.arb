@@ -1,0 +1,19 @@
+{
+  "@@locale": "en",
+  "appName": "Al-Savdogar",
+  "splashTagline": "Wholesale trade and debt book",
+  "tabDebts": "Debts",
+  "tabOrders": "Orders",
+  "tabCatalog": "Catalog",
+  "tabMore": "More",
+  "comingSoon": "Coming soon",
+  "debtsPlaceholder": "The debt book will appear here",
+  "ordersPlaceholder": "Orders from buyers and sellers will appear here",
+  "catalogPlaceholder": "Your product catalog will appear here",
+  "moreTitle": "More",
+  "settingsLanguage": "Language",
+  "settingsTheme": "Appearance",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark"
+}

@@ -1,0 +1,19 @@
+{
+  "@@locale": "ru",
+  "appName": "Al-Savdogar",
+  "splashTagline": "Оптовая торговля и книга должников",
+  "tabDebts": "Долги",
+  "tabOrders": "Заказы",
+  "tabCatalog": "Каталог",
+  "tabMore": "Ещё",
+  "comingSoon": "Скоро",
+  "debtsPlaceholder": "Здесь появится книга должников",
+  "ordersPlaceholder": "Здесь появятся заказы покупателей и продавцов",
+  "catalogPlaceholder": "Здесь появится каталог ваших товаров",
+  "moreTitle": "Ещё",
+  "settingsLanguage": "Язык",
+  "settingsTheme": "Оформление",
+  "themeSystem": "Как в системе",
+  "themeLight": "Светлая",
+  "themeDark": "Тёмная"
+}
