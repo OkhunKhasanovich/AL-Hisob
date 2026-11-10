@@ -28,12 +28,22 @@ void main() {
   DateTime daysAgo(int d, [int hour = 10]) => DateTime(2026, 6, 30 - d, hour);
 
   group('computeDebtTrend', () {
+    test('по умолчанию — неделя: 7 точек', () {
+      final trend = computeDebtTrend([
+        _tx('a', DebtKind.debt, 1000, daysAgo(20)),
+        _tx('a', DebtKind.debt, 300, daysAgo(2)),
+      ], now: now);
+      expect(defaultTrendDays, 7);
+      expect(trend.points, [1000, 1000, 1000, 1000, 1300, 1300, 1300]);
+      expect(trend.percent, closeTo(30, 1e-9));
+    });
+
     test('30 точек, последняя равна общему долгу', () {
       final trend = computeDebtTrend([
         _tx('a', DebtKind.debt, 1000, daysAgo(40)),
         _tx('a', DebtKind.payment, 400, daysAgo(10)),
         _tx('b', DebtKind.debt, 500, daysAgo(2)),
-      ], now: now);
+      ], now: now, days: 30);
       expect(trend.points.length, 30);
       expect(trend.first, 1000, reason: 'долг a на начало периода');
       expect(trend.points[18], 1000, reason: 'за день до оплаты');
@@ -71,7 +81,7 @@ void main() {
     test('операции из будущего попадают в последнюю точку', () {
       final trend = computeDebtTrend([
         _tx('a', DebtKind.debt, 700, now.add(const Duration(days: 3))),
-      ], now: now);
+      ], now: now, days: 30);
       expect(trend.last, 700);
       expect(trend.points[28], 0);
     });

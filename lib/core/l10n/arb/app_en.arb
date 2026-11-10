@@ -569,5 +569,34 @@
         "type": "int"
       }
     }
+  },
+  "demoDataSection": "Test data",
+  "demoDataAdd": "Add {count} test debtors",
+  "@demoDataAdd": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "demoDataAddHint": "Fake debtors with operations, to try the app out",
+  "demoDataRemove": "Remove test debtors",
+  "demoDataRemoveTitle": "Remove test debtors?",
+  "demoDataRemoveBody": "Only debtors added as test data will be removed, with their operations. Your own debtors stay.",
+  "demoDataAdded": "Added: {count}",
+  "@demoDataAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "demoDataRemoved": "Removed: {count}",
+  "@demoDataRemoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

@@ -7,6 +7,7 @@ import '../../core/l10n/l10n.dart';
 import '../../core/router/routes.dart';
 import '../../core/settings/settings_providers.dart';
 import '../debts/presentation/debt_settings_section.dart';
+import '../debts/presentation/demo_data_section.dart';
 import '../auth/presentation/account_tile.dart';
 import '../profile/profile_card.dart';
 import '../update/presentation/update_tile.dart';
@@ -76,6 +77,8 @@ class MorePage extends ConsumerWidget {
           ),
           const SizedBox(height: 32),
           const DebtSettingsSection(),
+          const SizedBox(height: 24),
+          const DemoDataSection(),
           const SizedBox(height: 16),
           ListTile(
             contentPadding: EdgeInsets.zero,

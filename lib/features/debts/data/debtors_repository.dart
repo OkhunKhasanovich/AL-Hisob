@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
@@ -7,6 +9,7 @@ import '../../../core/domain/debt_kind.dart';
 import '../../../core/utils/money.dart';
 import '../../../core/utils/phone.dart';
 import '../domain/debt_summary.dart';
+import '../domain/demo_data.dart';
 
 /// Данные для создания/редактирования должника.
 class DebtorInput {
@@ -174,6 +177,56 @@ class DebtorsRepository {
         syncStatus: const Value(SyncStatus.pending),
       ));
     });
+  }
+
+  // ---------- тестовые данные ----------
+
+  /// Добавляет [count] тестовых должников с историей операций (для знакомства с приложением).
+  /// Возвращает, сколько добавлено. У них в заметке стоит [demoDebtorNote].
+  Future<int> seedDemoDebtors({int count = 50, DateTime? now, Random? random}) async {
+    final today = now ?? DateTime.now();
+    final demo = generateDemoDebtors(count, random ?? Random());
+    await _db.transaction(() async {
+      for (final d in demo) {
+        final id = await createDebtor(DebtorInput(
+          name: d.name,
+          shopName: d.shopName,
+          address: d.address,
+          note: demoDebtorNote,
+          phones: [d.phone],
+        ));
+        for (final op in d.operations) {
+          await addTransaction(
+            debtorId: id,
+            kind: op.kind,
+            amount: op.amount,
+            occurredAt: DateTime(today.year, today.month, today.day - op.daysAgo, op.hour),
+          );
+        }
+      }
+    });
+    return demo.length;
+  }
+
+  /// Сколько сейчас тестовых должников.
+  Future<int> countDemoDebtors() async {
+    final rows = await (_db.select(_db.debtors)
+          ..where((t) => t.deletedAt.isNull() & t.note.equals(demoDebtorNote)))
+        .get();
+    return rows.length;
+  }
+
+  /// Удаляет (soft delete) всех тестовых должников. Возвращает, сколько удалено.
+  Future<int> deleteDemoDebtors() async {
+    final rows = await (_db.select(_db.debtors)
+          ..where((t) => t.deletedAt.isNull() & t.note.equals(demoDebtorNote)))
+        .get();
+    await _db.transaction(() async {
+      for (final d in rows) {
+        await deleteDebtor(d.id);
+      }
+    });
+    return rows.length;
   }
 
   // ---------- операции ----------

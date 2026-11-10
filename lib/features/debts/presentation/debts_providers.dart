@@ -44,7 +44,7 @@ class DebtSearchQuery extends Notifier<String> {
 final debtSearchQueryProvider =
     NotifierProvider<DebtSearchQuery, String>(DebtSearchQuery.new);
 
-/// Динамика общего долга за 30 дней; `null`, пока данные грузятся, или если долгов не было.
+/// Динамика общего долга за неделю; `null`, пока данные грузятся, или если долгов не было.
 final debtTrendProvider = Provider<DebtTrend?>((ref) {
   final txs = ref.watch(_activeTransactionsProvider).value;
   if (txs == null) return null;

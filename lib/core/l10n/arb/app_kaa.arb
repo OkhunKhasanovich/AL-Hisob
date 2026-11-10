@@ -300,5 +300,34 @@
         "type": "int"
       }
     }
+  },
+  "demoDataSection": "Sınaq maǵlıwmatları",
+  "demoDataAdd": "{count} sınaq qarızdarın qosıw",
+  "@demoDataAdd": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "demoDataAddHint": "Qosımshanı sınap kóriw ushın oylap tabılǵan qarızdarlar hám ámeller",
+  "demoDataRemove": "Sınaq qarızdarların óshiriw",
+  "demoDataRemoveTitle": "Sınaq qarızdarları óshirilsin be?",
+  "demoDataRemoveBody": "Tek sınaq retinde qosılǵan qarızdarlar ámelleri menen óshiriledi. Haqıyqıy qarızdarlarıńız qaladı.",
+  "demoDataAdded": "Qosıldı: {count}",
+  "@demoDataAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "demoDataRemoved": "Óshirildi: {count}",
+  "@demoDataRemoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

@@ -300,5 +300,34 @@
         "type": "int"
       }
     }
+  },
+  "demoDataSection": "Sinov ma’lumotlari",
+  "demoDataAdd": "{count} ta sinov qarzdorini qo‘shish",
+  "@demoDataAdd": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "demoDataAddHint": "Ilovani sinab ko‘rish uchun o‘ylab topilgan qarzdorlar va amallar",
+  "demoDataRemove": "Sinov qarzdorlarini o‘chirish",
+  "demoDataRemoveTitle": "Sinov qarzdorlari o‘chirilsinmi?",
+  "demoDataRemoveBody": "Faqat sinov sifatida qo‘shilgan qarzdorlar amallari bilan o‘chiriladi. Haqiqiy qarzdorlaringiz qoladi.",
+  "demoDataAdded": "Qo‘shildi: {count}",
+  "@demoDataAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "demoDataRemoved": "O‘chirildi: {count}",
+  "@demoDataRemoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

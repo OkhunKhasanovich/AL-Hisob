@@ -264,7 +264,7 @@ void main() {
     await openDebts(tester);
 
     expect(find.text('+20%'), findsOneWidget);
-    expect(find.text('за 30 дн.'), findsOneWidget);
+    expect(find.text('за 7 дн.'), findsOneWidget, reason: 'график недельный');
 
     await closeApp(tester);
   });

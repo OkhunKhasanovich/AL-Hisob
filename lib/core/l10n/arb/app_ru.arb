@@ -300,5 +300,34 @@
         "type": "int"
       }
     }
+  },
+  "demoDataSection": "Тестовые данные",
+  "demoDataAdd": "Добавить {count} тестовых должников",
+  "@demoDataAdd": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "demoDataAddHint": "Выдуманные должники с операциями — чтобы попробовать приложение",
+  "demoDataRemove": "Удалить тестовых должников",
+  "demoDataRemoveTitle": "Удалить тестовых должников?",
+  "demoDataRemoveBody": "Удалятся только должники, добавленные как тестовые, вместе с их операциями. Ваши настоящие должники останутся.",
+  "demoDataAdded": "Добавлено: {count}",
+  "@demoDataAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "demoDataRemoved": "Удалено: {count}",
+  "@demoDataRemoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }
