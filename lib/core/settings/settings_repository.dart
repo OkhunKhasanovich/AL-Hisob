@@ -9,7 +9,10 @@ class AppSettingsSnapshot {
     this.locale,
     this.themeMode = ThemeMode.system,
     this.debtFilter = const DebtFilterConfig(),
+    this.smsPauseSeconds = defaultSmsPauseSeconds,
   });
+
+  static const defaultSmsPauseSeconds = 3;
 
   /// `null` — язык системы (с запасным вариантом uz).
   final Locale? locale;
@@ -17,6 +20,9 @@ class AppSettingsSnapshot {
 
   /// Пороги «просроченных» и «крупных» долгов.
   final DebtFilterConfig debtFilter;
+
+  /// Пауза между SMS при массовой рассылке, секунды (1–30).
+  final int smsPauseSeconds;
 }
 
 class SettingsRepository {
@@ -28,6 +34,7 @@ class SettingsRepository {
   static const _themeKey = 'theme_mode';
   static const _overdueDaysKey = 'debt_overdue_days';
   static const _largeDebtKey = 'debt_large_threshold';
+  static const _smsPauseKey = 'sms_pause_seconds';
 
   Future<AppSettingsSnapshot> load() async {
     final rows = await _db.select(_db.appSettings).get();
@@ -45,12 +52,18 @@ class SettingsRepository {
         largeDebtThreshold: int.tryParse(map[_largeDebtKey] ?? '') ??
             DebtFilterConfig.defaultLargeDebtThreshold,
       ),
+      smsPauseSeconds: (int.tryParse(map[_smsPauseKey] ?? '') ??
+              AppSettingsSnapshot.defaultSmsPauseSeconds)
+          .clamp(1, 30),
     );
   }
 
   Future<void> saveLocale(Locale? locale) => _put(_localeKey, locale?.languageCode);
 
   Future<void> saveThemeMode(ThemeMode mode) => _put(_themeKey, mode.name);
+
+  Future<void> saveSmsPauseSeconds(int seconds) =>
+      _put(_smsPauseKey, seconds.clamp(1, 30).toString());
 
   Future<void> saveDebtFilter(DebtFilterConfig config) async {
     await _put(_overdueDaysKey, config.overdueDays.toString());

@@ -62,3 +62,17 @@ class DebtFilterConfigController extends Notifier<DebtFilterConfig> {
 final debtFilterConfigProvider =
     NotifierProvider<DebtFilterConfigController, DebtFilterConfig>(
         DebtFilterConfigController.new);
+
+class SmsPauseController extends Notifier<int> {
+  @override
+  int build() => ref.watch(initialSettingsProvider).smsPauseSeconds;
+
+  Future<void> set(int seconds) async {
+    state = seconds.clamp(1, 30);
+    await ref.read(settingsRepositoryProvider).saveSmsPauseSeconds(state);
+  }
+}
+
+/// Пауза между SMS в массовой рассылке, секунды.
+final smsPauseSecondsProvider =
+    NotifierProvider<SmsPauseController, int>(SmsPauseController.new);

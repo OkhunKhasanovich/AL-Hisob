@@ -183,6 +183,13 @@ class DebtorsRepository {
         updatedAt: Value(now),
         syncStatus: const Value(SyncStatus.pending),
       ));
+      await (_db.update(_db.smsLogs)
+            ..where((t) => t.debtorId.equals(id) & t.deletedAt.isNull()))
+          .write(SmsLogsCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+        syncStatus: const Value(SyncStatus.pending),
+      ));
       await (_db.update(_db.debtors)..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
           .write(DebtorsCompanion(
         deletedAt: Value(now),
