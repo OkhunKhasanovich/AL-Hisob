@@ -58,6 +58,10 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Снимок товара системной камерой. -->
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE"/>
+        </intent>
         <!-- Системное окно SMS (запасной способ отправки). -->
         <intent>
             <action android:name="android.intent.action.SENDTO"/>
