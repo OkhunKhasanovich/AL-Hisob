@@ -23,18 +23,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # Пока сервер не настроен (секретов нет), деплой молча пропускается, а не падает.
       - name: Check secrets
+        id: check
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
         run: |
+          missing=""
           for v in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS; do
-            if [ -z "${!v}" ]; then echo "::error::Secret $v is not set (see docs/server-setup.md)"; exit 1; fi
+            [ -n "${!v}" ] || missing="$missing $v"
           done
+          if [ -n "$missing" ]; then
+            echo "::notice::Deploy skipped, secrets not set:$missing (see docs/server-setup.md)"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Deploy over SSH
+        if: steps.check.outputs.enabled == 'true'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -60,6 +70,7 @@ jobs:
           REMOTE
 
       - name: Smoke test
+        if: steps.check.outputs.enabled == 'true'
         env:
           API_DOMAIN: ${{ vars.API_DOMAIN }}
         run: |
