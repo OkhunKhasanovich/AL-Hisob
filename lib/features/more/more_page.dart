@@ -8,6 +8,7 @@ import '../../core/router/routes.dart';
 import '../../core/settings/settings_providers.dart';
 import '../debts/presentation/debt_settings_section.dart';
 import '../profile/profile_card.dart';
+import '../update/presentation/update_tile.dart';
 
 class MorePage extends ConsumerWidget {
   const MorePage({super.key});
@@ -81,6 +82,8 @@ class MorePage extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () => context.push(Routes.smsTemplates),
           ),
+          const SizedBox(height: 16),
+          const UpdateTile(),
         ],
       ),
     );

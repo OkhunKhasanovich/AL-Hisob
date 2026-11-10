@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
+import '../update/presentation/update_controller.dart';
+import '../update/presentation/update_dialog.dart';
 
 /// Каркас с нижней навигацией. Вкладки сохраняют своё состояние
 /// (StatefulShellRoute), а переключение идёт с плавным fade.
-class HomeShell extends StatelessWidget {
+class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
+
+  @override
+  ConsumerState<HomeShell> createState() => _HomeShellState();
 
   /// Контейнер веток: все вкладки живут в Stack, активная плавно проявляется.
   static Widget branchContainer(
@@ -35,9 +41,38 @@ class HomeShell extends StatelessWidget {
         ],
       );
 
+}
+
+class _HomeShellState extends ConsumerState<HomeShell> {
+  bool _dialogOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Проверка обновления при запуске (в сборках для разработки ничего не делает).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(updateControllerProvider.notifier).checkOnStartup();
+    });
+  }
+
+  Future<void> _showUpdate() async {
+    if (_dialogOpen || !mounted) return;
+    _dialogOpen = true;
+    await showUpdateDialog(context);
+    _dialogOpen = false;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final navigationShell = widget.navigationShell;
     final l10n = context.l10n;
+
+    ref.listen(updateControllerProvider, (previous, next) {
+      if (next.phase == UpdatePhase.available && previous?.phase != UpdatePhase.available) {
+        _showUpdate();
+      }
+    });
+
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: NavigationBar(

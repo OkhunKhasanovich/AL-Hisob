@@ -13,6 +13,10 @@ class MainActivity : FlutterActivity() {
         smsBridge = bridge
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SmsBridge.CHANNEL)
             .setMethodCallHandler { call, result -> bridge.onMethodCall(call, result) }
+
+        val updateBridge = UpdateBridge(this)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, UpdateBridge.CHANNEL)
+            .setMethodCallHandler { call, result -> updateBridge.onMethodCall(call, result) }
     }
 
     override fun onRequestPermissionsResult(

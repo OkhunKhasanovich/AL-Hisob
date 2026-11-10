@@ -219,5 +219,52 @@
       }
     }
   },
-  "smsTemplateEmpty": "Template cannot be empty"
+  "smsTemplateEmpty": "Template cannot be empty",
+  "updateTitle": "App update",
+  "updateVersionLine": "Version {version} (build {build})",
+  "@updateVersionLine": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "int"
+      }
+    }
+  },
+  "updateDevBuild": "Development build: updates are disabled",
+  "updateCheckButton": "Check for updates",
+  "updateChecking": "Checking…",
+  "updateUpToDate": "You have the latest version",
+  "updateAvailableTitle": "Update available",
+  "updateAvailableBody": "Version {version} (build {build}) is ready to install.",
+  "@updateAvailableBody": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "int"
+      }
+    }
+  },
+  "updateButton": "Update",
+  "updateLater": "Later",
+  "updateSkip": "Skip this version",
+  "updateDownloading": "Downloading… {percent}%",
+  "@updateDownloading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "updatePermissionTitle": "Allow installing updates",
+  "updatePermissionBody": "Android needs your permission to install updates from this app. Turn on “Allow from this source”, come back and tap Update again.",
+  "updateErrorCheck": "Could not check for updates. Check your internet connection.",
+  "updateErrorDownload": "Download failed. Check your internet connection and try again.",
+  "updateErrorVerify": "The downloaded file is damaged. Try again.",
+  "updateErrorInstall": "Could not start the installer.",
+  "updateRetry": "Try again",
+  "closeButton": "Close"
 }

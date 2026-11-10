@@ -62,6 +62,14 @@ class SettingsRepository {
 
   Future<void> saveThemeMode(ThemeMode mode) => _put(_themeKey, mode.name);
 
+  /// Произвольные числовые настройки (служебные метки вроде «когда проверяли обновление»).
+  Future<int?> readInt(String key) async {
+    final row = await (_db.select(_db.appSettings)..where((t) => t.key.equals(key))).getSingleOrNull();
+    return int.tryParse(row?.value ?? '');
+  }
+
+  Future<void> writeInt(String key, int value) => _put(key, value.toString());
+
   Future<void> saveSmsPauseSeconds(int seconds) =>
       _put(_smsPauseKey, seconds.clamp(1, 30).toString());
 
