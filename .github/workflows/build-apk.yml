@@ -79,16 +79,22 @@ jobs:
             --dart-define=APP_VERSION="${{ steps.ver.outputs.name }}" \
             --dart-define=API_BASE_URL="${{ vars.API_BASE_URL }}"
 
-      - name: Check APK size (< 50 MB)
+      - name: Check APK size (Telegram limit is 50 MB)
         id: apk
+        env:
+          SEND_TO_TELEGRAM: ${{ vars.SEND_APK_TO_TELEGRAM }}
         run: |
           APK=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
           SIZE=$(stat -c %s "$APK")
           echo "path=$APK" >> "$GITHUB_OUTPUT"
           echo "size_mb=$(awk "BEGIN{printf \"%.1f\", $SIZE/1048576}")" >> "$GITHUB_OUTPUT"
+          # Лимит Telegram важен, только пока APK отправляется в Telegram.
           if [ "$SIZE" -ge "$MAX_APK_BYTES" ]; then
-            echo "::error::APK is $SIZE bytes, Telegram limit is $MAX_APK_BYTES"
-            exit 1
+            if [ "$SEND_TO_TELEGRAM" = "true" ]; then
+              echo "::error::APK is $SIZE bytes, Telegram limit is $MAX_APK_BYTES"
+              exit 1
+            fi
+            echo "::warning::APK is $SIZE bytes: over the Telegram limit ($MAX_APK_BYTES), fine for in-app updates"
           fi
 
       - uses: actions/upload-artifact@v4
@@ -97,7 +103,10 @@ jobs:
           path: build/app/outputs/flutter-apk/*-release.apk
           retention-days: 14
 
+      # Отправка APK в Telegram выключена: приложение обновляется само (см. шаг «Publish GitHub release»).
+      # Включить обратно: Settings → Secrets and variables → Actions → Variables → SEND_APK_TO_TELEGRAM = true.
       - name: Send APK to Telegram
+        if: vars.SEND_APK_TO_TELEGRAM == 'true'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
