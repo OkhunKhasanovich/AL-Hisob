@@ -1,0 +1,41 @@
+name: Android check
+
+# Проверка сборки на рабочих ветках: без подписи и без отправки в Telegram.
+# Релизная сборка с отправкой APK — build-apk.yml (только main).
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: dart run build_runner build
+      - run: flutter analyze
+      - run: flutter test
+
+      - name: Build debug APK (compiles Kotlin and Gradle config)
+        run: flutter build apk --debug --target-platform android-arm64

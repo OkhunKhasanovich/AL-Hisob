@@ -1,4 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Отправка SMS через SIM телефона (напоминания должникам). -->
+    <uses-permission android:name="android.permission.SEND_SMS"/>
+    <!-- Только чтобы показать список SIM-карт при выборе, с какой отправлять. -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <!-- Приложение работает и на планшетах без телефонного модуля. -->
+    <uses-feature android:name="android.hardware.telephony" android:required="false"/>
+
     <application
         android:label="Al-Savdogar"
         android:name="${applicationName}"
@@ -37,6 +44,11 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Системное окно SMS (запасной способ отправки). -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO"/>
+            <data android:scheme="smsto"/>
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
