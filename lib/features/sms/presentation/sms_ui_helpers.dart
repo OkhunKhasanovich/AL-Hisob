@@ -4,16 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/l10n.dart';
 import '../data/sms_providers.dart';
 import '../domain/sms_sender.dart';
-import '../../profile/profile_providers.dart';
-
-/// Название вашего магазина для текста SMS (из профиля). Вызывать из `build`:
-/// подписка нужна, иначе поток профиля ещё не отдал значение и подставится запасное.
-String watchShopName(WidgetRef ref, BuildContext context) =>
-    ref.watch(shopProfileProvider).value?.name ?? context.l10n.appName;
-
-/// То же в обработчиках событий (подписка уже создана через [watchShopName]).
-String readShopName(WidgetRef ref, BuildContext context) =>
-    ref.read(shopProfileProvider).value?.name ?? context.l10n.appName;
+export '../../profile/shop_name.dart';
 
 /// Понятная причина ошибки отправки на языке приложения.
 String smsReasonText(AppLocalizations l10n, String? error) => switch (error) {

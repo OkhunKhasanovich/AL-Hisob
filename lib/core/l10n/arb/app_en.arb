@@ -351,5 +351,107 @@
     }
   },
   "deleteProductTitle": "Delete this product?",
-  "deleteProductBody": "The product and its photos will be removed."
+  "deleteProductBody": "The product and its photos will be removed.",
+  "orderStatusCreated": "New",
+  "orderStatusAccepted": "Accepted",
+  "orderStatusPicking": "Picking",
+  "orderStatusReady": "Ready to ship",
+  "orderStatusInTransit": "On the way",
+  "orderStatusDelivered": "Delivered",
+  "orderStatusClosed": "Closed",
+  "orderStatusRejected": "Rejected",
+  "orderStatusCancelled": "Cancelled",
+  "orderGroupFresh": "New",
+  "orderGroupInProgress": "In progress",
+  "orderGroupDelivered": "Delivered",
+  "orderGroupClosed": "Closed",
+  "orderGroupCancelled": "Cancelled",
+  "orderActionAccept": "Accept",
+  "orderActionReject": "Reject",
+  "orderActionCancel": "Cancel order",
+  "orderActionStartPicking": "Start picking",
+  "orderActionMarkReady": "Ready to ship",
+  "orderActionShip": "Send on the way",
+  "orderActionDeliver": "Mark delivered",
+  "orderActionClose": "Close order",
+  "orderActionEdit": "Edit order",
+  "ordersEmptyTitle": "No orders yet",
+  "ordersEmptyHint": "Create the first order for a customer",
+  "ordersBuyerPlaceholder": "Your orders will appear here after sync",
+  "newOrder": "New order",
+  "orderNumberTitle": "Order #{number}",
+  "@orderNumberTitle": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "orderCustomerLabel": "Customer",
+  "orderChooseCustomer": "Choose a customer",
+  "orderNewCustomer": "New customer",
+  "orderItemsTitle": "Items",
+  "orderItemsCount": "{count} items",
+  "@orderItemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderTotalLabel": "Total",
+  "orderPaidLabel": "Paid",
+  "orderRemainingLabel": "Remaining",
+  "createOrderButton": "Create order",
+  "orderNoItems": "Add at least one product",
+  "orderMinQty": "Minimum: {qty} {unit}",
+  "@orderMinQty": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPickerTitle": "Add products",
+  "orderPickerAdd": "Add ({count})",
+  "@orderPickerAdd": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderPickerEmpty": "No products in stock",
+  "orderHistoryTitle": "History",
+  "orderEdited": "Order edited",
+  "orderByActor": "by {actor}",
+  "@orderByActor": {
+    "placeholders": {
+      "actor": {
+        "type": "String"
+      }
+    }
+  },
+  "orderReasonLabel": "Reason (optional)",
+  "orderRejectTitle": "Reject this order?",
+  "orderCancelTitle": "Cancel this order?",
+  "orderDeliverTitle": "Delivery",
+  "orderReceivedLabel": "Received from the customer",
+  "orderPaidFull": "Paid in full",
+  "orderOnCredit": "On credit",
+  "orderDebtHint": "Will be recorded as debt: {amount}",
+  "@orderDebtHint": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "orderFullyPaidHint": "Fully paid — no debt",
+  "orderAmountTooBig": "More than the order total",
+  "orderDebtRecorded": "Debt recorded in the debt book",
+  "orderOpenCustomer": "Open customer"
 }

@@ -9,7 +9,9 @@ import '../../features/debts/presentation/debtor_form_page.dart';
 import '../../features/debts/presentation/debts_page.dart';
 import '../../features/more/more_page.dart';
 import '../../features/onboarding/onboarding_page.dart';
-import '../../features/orders/orders_page.dart';
+import '../../features/orders/presentation/order_details_page.dart';
+import '../../features/orders/presentation/order_editor_page.dart';
+import '../../features/orders/presentation/orders_page.dart';
 import '../../features/shell/home_shell.dart';
 import '../../features/sms/presentation/bulk_sms_page.dart';
 import '../../features/sms/presentation/sms_templates_page.dart';
@@ -39,6 +41,20 @@ GoRouter createRouter({String initialLocation = Routes.splash}) {
           transitionsBuilder: (context, animation, _, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
+      ),
+      GoRoute(
+        path: Routes.orderNew,
+        builder: (_, _) => const OrderEditorPage(),
+      ),
+      GoRoute(
+        path: '/orders/:id',
+        builder: (_, state) => OrderDetailsPage(orderId: state.pathParameters['id']!),
+        routes: [
+          GoRoute(
+            path: 'edit',
+            builder: (_, state) => OrderEditorPage(orderId: state.pathParameters['id']),
+          ),
+        ],
       ),
       GoRoute(
         path: Routes.productNew,
