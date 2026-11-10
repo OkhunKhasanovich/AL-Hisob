@@ -18,7 +18,7 @@ lib/
     settings/   язык и тема (хранятся в БД)
     theme/      Material 3, светлая/тёмная
     widgets/    общие виджеты (shimmer и т.д.)
-  features/     feature-first: splash, onboarding, profile, shell, debts, orders, catalog, more
+  features/     feature-first: splash, onboarding, profile, shell, debts (domain, data, presentation), orders, catalog, more
 drift_schemas/  дампы схемы БД по версиям (для тестов миграций)
 ```
 
@@ -143,5 +143,5 @@ flutter build apk --release --split-per-abi
 
 ## Этапы
 
-0. Фундамент ✅ · 1. Онбординг ✅ · 2. Книга должников · 3. Умный поиск · 4. SMS ·
+0. Фундамент ✅ · 1. Онбординг ✅ · 2. Книга должников ✅ · 3. Умный поиск · 4. SMS ·
 5. Каталог · 6. Заказы · 7. Грузчик и доставка · 8. Бэкенд · 9. Синхронизация · 10. Полировка → iOS

@@ -5,4 +5,8 @@ abstract final class Routes {
   static const orders = '/orders';
   static const catalog = '/catalog';
   static const more = '/more';
+
+  static const debtorNew = '/debtors/new';
+  static String debtorDetails(String id) => '/debtors/$id';
+  static String debtorEdit(String id) => '/debtors/$id/edit';
 }

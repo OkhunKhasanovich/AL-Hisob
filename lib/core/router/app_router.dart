@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/catalog/catalog_page.dart';
-import '../../features/debts/debts_page.dart';
+import '../../features/debts/presentation/debtor_details_page.dart';
+import '../../features/debts/presentation/debtor_form_page.dart';
+import '../../features/debts/presentation/debts_page.dart';
 import '../../features/more/more_page.dart';
 import '../../features/onboarding/onboarding_page.dart';
 import '../../features/orders/orders_page.dart';
@@ -33,6 +35,20 @@ GoRouter createRouter({String initialLocation = Routes.splash}) {
           transitionsBuilder: (context, animation, _, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
+      ),
+      GoRoute(
+        path: Routes.debtorNew,
+        builder: (_, _) => const DebtorFormPage(),
+      ),
+      GoRoute(
+        path: '/debtors/:id',
+        builder: (_, state) => DebtorDetailsPage(debtorId: state.pathParameters['id']!),
+        routes: [
+          GoRoute(
+            path: 'edit',
+            builder: (_, state) => DebtorFormPage(debtorId: state.pathParameters['id']),
+          ),
+        ],
       ),
       StatefulShellRoute(
         builder: (context, state, shell) => HomeShell(navigationShell: shell),

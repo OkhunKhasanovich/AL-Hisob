@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/l10n/l10n.dart';
 import '../../core/settings/settings_providers.dart';
+import '../debts/presentation/debt_settings_section.dart';
 import '../profile/profile_card.dart';
 
 class MorePage extends ConsumerWidget {
@@ -68,6 +69,8 @@ class MorePage extends ConsumerWidget {
               ref.read(themeModeProvider.notifier).select(s.first);
             },
           ),
+          const SizedBox(height: 32),
+          const DebtSettingsSection(),
         ],
       ),
     );
