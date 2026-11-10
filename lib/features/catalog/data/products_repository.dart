@@ -186,6 +186,59 @@ class ProductsRepository {
     });
   }
 
+  /// Приводит набор фото товара к [fileNames] (первое — обложка): убранные
+  /// помечаются удалёнными, новые добавляются, остальные получают позиции по порядку.
+  /// Возвращает имена файлов убранных фото (их можно удалить с диска).
+  Future<List<String>> replacePhotos(String productId, List<String> fileNames) {
+    if (fileNames.length > maxProductPhotos) {
+      throw ArgumentError.value(fileNames.length, 'fileNames', 'At most $maxProductPhotos photos');
+    }
+    if (fileNames.toSet().length != fileNames.length) {
+      throw ArgumentError.value(fileNames, 'fileNames', 'Duplicate file names');
+    }
+    return _db.transaction(() async {
+      final now = DateTime.now();
+      final existing = await _activePhotos(productId);
+      final wanted = fileNames.toSet();
+
+      final removed = <String>[];
+      for (final photo in existing) {
+        if (wanted.contains(photo.fileName)) continue;
+        removed.add(photo.fileName);
+        await (_db.update(_db.productPhotos)..where((t) => t.id.equals(photo.id))).write(
+          ProductPhotosCompanion(
+            deletedAt: Value(now),
+            updatedAt: Value(now),
+            syncStatus: const Value(SyncStatus.pending),
+          ),
+        );
+      }
+
+      final byName = {for (final p in existing) p.fileName: p};
+      for (var i = 0; i < fileNames.length; i++) {
+        final photo = byName[fileNames[i]];
+        if (photo == null) {
+          await _db.into(_db.productPhotos).insert(
+                ProductPhotosCompanion.insert(
+                  productId: productId,
+                  fileName: fileNames[i],
+                  position: i,
+                ),
+              );
+        } else if (photo.position != i) {
+          await (_db.update(_db.productPhotos)..where((t) => t.id.equals(photo.id))).write(
+            ProductPhotosCompanion(
+              position: Value(i),
+              updatedAt: Value(now),
+              syncStatus: const Value(SyncStatus.pending),
+            ),
+          );
+        }
+      }
+      return removed;
+    });
+  }
+
   /// Soft delete фото; остальные сдвигаются так, чтобы позиции шли подряд.
   /// Возвращает имя файла для удаления с диска (или `null`, если фото нет).
   Future<String?> removePhoto(String photoId) {

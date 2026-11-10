@@ -266,5 +266,90 @@
   "updateErrorVerify": "The downloaded file is damaged. Try again.",
   "updateErrorInstall": "Could not start the installer.",
   "updateRetry": "Try again",
-  "closeButton": "Close"
+  "closeButton": "Close",
+  "catalogEmptyTitle": "No products yet",
+  "catalogEmptyHint": "Add your first product with a photo and prices",
+  "catalogBuyerPlaceholder": "Wholesalers’ catalogs will appear here after sync",
+  "addProduct": "Add product",
+  "catalogSearchHint": "Search products",
+  "productNewTitle": "New product",
+  "productEditTitle": "Edit product",
+  "productNameLabel": "Product name",
+  "productNameError": "Enter a product name",
+  "productCategoryLabel": "Category (optional)",
+  "productDescriptionLabel": "Description (optional)",
+  "productUnitLabel": "Unit",
+  "unitPiece": "pcs",
+  "unitKg": "kg",
+  "unitLiter": "l",
+  "unitMeter": "m",
+  "productUnitPriceLabel": "Price per unit",
+  "productPriceError": "Enter a price",
+  "productSoldInPacks": "Sold in packs",
+  "packKindLabel": "Pack type",
+  "packBox": "Box",
+  "packSack": "Sack",
+  "packBlock": "Block",
+  "packCrate": "Crate",
+  "packPack": "Pack",
+  "packSizeLabel": "Units per pack",
+  "packSizeError": "Enter 2 or more",
+  "packPriceLabel": "Price per pack",
+  "packPerUnitHint": "{price} per unit in a pack",
+  "@packPerUnitHint": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "packDiscount": "{percent}% cheaper than by the unit",
+  "@packDiscount": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "minOrderLabel": "Minimum order",
+  "minOrderError": "Enter 1 or more",
+  "minOrderValue": "Min. order: {qty} {unit}",
+  "@minOrderValue": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "inStockLabel": "In stock",
+  "outOfStock": "Out of stock",
+  "photosLabel": "Photos ({count} of {max})",
+  "@photosLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "addPhotoCamera": "Take a photo",
+  "addPhotoGallery": "Choose from gallery",
+  "photoMakeCover": "Make cover",
+  "photoRemove": "Remove photo",
+  "photoCover": "Cover",
+  "photoLimitReached": "At most {max} photos",
+  "@photoLimitReached": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteProductTitle": "Delete this product?",
+  "deleteProductBody": "The product and its photos will be removed."
 }

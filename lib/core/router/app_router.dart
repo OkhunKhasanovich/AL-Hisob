@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/catalog/catalog_page.dart';
+import '../../features/catalog/presentation/catalog_page.dart';
+import '../../features/catalog/presentation/product_details_page.dart';
+import '../../features/catalog/presentation/product_form_page.dart';
 import '../../features/debts/presentation/debtor_details_page.dart';
 import '../../features/debts/presentation/debtor_form_page.dart';
 import '../../features/debts/presentation/debts_page.dart';
@@ -37,6 +39,20 @@ GoRouter createRouter({String initialLocation = Routes.splash}) {
           transitionsBuilder: (context, animation, _, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
+      ),
+      GoRoute(
+        path: Routes.productNew,
+        builder: (_, _) => const ProductFormPage(),
+      ),
+      GoRoute(
+        path: '/products/:id',
+        builder: (_, state) => ProductDetailsPage(productId: state.pathParameters['id']!),
+        routes: [
+          GoRoute(
+            path: 'edit',
+            builder: (_, state) => ProductFormPage(productId: state.pathParameters['id']),
+          ),
+        ],
       ),
       GoRoute(
         path: Routes.bulkSms,

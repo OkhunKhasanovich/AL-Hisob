@@ -26,7 +26,9 @@ class _DebtorFormPageState extends ConsumerState<DebtorFormPage> {
   void initState() {
     super.initState();
     final id = widget.debtorId;
-    if (id != null) _loading = ref.read(debtorsRepositoryProvider).loadDetails(id);
+    if (id != null) {
+      _loading = ref.read(debtorsRepositoryProvider).loadDetails(id);
+    }
   }
 
   @override
@@ -35,7 +37,9 @@ class _DebtorFormPageState extends ConsumerState<DebtorFormPage> {
     final isEdit = widget.debtorId != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEdit ? l10n.debtorEditTitle : l10n.debtorNewTitle)),
+      appBar: AppBar(
+        title: Text(isEdit ? l10n.debtorEditTitle : l10n.debtorNewTitle),
+      ),
       body: isEdit
           ? FutureBuilder<DebtorDetails?>(
               future: _loading,
@@ -45,7 +49,10 @@ class _DebtorFormPageState extends ConsumerState<DebtorFormPage> {
                 }
                 final details = snapshot.data;
                 if (details == null) return const SizedBox.shrink();
-                return _DebtorFormBody(debtorId: widget.debtorId, initial: details);
+                return _DebtorFormBody(
+                  debtorId: widget.debtorId,
+                  initial: details,
+                );
               },
             )
           : const _DebtorFormBody(),
@@ -84,7 +91,8 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
     _note = TextEditingController(text: d?.note ?? '');
     final phones = widget.initial?.summary.phones ?? const <String>[];
     _phones = [
-      for (final p in phones) TextEditingController(text: formatPhone(p).replaceFirst('+998 ', '')),
+      for (final p in phones)
+        TextEditingController(text: formatPhone(p).replaceFirst('+998 ', '')),
       if (phones.isEmpty) TextEditingController(),
     ];
   }
@@ -129,11 +137,14 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
     }
   }
 
-  InputDecoration _decoration(String label, {IconData? icon, String? hint}) => InputDecoration(
+  InputDecoration _decoration(String label, {IconData? icon, String? hint}) =>
+      InputDecoration(
         labelText: label,
         hintText: hint,
         prefixIcon: icon == null ? null : Icon(icon),
-        border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
       );
 
   @override
@@ -142,90 +153,112 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
 
     return Form(
       key: _formKey,
-      child: ListView(
+      // Не ListView: он убирает поля за экраном, и validate() их бы не проверял.
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        children: [
-          TextFormField(
-            controller: _name,
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.next,
-            maxLength: 120,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            validator: (v) => (v == null || v.trim().isEmpty) ? l10n.debtorNameError : null,
-            decoration: _decoration(l10n.debtorNameLabel, icon: Icons.person_rounded),
-          ),
-          const SizedBox(height: 4),
-          TextFormField(
-            controller: _shop,
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.next,
-            decoration: _decoration(l10n.debtorShopLabel, icon: Icons.storefront_rounded),
-          ),
-          const SizedBox(height: 16),
-          for (var i = 0; i < _phones.length; i++) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _phones[i],
-                    keyboardType: TextInputType.phone,
-                    textInputAction: TextInputAction.next,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    validator: (v) => (v == null || v.trim().isEmpty || isValidPhone(v))
-                        ? null
-                        : l10n.debtorPhoneError,
-                    decoration: _decoration(
-                      l10n.debtorPhoneLabel,
-                      icon: Icons.phone_rounded,
-                      hint: l10n.debtorPhoneHint,
-                    ).copyWith(prefixText: '+998 '),
-                  ),
-                ),
-                if (_phones.length > 1)
-                  IconButton(
-                    tooltip: l10n.removePhone,
-                    icon: const Icon(Icons.remove_circle_outline_rounded),
-                    onPressed: () => setState(() => _phones.removeAt(i).dispose()),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (_phones.length < _maxPhones)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () => setState(() => _phones.add(TextEditingController())),
-                icon: const Icon(Icons.add_rounded),
-                label: Text(l10n.addPhone),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextFormField(
+              controller: _name,
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.next,
+              maxLength: 120,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? l10n.debtorNameError : null,
+              decoration: _decoration(
+                l10n.debtorNameLabel,
+                icon: Icons.person_rounded,
               ),
             ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _address,
-            textInputAction: TextInputAction.next,
-            decoration: _decoration(l10n.debtorAddressLabel, icon: Icons.location_on_rounded),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _note,
-            maxLines: 3,
-            decoration: _decoration(l10n.debtorNoteLabel, icon: Icons.notes_rounded),
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _saving ? null : _save,
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-            child: _saving
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2.5),
-                  )
-                : Text(l10n.saveButton),
-          ),
-        ],
+            const SizedBox(height: 4),
+            TextFormField(
+              controller: _shop,
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.next,
+              decoration: _decoration(
+                l10n.debtorShopLabel,
+                icon: Icons.storefront_rounded,
+              ),
+            ),
+            const SizedBox(height: 16),
+            for (var i = 0; i < _phones.length; i++) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _phones[i],
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.next,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      validator: (v) =>
+                          (v == null || v.trim().isEmpty || isValidPhone(v))
+                          ? null
+                          : l10n.debtorPhoneError,
+                      decoration: _decoration(
+                        l10n.debtorPhoneLabel,
+                        icon: Icons.phone_rounded,
+                        hint: l10n.debtorPhoneHint,
+                      ).copyWith(prefixText: '+998 '),
+                    ),
+                  ),
+                  if (_phones.length > 1)
+                    IconButton(
+                      tooltip: l10n.removePhone,
+                      icon: const Icon(Icons.remove_circle_outline_rounded),
+                      onPressed: () =>
+                          setState(() => _phones.removeAt(i).dispose()),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (_phones.length < _maxPhones)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () =>
+                      setState(() => _phones.add(TextEditingController())),
+                  icon: const Icon(Icons.add_rounded),
+                  label: Text(l10n.addPhone),
+                ),
+              ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _address,
+              textInputAction: TextInputAction.next,
+              decoration: _decoration(
+                l10n.debtorAddressLabel,
+                icon: Icons.location_on_rounded,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _note,
+              maxLines: 3,
+              decoration: _decoration(
+                l10n.debtorNoteLabel,
+                icon: Icons.notes_rounded,
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: _saving ? null : _save,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
+              child: _saving
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    )
+                  : Text(l10n.saveButton),
+            ),
+          ],
+        ),
       ),
     );
   }

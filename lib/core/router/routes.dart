@@ -8,6 +8,9 @@ abstract final class Routes {
 
   static const bulkSms = '/sms/bulk';
   static const smsTemplates = '/sms/templates';
+  static const productNew = '/products/new';
+  static String productDetails(String id) => '/products/$id';
+  static String productEdit(String id) => '/products/$id/edit';
   static const debtorNew = '/debtors/new';
   static String debtorDetails(String id) => '/debtors/$id';
   static String debtorEdit(String id) => '/debtors/$id/edit';

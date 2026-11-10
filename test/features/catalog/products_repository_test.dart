@@ -222,6 +222,44 @@ void main() {
     });
   });
 
+  group('replacePhotos', () {
+    test('добавляет новые, убирает лишние, порядок как в списке', () async {
+      final id = await repo.createProduct(input(), photoFiles: ['a.jpg', 'b.jpg', 'c.jpg']);
+
+      final removed = await repo.replacePhotos(id, ['c.jpg', 'new.jpg', 'a.jpg']);
+
+      expect(removed, ['b.jpg']);
+      final photos = (await repo.loadProduct(id))!.photos;
+      expect(photos.map((p) => p.fileName), ['c.jpg', 'new.jpg', 'a.jpg']);
+      expect(photos.map((p) => p.position), [0, 1, 2]);
+      expect((await db.select(db.productPhotos).get()).where((p) => p.deletedAt != null), hasLength(1));
+    });
+
+    test('пустой список снимает все фото', () async {
+      final id = await repo.createProduct(input(), photoFiles: ['a.jpg', 'b.jpg']);
+      expect(await repo.replacePhotos(id, const []), unorderedEquals(['a.jpg', 'b.jpg']));
+      expect((await repo.loadProduct(id))!.photos, isEmpty);
+    });
+
+    test('без изменений — ничего не пишет', () async {
+      final id = await repo.createProduct(input(), photoFiles: ['a.jpg', 'b.jpg']);
+      final before = (await db.select(db.productPhotos).get()).map((p) => p.updatedAt).toList();
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+
+      expect(await repo.replacePhotos(id, ['a.jpg', 'b.jpg']), isEmpty);
+
+      final after = (await db.select(db.productPhotos).get()).map((p) => p.updatedAt).toList();
+      expect(after, before);
+    });
+
+    test('лимит и дубликаты отклоняются', () async {
+      final id = await repo.createProduct(input());
+      expect(() => repo.replacePhotos(id, List.generate(6, (i) => '$i.jpg')), throwsArgumentError);
+      expect(() => repo.replacePhotos(id, ['a.jpg', 'a.jpg']), throwsArgumentError);
+      expect((await repo.loadProduct(id))!.photos, isEmpty);
+    });
+  });
+
   group('категории', () {
     test('уникальные, по алфавиту, без удалённых и пустых', () async {
       await repo.createProduct(input(name: 'A', category: 'Напитки'));

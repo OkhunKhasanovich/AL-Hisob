@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +7,7 @@ import '../../../core/l10n/l10n.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/settings/settings_providers.dart';
 import '../../../core/utils/money.dart';
+import '../../../core/widgets/debounced_search_field.dart';
 import '../../../core/widgets/fade_slide_in.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../domain/debt_filter.dart';
@@ -38,6 +37,8 @@ class DebtsPage extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        // Вкладки живут в одном дереве: одинаковые Hero-теги кнопок вызывают ошибку при переходах.
+        heroTag: null,
         onPressed: () {
           HapticFeedback.selectionClick();
           context.push(Routes.debtorNew);
@@ -155,64 +156,20 @@ class _CenteredMessage extends StatelessWidget {
   }
 }
 
-/// Строка поиска. Запрос уходит в провайдер с задержкой, чтобы не
-/// пересчитывать выдачу на каждую букву.
-class _SearchField extends ConsumerStatefulWidget {
+/// Строка поиска должников: запрос уходит в провайдер с задержкой.
+class _SearchField extends ConsumerWidget {
   const _SearchField();
 
-  static const debounce = Duration(milliseconds: 250);
-
   @override
-  ConsumerState<_SearchField> createState() => _SearchFieldState();
-}
-
-class _SearchFieldState extends ConsumerState<_SearchField> {
-  late final TextEditingController _controller =
-      TextEditingController(text: ref.read(debtSearchQueryProvider));
-  Timer? _timer;
-
-  void _onChanged(String text) {
-    setState(() {}); // кнопка «очистить» реагирует сразу
-    _timer?.cancel();
-    _timer = Timer(_SearchField.debounce, () {
-      if (mounted) ref.read(debtSearchQueryProvider.notifier).set(text);
-    });
-  }
-
-  void _clear() {
-    _timer?.cancel();
-    _controller.clear();
-    ref.read(debtSearchQueryProvider.notifier).set('');
-    setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: SearchBar(
-        controller: _controller,
+      child: DebouncedSearchField(
         hintText: l10n.searchHint,
-        elevation: const WidgetStatePropertyAll(0),
-        leading: const Icon(Icons.search_rounded),
-        trailing: [
-          if (_controller.text.isNotEmpty)
-            IconButton(
-              tooltip: l10n.searchClear,
-              icon: const Icon(Icons.close_rounded),
-              onPressed: _clear,
-            ),
-        ],
-        textInputAction: TextInputAction.search,
-        onChanged: _onChanged,
+        clearTooltip: l10n.searchClear,
+        initialText: ref.read(debtSearchQueryProvider),
+        onChanged: ref.read(debtSearchQueryProvider.notifier).set,
       ),
     );
   }
