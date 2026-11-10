@@ -276,5 +276,20 @@
   "accountSignOutTitle": "Hisobdan chiqilsinmi?",
   "accountSignOutBody": "Ma’lumotlar shu telefonda qoladi. Istalgan vaqt qayta kirishingiz mumkin.",
   "loginPromptTitle": "Ma’lumotlaringizni yo‘qotmang",
-  "loginPromptBody": "Ma’lumotlar xavfsiz bo‘lishi va ularni boshqa telefonlar bilan bo‘lishish uchun kiring."
+  "loginPromptBody": "Ma’lumotlar xavfsiz bo‘lishi va ularni boshqa telefonlar bilan bo‘lishish uchun kiring.",
+  "debtsCountLabel": "Qarzdorlar: {count}",
+  "debtsOverdueLabel": "Muddati o‘tgan: {count}",
+  "debtToday": "Bugun",
+  "debtYesterday": "Kecha",
+  "debtDaysAgo": "{days} kun oldin",
+  "debtOperationsCount": "{count} ta amal",
+  "debtPaidShare": "To‘langan {percent}%",
+  "debtOverdueDays": "Muddati o‘tgan · {days} kun",
+  "filterTooltip": "Filtrlar",
+  "filterSheetTitle": "Ko‘rsatish",
+  "filterAllHint": "Avval eng katta qarz",
+  "filterOverdueHint": "{days} kundan ortiq amal yo‘q",
+  "filterLargeHint": "Qarz {amount} dan",
+  "filterByDateHint": "Avval yaqinda bo‘lgan amallar",
+  "filterReset": "Filtrni tozalash"
 }

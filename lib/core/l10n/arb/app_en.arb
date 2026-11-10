@@ -489,5 +489,76 @@
   "accountSignOutTitle": "Sign out?",
   "accountSignOutBody": "Your data stays on this phone. You can sign in again at any time.",
   "loginPromptTitle": "Don’t lose your data",
-  "loginPromptBody": "Sign in to keep your data safe and share it with other phones."
+  "loginPromptBody": "Sign in to keep your data safe and share it with other phones.",
+  "debtsCountLabel": "Debtors: {count}",
+  "@debtsCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "debtsOverdueLabel": "Overdue: {count}",
+  "@debtsOverdueLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "debtToday": "Today",
+  "debtYesterday": "Yesterday",
+  "debtDaysAgo": "{days} d ago",
+  "@debtDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "debtOperationsCount": "{count} ops",
+  "@debtOperationsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "debtPaidShare": "Paid {percent}%",
+  "@debtPaidShare": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "debtOverdueDays": "Overdue · {days} d",
+  "@debtOverdueDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "filterTooltip": "Filters",
+  "filterSheetTitle": "Show",
+  "filterAllHint": "Largest debt first",
+  "filterOverdueHint": "No operations for more than {days} days",
+  "@filterOverdueHint": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "filterLargeHint": "Debt from {amount}",
+  "@filterLargeHint": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "filterByDateHint": "Latest operations first",
+  "filterReset": "Reset filter"
 }

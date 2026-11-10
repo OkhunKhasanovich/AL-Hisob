@@ -19,6 +19,9 @@ class DebtorSummary {
     required this.phones,
     required this.balance,
     required this.lastOperationAt,
+    this.totalGiven = 0,
+    this.totalPaid = 0,
+    this.operationCount = 0,
   });
 
   final Debtor debtor;
@@ -30,7 +33,27 @@ class DebtorSummary {
   /// Дата последней операции (по `occurredAt`); `null`, если операций нет.
   final DateTime? lastOperationAt;
 
+  /// Всего выдано в долг за всё время.
+  final int totalGiven;
+
+  /// Всего получено оплатой за всё время.
+  final int totalPaid;
+
+  /// Число операций (выдач и оплат).
+  final int operationCount;
+
   bool get hasDebt => balance > 0;
+
+  /// Какая часть выданного уже возвращена, 0…1 (0, если ничего не выдавалось).
+  double get paidShare => totalGiven <= 0 ? 0 : (totalPaid / totalGiven).clamp(0.0, 1.0);
+}
+
+/// Сколько календарных дней прошло от [last] до [now]: 0 — сегодня, 1 — вчера.
+/// `null`, если даты нет. Время суток не учитывается.
+int? daysSince(DateTime? last, DateTime now) {
+  if (last == null) return null;
+  final days = DateTime(now.year, now.month, now.day).difference(DateTime(last.year, last.month, last.day)).inDays;
+  return days < 0 ? 0 : days;
 }
 
 /// Собирает сводки из «сырых» строк. Удалённые (soft delete) записи игнорируются.
@@ -57,8 +80,14 @@ List<DebtorSummary> buildSummaries({
 
 DebtorSummary _summarize(Debtor d, List<DebtorPhone> phones, List<DebtTransaction> txs) {
   DateTime? last;
+  var given = 0, paid = 0;
   for (final t in txs) {
     if (last == null || t.occurredAt.isAfter(last)) last = t.occurredAt;
+    if (t.kind == DebtKind.debt) {
+      given += t.amount;
+    } else {
+      paid += t.amount;
+    }
   }
   final orderedPhones = [...phones]..sort((a, b) => a.createdAt.compareTo(b.createdAt));
   return DebtorSummary(
@@ -66,5 +95,8 @@ DebtorSummary _summarize(Debtor d, List<DebtorPhone> phones, List<DebtTransactio
     phones: [for (final p in orderedPhones) p.phone],
     balance: computeBalance(txs),
     lastOperationAt: last,
+    totalGiven: given,
+    totalPaid: paid,
+    operationCount: txs.length,
   );
 }

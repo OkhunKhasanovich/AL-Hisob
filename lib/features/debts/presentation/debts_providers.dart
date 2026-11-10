@@ -48,9 +48,31 @@ final debtSearchIndexProvider = Provider<DebtorSearchIndex?>((ref) {
   return all == null ? null : DebtorSearchIndex(all);
 });
 
-/// Результаты поиска, отсортированные по релевантности; `null` — запроса нет.
-final debtSearchHitsProvider = Provider<List<SearchHit>?>((ref) {
-  final query = ref.watch(debtSearchQueryProvider);
-  if (query.trim().isEmpty) return null;
-  return ref.watch(debtSearchIndexProvider)?.search(query);
+/// Строка списка: должник и, если нашли по номеру, какой именно телефон совпал.
+class DebtorRow {
+  const DebtorRow(this.summary, [this.matchedPhone]);
+
+  final DebtorSummary summary;
+  final String? matchedPhone;
+}
+
+/// Что показывать в списке: без запроса — отфильтрованный и отсортированный список;
+/// с запросом — результаты поиска по релевантности, суженные выбранным фильтром.
+final visibleDebtorsProvider = Provider<List<DebtorRow>?>((ref) {
+  final all = ref.watch(debtorSummariesProvider).value;
+  if (all == null) return null;
+  final filter = ref.watch(selectedDebtFilterProvider);
+  final config = ref.watch(debtFilterConfigProvider);
+  final query = ref.watch(debtSearchQueryProvider).trim();
+  final now = DateTime.now();
+
+  if (query.isEmpty) {
+    return [for (final s in applyDebtFilter(all, filter, now: now, config: config)) DebtorRow(s)];
+  }
+  final hits = ref.watch(debtSearchIndexProvider)?.search(query) ?? const <SearchHit>[];
+  return [
+    for (final h in hits)
+      if (matchesFilter(h.summary, filter, now: now, config: config))
+        DebtorRow(h.summary, h.matchedPhone),
+  ];
 });

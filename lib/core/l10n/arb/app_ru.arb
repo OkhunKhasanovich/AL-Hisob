@@ -276,5 +276,20 @@
   "accountSignOutTitle": "Выйти из аккаунта?",
   "accountSignOutBody": "Данные останутся на этом телефоне. Войти снова можно в любой момент.",
   "loginPromptTitle": "Не потеряйте данные",
-  "loginPromptBody": "Войдите, чтобы данные были в сохранности и ими можно было делиться с другими телефонами."
+  "loginPromptBody": "Войдите, чтобы данные были в сохранности и ими можно было делиться с другими телефонами.",
+  "debtsCountLabel": "Должников: {count}",
+  "debtsOverdueLabel": "Просрочено: {count}",
+  "debtToday": "Сегодня",
+  "debtYesterday": "Вчера",
+  "debtDaysAgo": "{days} дн. назад",
+  "debtOperationsCount": "{count} опер.",
+  "debtPaidShare": "Оплачено {percent}%",
+  "debtOverdueDays": "Просрочен · {days} дн.",
+  "filterTooltip": "Фильтры",
+  "filterSheetTitle": "Показать",
+  "filterAllHint": "Сначала самый большой долг",
+  "filterOverdueHint": "Нет операций больше {days} дн.",
+  "filterLargeHint": "Долг от {amount}",
+  "filterByDateHint": "Сначала недавние операции",
+  "filterReset": "Сбросить фильтр"
 }

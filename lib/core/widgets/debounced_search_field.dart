@@ -12,6 +12,8 @@ class DebouncedSearchField extends StatefulWidget {
     required this.onChanged,
     this.initialText = '',
     this.debounce = const Duration(milliseconds: 250),
+    this.trailingActions = const [],
+    this.compact = false,
   });
 
   final String hintText;
@@ -19,6 +21,12 @@ class DebouncedSearchField extends StatefulWidget {
   final String initialText;
   final Duration debounce;
   final ValueChanged<String> onChanged;
+
+  /// Кнопки в конце поля (после «очистить»), например фильтры.
+  final List<Widget> trailingActions;
+
+  /// Низкое поле (44 вместо 56).
+  final bool compact;
 
   @override
   State<DebouncedSearchField> createState() => _DebouncedSearchFieldState();
@@ -56,6 +64,10 @@ class _DebouncedSearchFieldState extends State<DebouncedSearchField> {
       controller: _controller,
       hintText: widget.hintText,
       elevation: const WidgetStatePropertyAll(0),
+      constraints: widget.compact ? const BoxConstraints(minHeight: 44, maxHeight: 44) : null,
+      padding: widget.compact
+          ? const WidgetStatePropertyAll(EdgeInsets.only(left: 14, right: 4))
+          : null,
       leading: const Icon(Icons.search_rounded),
       trailing: [
         if (_controller.text.isNotEmpty)
@@ -64,6 +76,7 @@ class _DebouncedSearchFieldState extends State<DebouncedSearchField> {
             icon: const Icon(Icons.close_rounded),
             onPressed: _clear,
           ),
+        ...widget.trailingActions,
       ],
       textInputAction: TextInputAction.search,
       onChanged: _onChanged,

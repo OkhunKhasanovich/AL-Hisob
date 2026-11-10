@@ -276,5 +276,20 @@
   "accountSignOutTitle": "Akkauntdan shıǵılsınba?",
   "accountSignOutBody": "Maǵlıwmatlar usı telefonda qaladı. Qálegen waqıtta qayta kiriwińiz múmkin.",
   "loginPromptTitle": "Maǵlıwmatlarıńızdı joǵaltpań",
-  "loginPromptBody": "Maǵlıwmatlar qáwipsiz bolıwı hám olardı basqa telefonlar menen bólisiw ushın kiriń."
+  "loginPromptBody": "Maǵlıwmatlar qáwipsiz bolıwı hám olardı basqa telefonlar menen bólisiw ushın kiriń.",
+  "debtsCountLabel": "Qarızdarlar: {count}",
+  "debtsOverdueLabel": "Merzimi ótken: {count}",
+  "debtToday": "Búgin",
+  "debtYesterday": "Keshe",
+  "debtDaysAgo": "{days} kún burın",
+  "debtOperationsCount": "{count} ámeliyat",
+  "debtPaidShare": "Tólengen {percent}%",
+  "debtOverdueDays": "Merzimi ótken · {days} kún",
+  "filterTooltip": "Filtrler",
+  "filterSheetTitle": "Kórsetiw",
+  "filterAllHint": "Aldın eń úlken qarız",
+  "filterOverdueHint": "{days} kúnnen artıq ámeliyat joq",
+  "filterLargeHint": "Qarız {amount} den",
+  "filterByDateHint": "Aldın jaqında bolǵan ámeliyatlar",
+  "filterReset": "Filtrdi tazalaw"
 }

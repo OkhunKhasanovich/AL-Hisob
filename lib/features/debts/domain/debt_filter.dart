@@ -39,6 +39,21 @@ bool isOverdue(DebtorSummary s, DateTime now, DebtFilterConfig config) {
 bool isLargeDebt(DebtorSummary s, DebtFilterConfig config) =>
     s.balance >= config.largeDebtThreshold;
 
+/// Подходит ли должник под [filter] как под ограничение (без сортировки).
+/// «Все» и «По дате» никого не исключают: это порядок, а не отбор.
+/// Используется, чтобы сузить результаты поиска, не меняя их порядок по релевантности.
+bool matchesFilter(
+  DebtorSummary s,
+  DebtFilter filter, {
+  required DateTime now,
+  DebtFilterConfig config = const DebtFilterConfig(),
+}) =>
+    switch (filter) {
+      DebtFilter.all || DebtFilter.byDate => true,
+      DebtFilter.overdue => isOverdue(s, now, config),
+      DebtFilter.large => isLargeDebt(s, config),
+    };
+
 /// Применяет фильтр и сортировку. Не изменяет входной список.
 List<DebtorSummary> applyDebtFilter(
   Iterable<DebtorSummary> all,
@@ -77,3 +92,45 @@ int _byName(DebtorSummary a, DebtorSummary b) =>
 /// Общий долг: сумма положительных балансов (переплаты не вычитаются).
 int totalOwed(Iterable<DebtorSummary> all) =>
     all.fold(0, (sum, s) => s.balance > 0 ? sum + s.balance : sum);
+
+/// Сводка по всей книге для верхней карточки.
+class DebtsOverview {
+  const DebtsOverview({
+    required this.totalOwed,
+    required this.debtorCount,
+    required this.overdueCount,
+    required this.overdueAmount,
+  });
+
+  /// Сумма всех долгов (переплаты не вычитаются).
+  final int totalOwed;
+
+  /// Сколько должников сейчас должны (баланс > 0).
+  final int debtorCount;
+
+  final int overdueCount;
+  final int overdueAmount;
+}
+
+DebtsOverview computeOverview(
+  Iterable<DebtorSummary> all, {
+  required DateTime now,
+  DebtFilterConfig config = const DebtFilterConfig(),
+}) {
+  var owed = 0, debtors = 0, overdueCount = 0, overdueAmount = 0;
+  for (final s in all) {
+    if (!s.hasDebt) continue;
+    owed += s.balance;
+    debtors++;
+    if (isOverdue(s, now, config)) {
+      overdueCount++;
+      overdueAmount += s.balance;
+    }
+  }
+  return DebtsOverview(
+    totalOwed: owed,
+    debtorCount: debtors,
+    overdueCount: overdueCount,
+    overdueAmount: overdueAmount,
+  );
+}

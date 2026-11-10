@@ -198,4 +198,105 @@ void main() {
     expect(totalOwed([s(100), s(-40), s(0), s(250)]), 350);
     expect(totalOwed([]), 0);
   });
+
+  group('расширенная сводка должника', () {
+    test('выдано, оплачено, число операций, доля возврата', () {
+      final summaries = buildSummaries(
+        debtors: [_debtor('a', 'Alisher')],
+        phones: const [],
+        transactions: [
+          _tx('a', DebtKind.debt, 1000, DateTime(2026, 2, 1)),
+          _tx('a', DebtKind.debt, 500, DateTime(2026, 2, 5)),
+          _tx('a', DebtKind.payment, 300, DateTime(2026, 2, 10)),
+          _tx('a', DebtKind.payment, 99999, DateTime(2026, 2, 11), deletedAt: DateTime(2026, 2, 12)),
+        ],
+      );
+      final s = summaries.single;
+      expect(s.totalGiven, 1500);
+      expect(s.totalPaid, 300);
+      expect(s.operationCount, 3, reason: 'удалённые операции не считаются');
+      expect(s.balance, 1200);
+      expect(s.paidShare, closeTo(0.2, 1e-9));
+    });
+
+    test('без операций: нули, доля 0', () {
+      final s = buildSummaries(debtors: [_debtor('a', 'A')], phones: const [], transactions: const []).single;
+      expect([s.totalGiven, s.totalPaid, s.operationCount], [0, 0, 0]);
+      expect(s.paidShare, 0);
+    });
+
+    test('доля возврата не больше 100 % (переплата)', () {
+      final s = buildSummaries(
+        debtors: [_debtor('a', 'A')],
+        phones: const [],
+        transactions: [
+          _tx('a', DebtKind.debt, 100, DateTime(2026, 1, 1)),
+          _tx('a', DebtKind.payment, 250, DateTime(2026, 1, 2)),
+        ],
+      ).single;
+      expect(s.paidShare, 1);
+      expect(s.balance, -150);
+    });
+
+    test('daysSince: календарные дни, время суток не важно', () {
+      final now = DateTime(2026, 6, 30, 1, 0);
+      expect(daysSince(DateTime(2026, 6, 30, 23, 59), now), 0, reason: 'сегодня');
+      expect(daysSince(DateTime(2026, 6, 29, 23, 59), now), 1, reason: 'вчера, хотя прошло 1,1 часа');
+      expect(daysSince(DateTime(2026, 6, 20, 12), now), 10);
+      expect(daysSince(null, now), isNull);
+      expect(daysSince(DateTime(2026, 7, 5), now), 0, reason: 'дата в будущем не уходит в минус');
+    });
+  });
+
+  group('matchesFilter (отбор для результатов поиска)', () {
+    DebtorSummary s(int balance, DateTime? last) => DebtorSummary(
+          debtor: _debtor('x', 'x'),
+          phones: const [],
+          balance: balance,
+          lastOperationAt: last,
+        );
+    const config = DebtFilterConfig(overdueDays: 30, largeDebtThreshold: 1000000);
+
+    test('«Все» и «По дате» никого не исключают', () {
+      final nobody = s(0, null);
+      expect(matchesFilter(nobody, DebtFilter.all, now: now, config: config), isTrue);
+      expect(matchesFilter(nobody, DebtFilter.byDate, now: now, config: config), isTrue);
+    });
+
+    test('«Просроченные» и «Крупные» отбирают', () {
+      final old = s(500, now.subtract(const Duration(days: 40)));
+      final fresh = s(2000000, now.subtract(const Duration(days: 1)));
+      expect(matchesFilter(old, DebtFilter.overdue, now: now, config: config), isTrue);
+      expect(matchesFilter(fresh, DebtFilter.overdue, now: now, config: config), isFalse);
+      expect(matchesFilter(old, DebtFilter.large, now: now, config: config), isFalse);
+      expect(matchesFilter(fresh, DebtFilter.large, now: now, config: config), isTrue);
+    });
+  });
+
+  group('computeOverview', () {
+    const config = DebtFilterConfig(overdueDays: 30, largeDebtThreshold: 1000000);
+    DebtorSummary s(int balance, int daysAgo) => DebtorSummary(
+          debtor: _debtor('$balance', '$balance'),
+          phones: const [],
+          balance: balance,
+          lastOperationAt: now.subtract(Duration(days: daysAgo)),
+        );
+
+    test('сумма долгов, число должников, просрочка', () {
+      final o = computeOverview(
+        [s(1000, 5), s(2000, 45), s(500, 90), s(0, 100), s(-300, 50)],
+        now: now,
+        config: config,
+      );
+      expect(o.totalOwed, 3500, reason: 'без нулей и переплат');
+      expect(o.debtorCount, 3);
+      expect(o.overdueCount, 2);
+      expect(o.overdueAmount, 2500);
+    });
+
+    test('пустая книга', () {
+      final o = computeOverview(const [], now: now, config: config);
+      expect([o.totalOwed, o.debtorCount, o.overdueCount, o.overdueAmount], [0, 0, 0, 0]);
+    });
+  });
 }

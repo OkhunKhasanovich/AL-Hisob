@@ -6,16 +6,15 @@ import 'package:go_router/go_router.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/settings/settings_providers.dart';
-import '../../../core/utils/money.dart';
 import '../../../core/widgets/debounced_search_field.dart';
 import '../../../core/widgets/fade_slide_in.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../auth/presentation/login_prompt.dart';
 import '../domain/debt_filter.dart';
 import '../domain/debt_summary.dart';
-import '../domain/search/debtor_search.dart';
-import 'balance_style.dart';
-import 'debtor_avatar.dart';
+import 'debt_filter_sheet.dart';
+import 'debtor_tile.dart';
+import 'debts_overview_card.dart';
 import 'debts_providers.dart';
 
 class DebtsPage extends ConsumerWidget {
@@ -65,6 +64,7 @@ class DebtsPage extends ConsumerWidget {
   }
 }
 
+/// Экран с данными: обзор → поиск с фильтром (закреплён) → список.
 class _DebtorList extends ConsumerWidget {
   const _DebtorList({required this.all});
 
@@ -75,290 +75,120 @@ class _DebtorList extends ConsumerWidget {
     final l10n = context.l10n;
     final filter = ref.watch(selectedDebtFilterProvider);
     final config = ref.watch(debtFilterConfigProvider);
-    final visible = applyDebtFilter(all, filter, now: DateTime.now(), config: config);
-
-    final hits = ref.watch(debtSearchHitsProvider);
+    final rows = ref.watch(visibleDebtorsProvider) ?? const <DebtorRow>[];
+    final now = DateTime.now();
+    final overview = computeOverview(all, now: now, config: config);
 
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
+        // 1. Общий долг — самый верх.
+        SliverToBoxAdapter(child: DebtsOverviewCard(overview: overview)),
+
+        // 2. Поиск с воронкой фильтров в конце поля; не уезжает при прокрутке.
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _PinnedHeader(
+            height: 60,
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: DebouncedSearchField(
+                compact: true,
+                hintText: l10n.searchHint,
+                clearTooltip: l10n.searchClear,
+                initialText: ref.read(debtSearchQueryProvider),
+                onChanged: ref.read(debtSearchQueryProvider.notifier).set,
+                trailingActions: const [DebtFilterButton()],
+              ),
+            ),
+          ),
+        ),
+
+        // Включённый фильтр виден и снимается одним нажатием.
+        if (filter != DebtFilter.all)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: InputChip(
+                  avatar: Icon(debtFilterIcon(filter), size: 18),
+                  label: Text('${debtFilterLabel(l10n, filter)} · ${rows.length}'),
+                  deleteButtonTooltipMessage: l10n.filterReset,
+                  onDeleted: () => ref.read(selectedDebtFilterProvider.notifier).select(DebtFilter.all),
+                ),
+              ),
+            ),
+          ),
+
         const SliverToBoxAdapter(child: LoginPromptCard()),
-        const SliverToBoxAdapter(child: _SearchField()),
-        if (hits != null) ...[
-          if (hits.isEmpty)
-            _CenteredMessage(text: l10n.searchNoResults)
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-              sliver: SliverList.builder(
-                itemCount: hits.length,
-                itemBuilder: (context, i) {
-                  final hit = hits[i];
-                  return _DebtorTile(
-                    key: ValueKey('hit-${hit.summary.debtor.id}'),
-                    summary: hit.summary,
-                    overdue: isOverdue(hit.summary, DateTime.now(), config),
-                    matchedPhone: formatMatchedPhone(hit),
-                  );
-                },
+
+        // 3. Список.
+        if (rows.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Text(
+                  ref.watch(debtSearchQueryProvider).trim().isEmpty
+                      ? l10n.debtsFilteredEmpty
+                      : l10n.searchNoResults,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
               ),
             ),
-        ] else ...[
-          SliverToBoxAdapter(child: _TotalCard(total: totalOwed(all))),
-          SliverToBoxAdapter(child: _FilterBar(selected: filter)),
-          if (visible.isEmpty)
-            _CenteredMessage(text: l10n.debtsFilteredEmpty)
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
-              sliver: SliverList.builder(
-                itemCount: visible.length,
-                itemBuilder: (context, i) {
-                  final s = visible[i];
-                  return FadeSlideIn(
-                    key: ValueKey(s.debtor.id),
-                    delay: Duration(milliseconds: i < 8 ? i * 40 : 0),
-                    child: _DebtorTile(
-                      summary: s,
-                      overdue: isOverdue(s, DateTime.now(), config),
-                    ),
-                  );
-                },
-              ),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+            sliver: SliverList.builder(
+              itemCount: rows.length,
+              itemBuilder: (context, i) {
+                final row = rows[i];
+                return FadeSlideIn(
+                  key: ValueKey(row.summary.debtor.id),
+                  delay: Duration(milliseconds: i < 8 ? i * 35 : 0),
+                  child: DebtorTile(
+                    summary: row.summary,
+                    now: now,
+                    overdue: isOverdue(row.summary, now, config),
+                    matchedPhone: row.matchedPhone,
+                  ),
+                );
+              },
             ),
-        ],
+          ),
       ],
     );
   }
 }
 
-class _CenteredMessage extends StatelessWidget {
-  const _CenteredMessage({required this.text});
+/// Закреплённая под обзором строка (поиск + фильтр).
+class _PinnedHeader extends SliverPersistentHeaderDelegate {
+  _PinnedHeader({required this.height, required this.child, required this.color});
 
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SliverFillRemaining(
-      hasScrollBody: false,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Text(
-            text,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyLarge
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Строка поиска должников: запрос уходит в провайдер с задержкой.
-class _SearchField extends ConsumerWidget {
-  const _SearchField();
+  final double height;
+  final Widget child;
+  final Color color;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: DebouncedSearchField(
-        hintText: l10n.searchHint,
-        clearTooltip: l10n.searchClear,
-        initialText: ref.read(debtSearchQueryProvider),
-        onChanged: ref.read(debtSearchQueryProvider.notifier).set,
-      ),
-    );
-  }
-}
-
-class _TotalCard extends StatelessWidget {
-  const _TotalCard({required this.total});
-
-  final int total;
+  double get minExtent => height;
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: Card(
-        color: theme.colorScheme.primaryContainer,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.debtsTotalLabel,
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(color: theme.colorScheme.onPrimaryContainer),
-              ),
-              const SizedBox(height: 4),
-              TweenAnimationBuilder<double>(
-                tween: Tween(end: total.toDouble()),
-                duration: const Duration(milliseconds: 500),
-                curve: Curves.easeOutCubic,
-                builder: (context, value, _) => Text(
-                  '${formatAmount(value.round())} ${l10n.currencySum}',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterBar extends ConsumerWidget {
-  const _FilterBar({required this.selected});
-
-  final DebtFilter selected;
+  double get maxExtent => height;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    String label(DebtFilter f) => switch (f) {
-          DebtFilter.all => l10n.filterAll,
-          DebtFilter.overdue => l10n.filterOverdue,
-          DebtFilter.large => l10n.filterLarge,
-          DebtFilter.byDate => l10n.filterByDate,
-        };
-
-    return SizedBox(
-      height: 56,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        children: [
-          for (final f in DebtFilter.values)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(label(f)),
-                selected: selected == f,
-                onSelected: (_) {
-                  HapticFeedback.selectionClick();
-                  ref.read(selectedDebtFilterProvider.notifier).select(f);
-                },
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DebtorTile extends StatelessWidget {
-  const _DebtorTile({
-    super.key,
-    required this.summary,
-    required this.overdue,
-    this.matchedPhone,
-  });
-
-  final DebtorSummary summary;
-  final bool overdue;
-
-  /// Телефон, по которому нашли должника (в режиме поиска).
-  final String? matchedPhone;
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) =>
+      Material(color: color, elevation: overlapsContent ? 1 : 0, child: child);
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final d = summary.debtor;
-    final subtitle = [
-      if (d.shopName != null) d.shopName!,
-      if (summary.lastOperationAt != null)
-        l10n.lastOperation(formatDate(summary.lastOperationAt!)),
-    ].join(' · ');
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => context.push(Routes.debtorDetails(d.id)),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                DebtorAvatar(id: d.id, name: d.name),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(d.name, style: theme.textTheme.titleMedium, maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                      if (subtitle.isNotEmpty)
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                        ),
-                      if (matchedPhone != null)
-                        Row(
-                          children: [
-                            Icon(Icons.phone_rounded,
-                                size: 14, color: theme.colorScheme.primary),
-                            const SizedBox(width: 4),
-                            Text(matchedPhone!, style: theme.textTheme.bodySmall),
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      balanceText(l10n, summary.balance),
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: balanceColor(theme.colorScheme, summary.balance),
-                      ),
-                    ),
-                    if (overdue)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.errorContainer,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            l10n.overdueBadge,
-                            style: theme.textTheme.labelSmall
-                                ?.copyWith(color: theme.colorScheme.onErrorContainer),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  bool shouldRebuild(covariant _PinnedHeader old) => true;
 }
 
 class _EmptyBook extends StatelessWidget {
