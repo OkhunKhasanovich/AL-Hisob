@@ -16,7 +16,7 @@ void main() {
   tearDown(() => db.close());
 
   test('текущая схема создаётся с нуля', () async {
-    expect(db.schemaVersion, 2);
+    expect(db.schemaVersion, 3);
     final snapshot = await repo.load();
     expect(snapshot.locale, isNull);
     expect(snapshot.themeMode, ThemeMode.system);

@@ -10,11 +10,13 @@ void main() {
 
   setUpAll(() => verifier = SchemaVerifier(GeneratedHelper()));
 
-  test('миграция v1 → v2 даёт ту же схему, что и создание с нуля', () async {
-    final connection = await verifier.startAt(1);
-    final db = AppDatabase(connection);
-    addTearDown(db.close);
+  for (final from in [1, 2]) {
+    test('миграция v$from → v3 даёт ту же схему, что и создание с нуля', () async {
+      final connection = await verifier.startAt(from);
+      final db = AppDatabase(connection);
+      addTearDown(db.close);
 
-    await verifier.migrateAndValidate(db, 2);
-  });
+      await verifier.migrateAndValidate(db, 3);
+    });
+  }
 }
