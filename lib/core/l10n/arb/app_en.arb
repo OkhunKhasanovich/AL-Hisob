@@ -560,5 +560,14 @@
     }
   },
   "filterByDateHint": "Latest operations first",
-  "filterReset": "Reset filter"
+  "filterReset": "Reset filter",
+  "debtsTrendNew": "new",
+  "debtsTrendPeriod": "last {days} days",
+  "@debtsTrendPeriod": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  }
 }

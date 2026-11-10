@@ -84,7 +84,7 @@ class _DebtorList extends ConsumerWidget {
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
         // 1. Общий долг — самый верх.
-        SliverToBoxAdapter(child: DebtsOverviewCard(overview: overview)),
+        SliverToBoxAdapter(child: DebtsOverviewCard(overview: overview, trend: ref.watch(debtTrendProvider))),
 
         // 2. Поиск с воронкой фильтров в конце поля; не уезжает при прокрутке.
         SliverPersistentHeader(

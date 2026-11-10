@@ -291,5 +291,14 @@
   "filterOverdueHint": "{days} kundan ortiq amal yo‘q",
   "filterLargeHint": "Qarz {amount} dan",
   "filterByDateHint": "Avval yaqinda bo‘lgan amallar",
-  "filterReset": "Filtrni tozalash"
+  "filterReset": "Filtrni tozalash",
+  "debtsTrendNew": "yangi",
+  "debtsTrendPeriod": "oxirgi {days} kun",
+  "@debtsTrendPeriod": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  }
 }

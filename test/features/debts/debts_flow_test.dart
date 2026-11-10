@@ -243,6 +243,32 @@ void main() {
     await closeApp(tester);
   });
 
+  testWidgets('график динамики: индекс растущего долга на карточке обзора', (tester) async {
+    await tester.runAsync(() async {
+      final repo = DebtorsRepository(db);
+      final id = await repo.createDebtor(const DebtorInput(name: 'Alisher'));
+      final now = DateTime.now();
+      await repo.addTransaction(
+        debtorId: id,
+        kind: DebtKind.debt,
+        amount: 1000,
+        occurredAt: now.subtract(const Duration(days: 45)),
+      );
+      await repo.addTransaction(
+        debtorId: id,
+        kind: DebtKind.debt,
+        amount: 200,
+        occurredAt: now.subtract(const Duration(days: 3)),
+      );
+    });
+    await openDebts(tester);
+
+    expect(find.text('+20%'), findsOneWidget);
+    expect(find.text('за 30 дн.'), findsOneWidget);
+
+    await closeApp(tester);
+  });
+
   testWidgets('раскладка: обзор сверху, под ним поиск с воронкой в конце поля, чипов фильтров нет', (tester) async {
     await tester.runAsync(() => DebtorsRepository(db).createDebtor(const DebtorInput(name: 'Alisher')));
     await openDebts(tester);

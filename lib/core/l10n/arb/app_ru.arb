@@ -291,5 +291,14 @@
   "filterOverdueHint": "Нет операций больше {days} дн.",
   "filterLargeHint": "Долг от {amount}",
   "filterByDateHint": "Сначала недавние операции",
-  "filterReset": "Сбросить фильтр"
+  "filterReset": "Сбросить фильтр",
+  "debtsTrendNew": "новые",
+  "debtsTrendPeriod": "за {days} дн.",
+  "@debtsTrendPeriod": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  }
 }

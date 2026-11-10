@@ -3,17 +3,21 @@ import 'package:flutter/material.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/utils/money.dart';
 import '../domain/debt_filter.dart';
+import '../domain/debt_trend.dart';
+import 'debt_trend_backdrop.dart';
 
 /// Верхняя карточка экрана «Долги»: сколько вам должны всего, сколько должников
 /// и сколько из них просрочено.
 class DebtsOverviewCard extends StatelessWidget {
-  const DebtsOverviewCard({super.key, required this.overview});
+  const DebtsOverviewCard({super.key, required this.overview, this.trend});
 
   final DebtsOverview overview;
 
+  /// Динамика общего долга; `null` — график не рисуется.
+  final DebtTrend? trend;
+
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
@@ -28,55 +32,69 @@ class DebtsOverviewCard extends StatelessWidget {
             colors: [scheme.primaryContainer, scheme.secondaryContainer],
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
             children: [
-              Text(
-                l10n.debtsTotalLabel,
-                style: theme.textTheme.labelLarge?.copyWith(color: scheme.onPrimaryContainer),
-              ),
-              const SizedBox(height: 2),
-              TweenAnimationBuilder<double>(
-                tween: Tween(end: overview.totalOwed.toDouble()),
-                duration: const Duration(milliseconds: 500),
-                curve: Curves.easeOutCubic,
-                builder: (context, value, _) => FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '${formatAmount(value.round())} ${l10n.currencySum}',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: scheme.onPrimaryContainer,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: [
-                  _Pill(
-                    icon: Icons.groups_rounded,
-                    text: l10n.debtsCountLabel(overview.debtorCount),
-                    background: scheme.surface.withValues(alpha: 0.55),
-                    foreground: scheme.onSurface,
-                  ),
-                  if (overview.overdueCount > 0)
-                    _Pill(
-                      icon: Icons.schedule_rounded,
-                      text: l10n.debtsOverdueLabel(overview.overdueCount),
-                      background: scheme.errorContainer,
-                      foreground: scheme.onErrorContainer,
-                    ),
-                ],
-              ),
+              // График — на заднем плане, под текстом.
+              if (trend != null) Positioned.fill(child: DebtTrendBackdrop(trend: trend!)),
+              _content(context, theme, scheme),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _content(BuildContext context, ThemeData theme, ColorScheme scheme) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.debtsTotalLabel,
+            style: theme.textTheme.labelLarge?.copyWith(color: scheme.onPrimaryContainer),
+          ),
+          const SizedBox(height: 2),
+          TweenAnimationBuilder<double>(
+            tween: Tween(end: overview.totalOwed.toDouble()),
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, _) => FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '${formatAmount(value.round())} ${l10n.currencySum}',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: scheme.onPrimaryContainer,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              _Pill(
+                icon: Icons.groups_rounded,
+                text: l10n.debtsCountLabel(overview.debtorCount),
+                background: scheme.surface.withValues(alpha: 0.55),
+                foreground: scheme.onSurface,
+              ),
+              if (overview.overdueCount > 0)
+                _Pill(
+                  icon: Icons.schedule_rounded,
+                  text: l10n.debtsOverdueLabel(overview.overdueCount),
+                  background: scheme.errorContainer,
+                  foreground: scheme.onErrorContainer,
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -106,10 +124,7 @@ class _Pill extends StatelessWidget {
           children: [
             Icon(icon, size: 15, color: foreground),
             const SizedBox(width: 5),
-            Text(
-              text,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(color: foreground),
-            ),
+            Text(text, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: foreground)),
           ],
         ),
       ),

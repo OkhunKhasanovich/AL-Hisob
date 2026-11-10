@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/database/app_database.dart';
 import '../../../core/settings/settings_providers.dart';
 import '../data/debtors_repository.dart';
 import '../domain/debt_filter.dart';
 import '../domain/debt_summary.dart';
+import '../domain/debt_trend.dart';
 import '../domain/search/debtor_search.dart';
 
 final debtorsRepositoryProvider = Provider<DebtorsRepository>(
@@ -41,6 +43,18 @@ class DebtSearchQuery extends Notifier<String> {
 
 final debtSearchQueryProvider =
     NotifierProvider<DebtSearchQuery, String>(DebtSearchQuery.new);
+
+/// Динамика общего долга за 30 дней; `null`, пока данные грузятся, или если долгов не было.
+final debtTrendProvider = Provider<DebtTrend?>((ref) {
+  final txs = ref.watch(_activeTransactionsProvider).value;
+  if (txs == null) return null;
+  final trend = computeDebtTrend(txs, now: DateTime.now());
+  return trend.isEmpty ? null : trend;
+});
+
+final _activeTransactionsProvider = StreamProvider<List<DebtTransaction>>(
+  (ref) => ref.watch(debtorsRepositoryProvider).watchActiveTransactions(),
+);
 
 /// Индекс пересобирается только при изменении данных, а не при каждой букве.
 final debtSearchIndexProvider = Provider<DebtorSearchIndex?>((ref) {

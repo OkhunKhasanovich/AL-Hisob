@@ -51,6 +51,18 @@ class DebtorsRepository {
     return buildSummaries(debtors: debtors, phones: phones, transactions: txs);
   }
 
+  /// Действующие операции действующих должников — для графика динамики долга.
+  Future<List<DebtTransaction>> loadActiveTransactions() async {
+    final debtors = await (_db.select(_db.debtors)..where((t) => t.deletedAt.isNull())).get();
+    final ids = {for (final d in debtors) d.id};
+    final txs =
+        await (_db.select(_db.debtTransactions)..where((t) => t.deletedAt.isNull())).get();
+    return [for (final t in txs) if (ids.contains(t.debtorId)) t];
+  }
+
+  Stream<List<DebtTransaction>> watchActiveTransactions() =>
+      watchTables(_db, [_db.debtors, _db.debtTransactions], loadActiveTransactions);
+
   /// Список должников; обновляется при любом изменении связанных таблиц.
   Stream<List<DebtorSummary>> watchSummaries() => _watch(loadSummaries);
 

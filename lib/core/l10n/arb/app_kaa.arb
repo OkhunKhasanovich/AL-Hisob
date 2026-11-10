@@ -291,5 +291,14 @@
   "filterOverdueHint": "{days} kúnnen artıq ámeliyat joq",
   "filterLargeHint": "Qarız {amount} den",
   "filterByDateHint": "Aldın jaqında bolǵan ámeliyatlar",
-  "filterReset": "Filtrdi tazalaw"
+  "filterReset": "Filtrdi tazalaw",
+  "debtsTrendNew": "jańa",
+  "debtsTrendPeriod": "sońǵı {days} kún",
+  "@debtsTrendPeriod": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  }
 }
