@@ -76,6 +76,16 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
     super.dispose();
   }
 
+  /// Подставляет сумму в поле (с пробелами между тысячами) и ставит курсор в конец.
+  void _fill(int amount) {
+    HapticFeedback.selectionClick();
+    final text = formatAmount(amount);
+    _amount.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -124,6 +134,7 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
     final theme = Theme.of(context);
     final isDebt = widget.kind == DebtKind.debt;
     final title = isDebt ? l10n.gaveDebtButton : l10n.receivedPaymentButton;
+    final balance = ref.watch(debtorDetailsProvider(widget.debtorId)).value?.summary.balance ?? 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -143,6 +154,15 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
             border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
           ),
         ),
+        if (!isDebt && balance > 0) ...[
+          const SizedBox(height: 10),
+          _FullDebtSuggestion(
+            label: l10n.payFullDebtLabel('${formatAmount(balance)} ${l10n.currencySum}'),
+            hint: l10n.payFullDebtHint,
+            selected: _parsedAmount == balance,
+            onTap: () => _fill(balance),
+          ),
+        ],
         const SizedBox(height: 12),
         OutlinedButton.icon(
           onPressed: _pickDate,
@@ -173,6 +193,61 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
               : Text(title),
         ),
       ],
+    );
+  }
+}
+
+/// Подсказка под полем суммы при погашении: весь долг одним нажатием.
+class _FullDebtSuggestion extends StatelessWidget {
+  const _FullDebtSuggestion({
+    required this.label,
+    required this.hint,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final String hint;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Material(
+      color: selected ? scheme.primaryContainer : scheme.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        key: const ValueKey('full-debt-suggestion'),
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: [
+              Icon(
+                selected ? Icons.check_circle_rounded : Icons.bolt_rounded,
+                size: 20,
+                color: scheme.primary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label, style: theme.textTheme.titleSmall),
+                    Text(
+                      hint,
+                      style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

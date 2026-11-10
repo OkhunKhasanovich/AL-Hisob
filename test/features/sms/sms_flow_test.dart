@@ -400,7 +400,8 @@ void main() {
     await addDebtor(tester, 'Lola', phones: ['90 111 22 33'], debt: 250000);
     await openApp(tester);
 
-    await tapText(tester, 'Ещё');
+    await tester.tap(find.byTooltip('Ещё'));
+    await tester.pump(const Duration(milliseconds: 500));
     await tapText(tester, 'Шаблоны SMS');
     await tapText(tester, 'Русский');
 
@@ -426,7 +427,8 @@ void main() {
 
   testWidgets('шаблон: неизвестная переменная подсвечивается, пустой не сохраняется', (tester) async {
     await openApp(tester);
-    await tapText(tester, 'Ещё');
+    await tester.tap(find.byTooltip('Ещё'));
+    await tester.pump(const Duration(milliseconds: 500));
     await tapText(tester, 'Шаблоны SMS');
     await tapText(tester, 'English');
 

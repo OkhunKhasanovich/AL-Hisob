@@ -260,7 +260,7 @@
     }
   },
   "updatePermissionTitle": "Allow installing updates",
-  "updatePermissionBody": "Android needs your permission to install updates from this app. Turn on “Allow from this source”, come back and tap Update again.",
+  "updatePermissionBody": "Android needs your permission to install updates from this app. Turn on “Allow from this source”, come back and tap Install again.",
   "updateErrorCheck": "Could not check for updates. Check your internet connection.",
   "updateErrorDownload": "Download failed. Check your internet connection and try again.",
   "updateErrorVerify": "The downloaded file is damaged. Try again.",
@@ -598,5 +598,32 @@
         "type": "int"
       }
     }
-  }
+  },
+  "debtShortButton": "Debt",
+  "paymentShortButton": "Payment",
+  "payFullDebtLabel": "Full debt: {amount}",
+  "@payFullDebtLabel": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payFullDebtHint": "Tap to fill in",
+  "debtSettled": "Settled",
+  "debtRemaining": "{left} left of {total}",
+  "@debtRemaining": {
+    "placeholders": {
+      "left": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDownloadButton": "Download",
+  "updateBackgroundHint": "The download runs in the background, so you can keep using the app. When it finishes, we will offer to install.",
+  "updateReadyTitle": "Update downloaded",
+  "updateInstallButton": "Install"
 }

@@ -118,18 +118,52 @@ void main() {
     await settle(tester);
   }
 
-  testWidgets('при запуске предлагает обновление; «Обновить» запускает установку', (tester) async {
+  testWidgets('при запуске предлагает обновление; «Скачать» качает в фоне, потом предлагает установить',
+      (tester) async {
     await openApp(tester);
 
     expect(find.text('Доступно обновление'), findsOneWidget);
     expect(find.text('Версия 0.2.0 (сборка 9) готова к установке.'), findsOneWidget);
     expect(find.text('feat: catalog'), findsOneWidget);
+    expect(find.textContaining('Загрузка пойдёт в фоне'), findsOneWidget);
 
-    await tap(tester, 'Обновить', async: true);
+    await tap(tester, 'Скачать', async: true);
+
+    // Скачано, но не установлено: приложение предлагает установить.
+    expect(installer.installed, isEmpty, reason: 'без согласия пользователя не ставим');
+    expect(find.text('Обновление загружено'), findsOneWidget);
+    await tap(tester, 'Установить', async: true);
 
     expect(installer.installed, hasLength(1));
     expect(installer.installed.single, endsWith('al-savdogar-9.apk'));
-    expect(find.text('Доступно обновление'), findsNothing, reason: 'диалог закрылся');
+    expect(find.text('Обновление загружено'), findsNothing, reason: 'диалог закрылся');
+
+    await closeApp(tester);
+  });
+
+  testWidgets('«Позже» после загрузки: файл остаётся, установить можно из «Ещё»', (tester) async {
+    await openApp(tester);
+    await tap(tester, 'Скачать', async: true);
+    expect(find.text('Обновление загружено'), findsOneWidget);
+
+    await tap(tester, 'Позже');
+    expect(find.text('Обновление загружено'), findsNothing);
+    expect(installer.installed, isEmpty);
+
+    await tester.tap(find.byTooltip('Ещё'));
+    await settle(tester);
+    await scrollToTile(tester);
+    expect(find.text('Установить'), findsOneWidget, reason: 'в плитке — готово к установке');
+
+    await tap(tester, 'Обновление приложения');
+    expect(find.text('Обновление загружено'), findsOneWidget);
+    // «Установить» есть и в плитке за диалогом, и в самом диалоге — нажимаем кнопку диалога.
+    await tester.runAsync(() async {
+      await tester.tap(find.widgetWithText(FilledButton, 'Установить'));
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+    });
+    await settle(tester);
+    expect(installer.installed, hasLength(1));
 
     await closeApp(tester);
   });
@@ -160,7 +194,8 @@ void main() {
   testWidgets('нет разрешения: объясняем и открываем настройки Android', (tester) async {
     installer.status = InstallStatus.needsPermission;
     await openApp(tester);
-    await tap(tester, 'Обновить', async: true);
+    await tap(tester, 'Скачать', async: true);
+    await tap(tester, 'Установить', async: true);
 
     expect(find.text('Разрешите установку обновлений'), findsOneWidget);
     await tap(tester, 'Открыть настройки', async: true);
@@ -168,7 +203,7 @@ void main() {
 
     // Выдали разрешение — повторное нажатие запускает установку.
     installer.status = InstallStatus.started;
-    await tap(tester, 'Обновить', async: true);
+    await tap(tester, 'Установить', async: true);
     expect(installer.installed, hasLength(2));
     expect(find.text('Разрешите установку обновлений'), findsNothing);
 
@@ -186,7 +221,8 @@ void main() {
     latest = release(tag: 'build-5');
     await openApp(tester);
 
-    await tap(tester, 'Ещё');
+    await tester.tap(find.byTooltip('Ещё'));
+    await settle(tester);
     await scrollToTile(tester);
     expect(find.text('Обновление приложения'), findsOneWidget);
     expect(find.textContaining('(сборка 5)'), findsOneWidget);
@@ -200,7 +236,8 @@ void main() {
   testWidgets('плитка: ручная проверка находит обновление и открывает диалог', (tester) async {
     latest = release(tag: 'build-5');
     await openApp(tester);
-    await tap(tester, 'Ещё');
+    await tester.tap(find.byTooltip('Ещё'));
+    await settle(tester);
     await scrollToTile(tester);
 
     latest = release(
@@ -219,7 +256,8 @@ void main() {
   testWidgets('плитка: ошибка сети показана понятным текстом', (tester) async {
     latest = release(tag: 'build-5');
     await openApp(tester);
-    await tap(tester, 'Ещё');
+    await tester.tap(find.byTooltip('Ещё'));
+    await settle(tester);
     await scrollToTile(tester);
 
     latest = null;
@@ -234,7 +272,8 @@ void main() {
     await openApp(tester, build: 0);
     expect(find.text('Доступно обновление'), findsNothing);
 
-    await tap(tester, 'Ещё');
+    await tester.tap(find.byTooltip('Ещё'));
+    await settle(tester);
     await scrollToTile(tester);
     expect(find.textContaining('Сборка для разработки: обновления отключены'), findsOneWidget);
     expect(find.text('Проверить обновления'), findsNothing);

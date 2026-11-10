@@ -44,7 +44,7 @@ void main() {
     expect(find.text('Долги'), findsWidgets);
 
     // Вкладка «Ещё» → меняем язык на английский.
-    await tester.tap(find.text('Ещё'));
+    await tester.tap(find.byTooltip('Ещё'));
     await tester.pump(const Duration(milliseconds: 600));
     await tester.tap(find.text('English'));
     await tester.pump(const Duration(milliseconds: 600));

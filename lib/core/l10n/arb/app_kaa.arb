@@ -147,7 +147,7 @@
   "updateSkip": "Bul versiyanı ótkizip jiberiw",
   "updateDownloading": "Júklep alınbaqta… {percent}%",
   "updatePermissionTitle": "Jańalawlardı ornatıwǵa ruxsat berıń",
-  "updatePermissionBody": "Android bul ilovadan jańalawlardı ornatıw ushın ruxsat soraydı. «Usı derekke ruxsat beriw»di qosıń, qaytıp kelip, qayta «Jańalaw»dı basıń.",
+  "updatePermissionBody": "Android bul ilovadan jańalawlardı ornatıw ushın ruxsat soraydı. «Usı derekke ruxsat beriw»di qosıń, qaytıp kelip, qayta «Ornatıw»dı basıń.",
   "updateErrorCheck": "Jańalawdı tekserip bolmadı. Internetti tekseriń.",
   "updateErrorDownload": "Júklep bolmadı. Internetti tekserip, qayta urınıp kóriń.",
   "updateErrorVerify": "Júklengen fayl buzılǵan. Qayta urınıp kóriń.",
@@ -329,5 +329,32 @@
         "type": "int"
       }
     }
-  }
+  },
+  "debtShortButton": "Qarızǵa",
+  "paymentShortButton": "Tólew",
+  "payFullDebtLabel": "Pútin qarız: {amount}",
+  "@payFullDebtLabel": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payFullDebtHint": "Toltırıw ushın basıń",
+  "debtSettled": "Tólengen",
+  "debtRemaining": "{total} nan {left} qaldı",
+  "@debtRemaining": {
+    "placeholders": {
+      "left": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDownloadButton": "Júklep alıw",
+  "updateBackgroundHint": "Júklew fonda ketedi, qosımshadan ádettegidey paydalana alasız. Pitkende ornatıwdı usınamız.",
+  "updateReadyTitle": "Jańalaw júklendi",
+  "updateInstallButton": "Ornatıw"
 }

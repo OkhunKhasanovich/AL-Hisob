@@ -98,7 +98,7 @@ void main() {
   }
 
   Future<void> openMore(WidgetTester tester) async {
-    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Ещё')));
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.byTooltip('Ещё')));
     await settle(tester);
   }
 

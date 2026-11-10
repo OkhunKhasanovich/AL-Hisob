@@ -32,8 +32,11 @@ class UpdateDialog extends ConsumerWidget {
     final controller = ref.read(updateControllerProvider.notifier);
     final info = state.info;
 
-    // Состояние сброшено (установка запущена, «Позже», «Пропустить») — закрываем.
-    if (state.phase == UpdatePhase.idle || state.phase == UpdatePhase.upToDate) {
+    // Состояние сброшено (установка запущена, «Позже», «Пропустить») или началась загрузка
+    // в фоне (её прогресс виден над вкладками) — закрываем.
+    if (state.phase == UpdatePhase.idle ||
+        state.phase == UpdatePhase.upToDate ||
+        state.phase == UpdatePhase.downloading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted && Navigator.of(context).canPop()) Navigator.of(context).pop();
       });
@@ -42,14 +45,20 @@ class UpdateDialog extends ConsumerWidget {
 
     switch (state.phase) {
       case UpdatePhase.downloading:
-        final percent = (state.progress * 100).round();
-        return PopScope(
-          canPop: false,
-          child: AlertDialog(
-            icon: const Icon(Icons.downloading_rounded),
-            title: Text(l10n.updateDownloading(percent)),
-            content: LinearProgressIndicator(value: state.progress == 0 ? null : state.progress),
-          ),
+        return const SizedBox.shrink(); // диалог закроется выше
+
+      case UpdatePhase.ready:
+        return AlertDialog(
+          icon: const Icon(Icons.system_update_rounded),
+          title: Text(l10n.updateReadyTitle),
+          content: info == null
+              ? null
+              : Text(l10n.updateAvailableBody(info.versionName, info.build)),
+          actions: [
+            // «Позже» не сбрасывает загрузку: установить можно из «Ещё».
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.updateLater)),
+            FilledButton(onPressed: controller.install, child: Text(l10n.updateInstallButton)),
+          ],
         );
 
       case UpdatePhase.needsPermission:
@@ -63,7 +72,7 @@ class UpdateDialog extends ConsumerWidget {
               onPressed: controller.openInstallSettings,
               child: Text(l10n.openSettingsButton),
             ),
-            FilledButton(onPressed: controller.install, child: Text(l10n.updateButton)),
+            FilledButton(onPressed: controller.install, child: Text(l10n.updateInstallButton)),
           ],
         );
 
@@ -75,7 +84,11 @@ class UpdateDialog extends ConsumerWidget {
           actions: [
             TextButton(onPressed: controller.dismiss, child: Text(l10n.closeButton)),
             if (info != null)
-              FilledButton(onPressed: controller.install, child: Text(l10n.updateRetry)),
+              FilledButton(
+                // Файл уже скачан (ошибка установки) — повторяем установку, иначе качаем заново.
+                onPressed: state.apkPath != null ? controller.install : controller.download,
+                child: Text(l10n.updateRetry),
+              ),
           ],
         );
 
@@ -92,6 +105,13 @@ class UpdateDialog extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (info != null) Text(l10n.updateAvailableBody(info.versionName, info.build)),
+                const SizedBox(height: 12),
+                Text(
+                  l10n.updateBackgroundHint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
                 if (info?.notes != null) ...[
                   const SizedBox(height: 12),
                   Text(info!.notes!, style: Theme.of(context).textTheme.bodySmall),
@@ -102,7 +122,7 @@ class UpdateDialog extends ConsumerWidget {
           actions: [
             TextButton(onPressed: controller.skip, child: Text(l10n.updateSkip)),
             TextButton(onPressed: controller.dismiss, child: Text(l10n.updateLater)),
-            FilledButton(onPressed: controller.install, child: Text(l10n.updateButton)),
+            FilledButton(onPressed: controller.download, child: Text(l10n.updateDownloadButton)),
           ],
         );
     }

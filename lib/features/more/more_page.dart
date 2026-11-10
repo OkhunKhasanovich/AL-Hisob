@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
+import '../../core/widgets/section_app_bar.dart';
 import '../../core/router/routes.dart';
 import '../../core/settings/settings_providers.dart';
 import '../debts/presentation/debt_settings_section.dart';
@@ -24,7 +25,7 @@ class MorePage extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.moreTitle)),
+      appBar: SectionAppBar(title: l10n.moreTitle),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

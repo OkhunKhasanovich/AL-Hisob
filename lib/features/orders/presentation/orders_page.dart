@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/shop_role.dart';
+import '../../../core/widgets/section_app_bar.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/utils/money.dart';
@@ -27,11 +28,11 @@ class OrdersPage extends ConsumerWidget {
 
     return profile.when(
       loading: () => Scaffold(
-        appBar: AppBar(title: Text(l10n.tabOrders)),
+        appBar: SectionAppBar(title: l10n.tabOrders),
         body: const Padding(padding: EdgeInsets.all(16), child: SkeletonList()),
       ),
       error: (e, _) =>
-          Scaffold(appBar: AppBar(title: Text(l10n.tabOrders)), body: Center(child: Text('$e'))),
+          Scaffold(appBar: SectionAppBar(title: l10n.tabOrders), body: Center(child: Text('$e'))),
       data: (p) => (p?.roles.contains(ShopRole.wholesaler) ?? false)
           ? const _WholesalerOrders()
           : FeaturePlaceholder(
@@ -52,7 +53,7 @@ class _WholesalerOrders extends ConsumerWidget {
     final all = ref.watch(orderSummariesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.tabOrders)),
+      appBar: SectionAppBar(title: l10n.tabOrders),
       floatingActionButton: FloatingActionButton.extended(
         // Вкладки живут в одном дереве: одинаковые Hero-теги кнопок вызывают ошибку при переходах.
         heroTag: null,

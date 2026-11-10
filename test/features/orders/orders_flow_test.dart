@@ -46,7 +46,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1900));
     await tester.pump(const Duration(milliseconds: 800));
     await settle(tester);
-    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Заказы')));
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.byTooltip('Заказы')));
     await settle(tester);
   }
 

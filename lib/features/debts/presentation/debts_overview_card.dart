@@ -8,7 +8,7 @@ import 'debt_trend_backdrop.dart';
 
 /// Высота нижней полосы: слева сводка, справа график.
 const _bandHeight = 68.0;
-const _cardPadding = EdgeInsets.fromLTRB(20, 16, 20, 16);
+const _cardPadding = EdgeInsets.fromLTRB(20, 16, 20, 12);
 
 /// Верхняя карточка экрана «Долги»: сколько вам должны всего, динамика за неделю,
 /// сколько должников и сколько из них просрочено.
@@ -135,10 +135,10 @@ class _Content extends StatelessWidget {
           _Amount(amount: overview.totalOwed, currency: l10n.currencySum),
           const SizedBox(height: 8),
           if (hasChart)
-            // Сводка слева по центру полосы; с 40% ширины карточки начинается график.
+            // Сводка слева у нижнего края полосы; с 40% ширины карточки начинается график.
             SizedBox(
               height: _bandHeight,
-              child: Align(alignment: Alignment.centerLeft, child: stats),
+              child: Align(alignment: Alignment.bottomLeft, child: stats),
             )
           else
             stats,
@@ -200,6 +200,7 @@ class _Amount extends StatelessWidget {
                   ],
                 ),
                 style: theme.textTheme.headlineMedium?.copyWith(
+                  fontSize: 32,
                   fontWeight: FontWeight.w800,
                   color: scheme.onPrimaryContainer,
                 ),

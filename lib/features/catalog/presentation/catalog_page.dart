@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/shop_role.dart';
+import '../../../core/widgets/section_app_bar.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/widgets/debounced_search_field.dart';
@@ -25,10 +26,10 @@ class CatalogPage extends ConsumerWidget {
 
     return profile.when(
       loading: () => Scaffold(
-        appBar: AppBar(title: Text(l10n.tabCatalog)),
+        appBar: SectionAppBar(title: l10n.tabCatalog),
         body: const Padding(padding: EdgeInsets.all(16), child: SkeletonList()),
       ),
-      error: (e, _) => Scaffold(appBar: AppBar(title: Text(l10n.tabCatalog)), body: Center(child: Text('$e'))),
+      error: (e, _) => Scaffold(appBar: SectionAppBar(title: l10n.tabCatalog), body: Center(child: Text('$e'))),
       data: (p) => (p?.roles.contains(ShopRole.wholesaler) ?? false)
           ? const _WholesalerCatalog()
           : FeaturePlaceholder(
@@ -49,7 +50,7 @@ class _WholesalerCatalog extends ConsumerWidget {
     final summaries = ref.watch(productSummariesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.tabCatalog)),
+      appBar: SectionAppBar(title: l10n.tabCatalog),
       floatingActionButton: FloatingActionButton.extended(
         // Вкладки живут в одном дереве: одинаковые Hero-теги кнопок вызывают ошибку при переходах.
         heroTag: null,

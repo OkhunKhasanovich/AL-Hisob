@@ -147,7 +147,7 @@
   "updateSkip": "Bu versiyani o‘tkazib yuborish",
   "updateDownloading": "Yuklab olinmoqda… {percent}%",
   "updatePermissionTitle": "Yangilanishlarni o‘rnatishga ruxsat bering",
-  "updatePermissionBody": "Android bu ilovadan yangilanishlarni o‘rnatish uchun ruxsat so‘raydi. «Ushbu manbaga ruxsat berish»ni yoqing, qaytib kelib, yana «Yangilash»ni bosing.",
+  "updatePermissionBody": "Android bu ilovadan yangilanishlarni o‘rnatish uchun ruxsat so‘raydi. «Ushbu manbaga ruxsat berish»ni yoqing, qaytib kelib, yana «O‘rnatish»ni bosing.",
   "updateErrorCheck": "Yangilanishni tekshirib bo‘lmadi. Internetni tekshiring.",
   "updateErrorDownload": "Yuklab bo‘lmadi. Internetni tekshirib, qayta urinib ko‘ring.",
   "updateErrorVerify": "Yuklangan fayl buzilgan. Qayta urinib ko‘ring.",
@@ -329,5 +329,32 @@
         "type": "int"
       }
     }
-  }
+  },
+  "debtShortButton": "Qarzga",
+  "paymentShortButton": "To‘lov",
+  "payFullDebtLabel": "Butun qarz: {amount}",
+  "@payFullDebtLabel": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payFullDebtHint": "Qo‘yish uchun bosing",
+  "debtSettled": "To‘langan",
+  "debtRemaining": "{total} dan {left} qoldi",
+  "@debtRemaining": {
+    "placeholders": {
+      "left": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDownloadButton": "Yuklab olish",
+  "updateBackgroundHint": "Yuklash fonda ketadi, ilovadan odatdagidek foydalanishingiz mumkin. Tugagach, o‘rnatishni taklif qilamiz.",
+  "updateReadyTitle": "Yangilanish yuklandi",
+  "updateInstallButton": "O‘rnatish"
 }

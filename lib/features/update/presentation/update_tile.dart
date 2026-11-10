@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/l10n.dart';
 import '../domain/update_info.dart';
 import 'update_controller.dart';
-import 'update_dialog.dart' show updateErrorText;
+import 'update_dialog.dart' show showUpdateDialog, updateErrorText;
 
 /// Плитка «Обновление приложения» во вкладке «Ещё»: версия и ручная проверка.
 class UpdateTile extends ConsumerWidget {
@@ -25,6 +25,8 @@ class UpdateTile extends ConsumerWidget {
             UpdatePhase.upToDate => l10n.updateUpToDate,
             UpdatePhase.error => updateErrorText(l10n, state.errorKind),
             UpdatePhase.available => l10n.updateAvailableTitle,
+            UpdatePhase.downloading => l10n.updateDownloading((state.progress * 100).round()),
+            UpdatePhase.ready => l10n.updateReadyTitle,
             _ => null,
           };
 
@@ -34,13 +36,30 @@ class UpdateTile extends ConsumerWidget {
       title: Text(l10n.updateTitle),
       subtitle: Text([version, ?status].join('\n')),
       isThreeLine: status != null,
-      trailing: state.phase == UpdatePhase.checking
-          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5))
-          : (enabled ? Text(l10n.updateCheckButton, style: Theme.of(context).textTheme.labelLarge) : null),
-      onTap: !enabled || state.phase == UpdatePhase.checking
+      trailing: switch (state.phase) {
+        UpdatePhase.checking => const SizedBox(
+            width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5)),
+        UpdatePhase.downloading => SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              value: state.progress == 0 ? null : state.progress,
+            ),
+          ),
+        UpdatePhase.ready =>
+          Text(l10n.updateInstallButton, style: Theme.of(context).textTheme.labelLarge),
+        _ => enabled
+            ? Text(l10n.updateCheckButton, style: Theme.of(context).textTheme.labelLarge)
+            : null,
+      },
+      onTap: !enabled || state.phase == UpdatePhase.checking || state.phase == UpdatePhase.downloading
           ? null
-          // Диалог при найденном обновлении откроет главный экран (HomeShell).
-          : () => ref.read(updateControllerProvider.notifier).check(),
+          : state.phase == UpdatePhase.ready
+              // Скачано, но установку отложили: возвращаем предложение «Установить».
+              ? () => showUpdateDialog(context)
+              // Диалог при найденном обновлении откроет главный экран (HomeShell).
+              : () => ref.read(updateControllerProvider.notifier).check(),
     );
   }
 }

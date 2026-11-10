@@ -76,7 +76,7 @@ void main() {
     expect(find.text('Пока нет должников'), findsOneWidget);
 
     // Создаём должника.
-    await tester.tap(find.text('Добавить должника'));
+    await tester.tap(find.byTooltip('Добавить должника'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
     final fields = find.byType(TextFormField);
@@ -91,8 +91,8 @@ void main() {
     expect(find.text('Нет долга'), findsOneWidget);
     expect(find.text('Операций пока нет'), findsOneWidget);
 
-    // «Дал в долг» 1 500 000.
-    await tester.tap(find.text('Дал в долг'));
+    // Кнопка «В долг» — коротко, в одну строку; в шторке заголовок полный.
+    await tester.tap(find.text('В долг'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
     await tester.enterText(find.byType(TextField).first, '1500000');
@@ -105,8 +105,8 @@ void main() {
     expect(find.text('1 500 000 сум'), findsOneWidget);
     expect(find.text('+1 500 000'), findsOneWidget);
 
-    // «Получил оплату» 500 000.
-    await tester.tap(find.text('Получил оплату'));
+    // «Погашение» 500 000.
+    await tester.tap(find.text('Погашение'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
     await tester.enterText(find.byType(TextField).first, '500000');
@@ -265,6 +265,58 @@ void main() {
 
     expect(find.text('+20%'), findsOneWidget);
     expect(find.text('за 7 дн.'), findsOneWidget, reason: 'график недельный');
+
+    await closeApp(tester);
+  });
+
+  testWidgets('погашение: подсказка «Весь долг» подставляет сумму; частичная оплата гасит старые долги',
+      (tester) async {
+    late String id;
+    await tester.runAsync(() async {
+      final repo = DebtorsRepository(db);
+      id = await repo.createDebtor(const DebtorInput(name: 'Alisher'));
+      await repo.addTransaction(
+          debtorId: id,
+          kind: DebtKind.debt,
+          amount: 1000000,
+          occurredAt: DateTime.now().subtract(const Duration(days: 20)));
+      await repo.addTransaction(
+          debtorId: id,
+          kind: DebtKind.debt,
+          amount: 500000,
+          occurredAt: DateTime.now().subtract(const Duration(days: 5)));
+    });
+    await openDebts(tester);
+
+    await tester.tap(find.text('Alisher'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('В долг'), findsOneWidget);
+    expect(find.text('Погашение'), findsOneWidget);
+
+    await tester.tap(find.text('Погашение'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('Весь долг: 1 500 000 сум'), findsOneWidget);
+    expect(find.text('Нажмите, чтобы подставить'), findsOneWidget);
+
+    // Нажатие подставляет весь долг в поле суммы.
+    await tester.tap(find.byKey(const ValueKey('full-debt-suggestion')));
+    await tester.pump();
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    expect(field.controller!.text, '1 500 000');
+
+    // Вводим часть: 1 200 000.
+    await tester.enterText(find.byType(TextField).first, '1200000');
+    await tester.pump();
+    await tapAsync(
+      tester,
+      find.descendant(of: find.byType(TransactionForm), matching: find.byType(FilledButton)),
+    );
+
+    // Самый старый долг (1 000 000) погашен целиком, следующий — частично.
+    expect(find.text('Погашен'), findsOneWidget);
+    expect(find.text('Осталось 300 000 из 500 000'), findsOneWidget);
 
     await closeApp(tester);
   });

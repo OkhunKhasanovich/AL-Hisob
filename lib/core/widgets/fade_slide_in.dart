@@ -8,7 +8,11 @@ class FadeSlideIn extends StatefulWidget {
     required this.child,
     this.delay = Duration.zero,
     this.duration = const Duration(milliseconds: 450),
+    this.enabled = true,
   });
+
+  /// `false` — показать сразу, без анимации (проверяется при создании виджета).
+  final bool enabled;
 
   final Widget child;
   final Duration delay;
@@ -19,16 +23,20 @@ class FadeSlideIn extends StatefulWidget {
 }
 
 class _FadeSlideInState extends State<FadeSlideIn> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  AnimationController? _controller;
   late final Animation<double> _curve;
 
   @override
   void initState() {
     super.initState();
+    if (!widget.enabled) {
+      _curve = const AlwaysStoppedAnimation(1);
+      return;
+    }
     final total = widget.delay + widget.duration;
-    _controller = AnimationController(vsync: this, duration: total)..forward();
+    final controller = _controller = AnimationController(vsync: this, duration: total)..forward();
     _curve = CurvedAnimation(
-      parent: _controller,
+      parent: controller,
       curve: Interval(
         widget.delay.inMilliseconds / total.inMilliseconds,
         1,
@@ -39,12 +47,13 @@ class _FadeSlideInState extends State<FadeSlideIn> with SingleTickerProviderStat
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_controller == null) return widget.child;
     return FadeTransition(
       opacity: _curve,
       child: SlideTransition(

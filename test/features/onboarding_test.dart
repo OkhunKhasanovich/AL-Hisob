@@ -98,7 +98,7 @@ void main() {
     await pumpApp(tester);
     await pastSplash(tester);
 
-    await tester.tap(find.text('Ещё'));
+    await tester.tap(find.byTooltip('Ещё'));
     await tester.pump(const Duration(milliseconds: 600));
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
     await tester.pump(const Duration(milliseconds: 600));

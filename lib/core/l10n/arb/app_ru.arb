@@ -147,7 +147,7 @@
   "updateSkip": "Пропустить версию",
   "updateDownloading": "Скачивание… {percent}%",
   "updatePermissionTitle": "Разрешите установку обновлений",
-  "updatePermissionBody": "Android просит разрешения на установку обновлений из этого приложения. Включите «Разрешить из этого источника», вернитесь и снова нажмите «Обновить».",
+  "updatePermissionBody": "Android просит разрешения на установку обновлений из этого приложения. Включите «Разрешить из этого источника», вернитесь и снова нажмите «Установить».",
   "updateErrorCheck": "Не удалось проверить обновления. Проверьте интернет.",
   "updateErrorDownload": "Не удалось скачать. Проверьте интернет и попробуйте ещё раз.",
   "updateErrorVerify": "Скачанный файл повреждён. Попробуйте ещё раз.",
@@ -329,5 +329,32 @@
         "type": "int"
       }
     }
-  }
+  },
+  "debtShortButton": "В долг",
+  "paymentShortButton": "Погашение",
+  "payFullDebtLabel": "Весь долг: {amount}",
+  "@payFullDebtLabel": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payFullDebtHint": "Нажмите, чтобы подставить",
+  "debtSettled": "Погашен",
+  "debtRemaining": "Осталось {left} из {total}",
+  "@debtRemaining": {
+    "placeholders": {
+      "left": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "updateDownloadButton": "Скачать",
+  "updateBackgroundHint": "Загрузка пойдёт в фоне, пользоваться приложением можно как обычно. Когда закончится, предложим установить.",
+  "updateReadyTitle": "Обновление загружено",
+  "updateInstallButton": "Установить"
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'section_app_bar.dart';
+
 import '../l10n/l10n.dart';
 import 'skeleton.dart';
 
@@ -21,7 +23,7 @@ class FeaturePlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: SectionAppBar(title: title),
       body: RefreshIndicator(
         onRefresh: () => Future<void>.delayed(const Duration(milliseconds: 600)),
         child: ListView(

@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/settings/settings_providers.dart';
 import '../../../core/widgets/debounced_search_field.dart';
 import '../../../core/widgets/fade_slide_in.dart';
+import '../../../core/widgets/section_app_bar.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../auth/presentation/login_prompt.dart';
 import '../domain/debt_filter.dart';
@@ -26,8 +29,8 @@ class DebtsPage extends ConsumerWidget {
     final summaries = ref.watch(debtorSummariesProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.tabDebts),
+      appBar: SectionAppBar(
+        title: l10n.tabDebts,
         actions: [
           IconButton(
             tooltip: l10n.bulkSmsTitle,
@@ -36,15 +39,15 @@ class DebtsPage extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         // Вкладки живут в одном дереве: одинаковые Hero-теги кнопок вызывают ошибку при переходах.
         heroTag: null,
+        tooltip: l10n.addDebtor,
         onPressed: () {
           HapticFeedback.selectionClick();
           context.push(Routes.debtorNew);
         },
-        icon: const Icon(Icons.person_add_alt_1_rounded),
-        label: Text(l10n.addDebtor),
+        child: const Icon(Icons.person_add_alt_1_rounded),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(debtorSummariesProvider),
@@ -65,13 +68,29 @@ class DebtsPage extends ConsumerWidget {
 }
 
 /// Экран с данными: обзор → поиск с фильтром (закреплён) → список.
-class _DebtorList extends ConsumerWidget {
+class _DebtorList extends ConsumerStatefulWidget {
   const _DebtorList({required this.all});
 
   final List<DebtorSummary> all;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DebtorList> createState() => _DebtorListState();
+}
+
+class _DebtorListState extends ConsumerState<_DebtorList> {
+  /// Появление карточек играет только при открытии экрана. Позже, при прокрутке,
+  /// карточки создаются заново, и анимация оставляла бы на их месте пустоту.
+  bool _intro = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _intro = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final all = widget.all;
     final l10n = context.l10n;
     final filter = ref.watch(selectedDebtFilterProvider);
     final config = ref.watch(debtFilterConfigProvider);
@@ -153,6 +172,7 @@ class _DebtorList extends ConsumerWidget {
                 final row = rows[i];
                 return FadeSlideIn(
                   key: ValueKey(row.summary.debtor.id),
+                  enabled: _intro,
                   delay: Duration(milliseconds: i < 8 ? i * 35 : 0),
                   child: DebtorTile(
                     summary: row.summary,
@@ -169,7 +189,9 @@ class _DebtorList extends ConsumerWidget {
   }
 }
 
-/// Закреплённая под обзором строка (поиск + фильтр).
+/// Закреплённая под обзором строка (поиск + фильтр). Пока под ней ничего нет — прозрачная;
+/// когда карточки заходят под неё, становится матовым стеклом: размытие и лёгкая подложка
+/// цвета фона, без тёмной плашки и смены цвета шапки.
 class _PinnedHeader extends SliverPersistentHeaderDelegate {
   _PinnedHeader({required this.height, required this.child, required this.color});
 
@@ -184,8 +206,21 @@ class _PinnedHeader extends SliverPersistentHeaderDelegate {
   double get maxExtent => height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) =>
-      Material(color: color, elevation: overlapsContent ? 1 : 0, child: child);
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: overlapsContent ? 16 : 0.001,
+          sigmaY: overlapsContent ? 16 : 0.001,
+        ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          color: color.withValues(alpha: overlapsContent ? 0.62 : 0),
+          child: child,
+        ),
+      ),
+    );
+  }
 
   @override
   bool shouldRebuild(covariant _PinnedHeader old) => true;

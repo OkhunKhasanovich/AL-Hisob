@@ -229,6 +229,60 @@ void main() {
   });
 
   group('установка', () {
+    test('download(): качает без установки и переходит в ready с путём к файлу', () async {
+      latest = releaseOnServer(9);
+      makeContainer();
+      final phases = <UpdatePhase>[];
+      container.listen(updateControllerProvider, (_, next) => phases.add(next.phase));
+      await controller().check();
+      await controller().download();
+
+      expect(installer.installed, isEmpty, reason: 'установка — только по согласию');
+      expect(state().phase, UpdatePhase.ready);
+      expect(phases, containsAllInOrder([UpdatePhase.downloading, UpdatePhase.ready]));
+      expect(await File(state().apkPath!).readAsBytes(), apk);
+    });
+
+    test('ready → install() ставит скачанный файл, не качая заново', () async {
+      latest = releaseOnServer(9);
+      makeContainer();
+      await controller().check();
+      await controller().download();
+      final path = state().apkPath!;
+
+      var downloadingAgain = false;
+      container.listen(updateControllerProvider, (_, next) {
+        if (next.phase == UpdatePhase.downloading) downloadingAgain = true;
+      });
+      await controller().install();
+
+      expect(installer.installed, [path]);
+      expect(downloadingAgain, isFalse);
+      expect(state().phase, UpdatePhase.idle);
+    });
+
+    test('в ready проверка и «Позже» ничего не сбрасывают', () async {
+      latest = releaseOnServer(9);
+      makeContainer();
+      await controller().check();
+      await controller().download();
+
+      await controller().check();
+      controller().dismiss();
+      expect(state().phase, UpdatePhase.ready);
+      expect(state().apkPath, isNotNull);
+    });
+
+    test('ошибка загрузки: повторный download() качает заново', () async {
+      latest = releaseOnServer(9, sha: 'f' * 64);
+      makeContainer();
+      await controller().check();
+      await controller().download();
+      expect(state().phase, UpdatePhase.error);
+      expect(state().errorKind, UpdateErrorKind.verify);
+      expect(state().apkPath, isNull);
+    });
+
     test('скачивает, проверяет и запускает установку', () async {
       latest = releaseOnServer(9);
       makeContainer();

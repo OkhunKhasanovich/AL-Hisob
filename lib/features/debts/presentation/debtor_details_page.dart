@@ -10,6 +10,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/utils/money.dart';
 import '../../../core/utils/phone.dart';
 import '../data/debtors_repository.dart';
+import '../domain/debt_allocation.dart';
 import '../domain/debt_summary.dart';
 import '../../sms/presentation/send_sms_sheet.dart';
 import '../../sms/presentation/sms_log_section.dart';
@@ -71,6 +72,8 @@ class _DetailsContent extends ConsumerWidget {
     final theme = Theme.of(context);
     final summary = details.summary;
     final d = summary.debtor;
+    // Оплаты гасят самые старые долги первыми; у каждого долга видно, сколько осталось.
+    final allocations = allocatePayments(details.transactions);
 
     return Scaffold(
       appBar: AppBar(
@@ -135,7 +138,7 @@ class _DetailsContent extends ConsumerWidget {
                     kind: DebtKind.debt,
                   ),
                   icon: const Icon(Icons.arrow_upward_rounded),
-                  label: Text(l10n.gaveDebtButton),
+                  label: Text(l10n.debtShortButton, maxLines: 1),
                   style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
                 ),
               ),
@@ -148,7 +151,7 @@ class _DetailsContent extends ConsumerWidget {
                     kind: DebtKind.payment,
                   ),
                   icon: const Icon(Icons.arrow_downward_rounded),
-                  label: Text(l10n.receivedPaymentButton),
+                  label: Text(l10n.paymentShortButton, maxLines: 1),
                   style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
                 ),
               ),
@@ -203,7 +206,8 @@ class _DetailsContent extends ConsumerWidget {
               ),
             )
           else
-            for (final t in details.transactions) _TransactionTile(transaction: t),
+            for (final t in details.transactions)
+              _TransactionTile(transaction: t, allocation: allocations[t.id]),
           const SizedBox(height: 24),
           SmsLogSection(debtorId: d.id),
         ],
@@ -244,9 +248,12 @@ class _InfoRow extends StatelessWidget {
 }
 
 class _TransactionTile extends ConsumerWidget {
-  const _TransactionTile({required this.transaction});
+  const _TransactionTile({required this.transaction, this.allocation});
 
   final DebtTransaction transaction;
+
+  /// Для долга — сколько из него погашено; для оплаты `null`.
+  final DebtAllocation? allocation;
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
@@ -301,6 +308,7 @@ class _TransactionTile extends ConsumerWidget {
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: scheme.onSurfaceVariant),
                   ),
+                  if (allocation != null) _AllocationLine(allocation: allocation!),
                 ],
               ),
             ),
@@ -320,6 +328,64 @@ class _TransactionTile extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Состояние долга при погашении «от старых к новым»: погашен или сколько осталось.
+class _AllocationLine extends StatelessWidget {
+  const _AllocationLine({required this.allocation});
+
+  final DebtAllocation allocation;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    if (allocation.isSettled) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check_circle_rounded, size: 14, color: scheme.primary),
+            const SizedBox(width: 4),
+            Text(
+              l10n.debtSettled,
+              style: theme.textTheme.labelMedium?.copyWith(color: scheme.primary),
+            ),
+          ],
+        ),
+      );
+    }
+    if (!allocation.isPartial) return const SizedBox.shrink();
+
+    final share = allocation.paid / allocation.debt.amount;
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, right: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.debtRemaining(
+              formatAmount(allocation.remaining),
+              formatAmount(allocation.debt.amount),
+            ),
+            style: theme.textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: share,
+              minHeight: 3,
+              backgroundColor: scheme.surfaceContainerHighest,
+            ),
+          ),
+        ],
       ),
     );
   }
