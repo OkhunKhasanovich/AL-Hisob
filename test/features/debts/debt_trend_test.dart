@@ -182,7 +182,7 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
-    testWidgets('период — отдельно от процента, вверху на 3/4 ширины карточки', (tester) async {
+    testWidgets('период — крупный полупрозрачный фон за линией, правее 40% ширины', (tester) async {
       tester.view.physicalSize = const Size(1200, 1600);
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
@@ -190,12 +190,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1000));
 
       final card = tester.getRect(find.byType(DebtsOverviewCard));
-      final period = tester.getCenter(find.text('за 7 дн.'));
-      final percent = tester.getCenter(find.text('+12%'));
-      expect(period.dx, closeTo(card.left + card.width * 0.75, card.width * 0.06),
-          reason: 'подпись периода — на 3/4 ширины');
-      expect(period.dy - card.top, lessThan(40), reason: 'вверху карточки');
-      expect(percent.dy, greaterThan(period.dy), reason: 'процент у конца линии, а не в шапке');
+      final periodFinder = find.byKey(const ValueKey('trend-period'));
+      final period = tester.getRect(periodFinder);
+      final style = tester.widget<Text>(periodFinder).style!;
+      expect(style.color!.a, lessThan(0.25), reason: 'полупрозрачный');
+      expect(style.fontSize!, greaterThan(30), reason: 'крупный');
+      expect(period.left, greaterThanOrEqualTo(card.left + card.width * 0.4 - 1));
+      expect(period.top, greaterThan(card.top + card.height * 0.4), reason: 'в полосе графика, не в шапке');
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
@@ -227,24 +228,37 @@ void main() {
 
       final card = tester.getRect(find.byType(DebtsOverviewCard));
       final amount = tester.getRect(find.textContaining('сум'));
-      final period = tester.getRect(find.text('за 7 дн.'));
       final percent = tester.getRect(find.text('+17%'));
-      final debtors = tester.getRect(find.text('Должников: 51'));
-      final overdue = tester.getRect(find.text('Просрочено: 17'));
+      final debtors = tester.getRect(find.byKey(const ValueKey('stat-debtors')));
+      final overdue = tester.getRect(find.byKey(const ValueKey('stat-overdue')));
 
-      bool overlaps(Rect a, Rect b) => a.overlaps(b);
-      expect(overlaps(percent, period), isFalse, reason: 'процент и период');
-      expect(overlaps(percent, amount), isFalse, reason: 'процент и сумма');
-      expect(overlaps(period, amount), isFalse, reason: 'период и сумма');
-      expect(overlaps(debtors, overdue), isFalse);
-      // Сводка слева не заходит на линию (она начинается с 40% ширины, почти прозрачная).
-      final limit = card.left + card.width * 0.47;
-      expect(debtors.right, lessThanOrEqualTo(limit));
+      expect(percent.overlaps(amount), isFalse, reason: 'процент и сумма');
+      expect(debtors.overlaps(overdue), isFalse);
+      expect(debtors.center.dy, closeTo(overdue.center.dy, 1), reason: 'значки в одной строке');
+      expect(overdue.left, greaterThan(debtors.right));
+      // Сводка слева не заходит на линию (она начинается с 40% ширины).
+      final limit = card.left + card.width * 0.4;
       expect(overdue.right, lessThanOrEqualTo(limit));
       // Всё внутри карточки.
-      for (final r in [amount, period, percent, debtors, overdue]) {
+      for (final r in [amount, percent, debtors, overdue]) {
         expect(card.contains(r.topLeft) && card.contains(r.bottomRight), isTrue);
       }
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('сумма с середины карточки плавно бледнеет к правому краю', (tester) async {
+      tester.view.physicalSize = const Size(1233, 1600);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await pump(tester, null);
+      await tester.pump(const Duration(milliseconds: 700));
+
+      final mask = tester.widget<ShaderMask>(find.byType(ShaderMask));
+      expect(mask.blendMode, BlendMode.dstIn);
+      // Слева прозрачности нет, а у правого края — есть.
+      final box = tester.getRect(find.byType(ShaderMask));
+      final shader = mask.shaderCallback(Rect.fromLTWH(0, 0, box.width, box.height));
+      expect(shader, isNotNull);
       await tester.pumpWidget(const SizedBox.shrink());
     });
 

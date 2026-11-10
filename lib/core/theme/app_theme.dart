@@ -21,8 +21,9 @@ class AppTheme {
       }),
       appBarTheme: const AppBarTheme(centerTitle: false, scrolledUnderElevation: 0),
       navigationBarTheme: NavigationBarThemeData(
-        height: 68,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        height: 64,
+        // Только значки; название вкладки остаётся в подсказке и для экранных дикторов.
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
         indicatorColor: scheme.secondaryContainer,
       ),
       cardTheme: CardThemeData(

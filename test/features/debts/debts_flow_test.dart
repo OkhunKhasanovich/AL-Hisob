@@ -308,8 +308,12 @@ void main() {
     await openDebts(tester);
 
     expect(find.text('1 000 000 сум'), findsWidgets);
-    expect(find.text('Должников: 2'), findsOneWidget, reason: 'без долга не считается');
-    expect(find.text('Просрочено: 1'), findsOneWidget);
+    Finder stat(String key, String value) =>
+        find.descendant(of: find.byKey(ValueKey(key)), matching: find.text(value));
+    expect(stat('stat-debtors', '2'), findsOneWidget, reason: 'без долга не считается');
+    expect(stat('stat-overdue', '1'), findsOneWidget);
+    expect(find.textContaining('Должников'), findsNothing, reason: 'только значки, без слов');
+    expect(find.textContaining('Просрочено'), findsNothing);
 
     await closeApp(tester);
   });
@@ -330,8 +334,11 @@ void main() {
     await openDebts(tester);
 
     expect(find.text('Alisher'), findsOneWidget);
-    expect(find.text('Baraka Market'), findsOneWidget);
-    expect(find.text('+998 90 123 45 67  +1'), findsOneWidget, reason: 'первый телефон и сколько ещё');
+    expect(
+      find.text('+998 90 123 45 67  +1 • Baraka Market'),
+      findsOneWidget,
+      reason: 'телефон (и сколько ещё), затем • и магазин — в одну строку',
+    );
     expect(find.text('600 000 сум'), findsWidgets, reason: 'текущий долг');
     expect(find.text('Сегодня'), findsOneWidget, reason: 'последняя операция — оплата сегодня');
     expect(find.text('2 опер.'), findsOneWidget);

@@ -70,28 +70,43 @@ class DebtorTile extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                         ),
-                        if (d.shopName != null)
-                          Text(d.shopName!, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
-                        if (phone != null)
+                        if (phone != null || d.shopName != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 2),
                             child: Row(
                               children: [
                                 Icon(
-                                  Icons.phone_rounded,
+                                  phone != null ? Icons.phone_rounded : Icons.storefront_rounded,
                                   size: 13,
                                   color: matchedPhone != null ? scheme.primary : scheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 4),
+                                // «+998 90 123 45 67 • Магазин» в одну строку; при нехватке места
+                                // сокращается название магазина, а не номер.
                                 Flexible(
-                                  child: Text(
-                                    extraPhones > 0 ? '${formatPhone(phone)}  +$extraPhones' : formatPhone(phone),
+                                  child: Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        if (phone != null)
+                                          TextSpan(
+                                            text: extraPhones > 0
+                                                ? '${formatPhone(phone)}  +$extraPhones'
+                                                : formatPhone(phone),
+                                            style: matchedPhone != null
+                                                ? TextStyle(
+                                                    color: scheme.primary,
+                                                    fontWeight: FontWeight.w600,
+                                                  )
+                                                : null,
+                                          ),
+                                        if (phone != null && d.shopName != null)
+                                          const TextSpan(text: ' • '),
+                                        if (d.shopName != null) TextSpan(text: d.shopName),
+                                      ],
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: muted?.copyWith(
-                                      color: matchedPhone != null ? scheme.primary : null,
-                                      fontWeight: matchedPhone != null ? FontWeight.w600 : null,
-                                    ),
+                                    style: muted,
                                   ),
                                 ),
                               ],

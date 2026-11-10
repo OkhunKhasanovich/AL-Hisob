@@ -52,8 +52,8 @@ List<Offset> trendOffsets(List<int> values, Size band) {
 }
 
 /// Слой карточки: линия динамики общего долга в своей полосе (с 40% ширины до правого края),
-/// мигающая точка на конце, процент над линией и полупрозрачная подпись периода
-/// вверху на 3/4 ширины. Полоса — [bandHeight] над нижним отступом [bottomInset].
+/// мигающая точка на конце, процент над линией и крупная полупрозрачная подпись периода
+/// на заднем плане. Полоса — [bandHeight] над нижним отступом [bottomInset].
 class DebtTrendBackdrop extends StatefulWidget {
   const DebtTrendBackdrop({
     super.key,
@@ -141,18 +141,26 @@ class _DebtTrendBackdropState extends State<DebtTrendBackdrop>
                 ),
               ),
             ),
-            // Период — вверху, по центру правой половины (на 3/4 ширины), едва заметный.
+            // Период — крупный полупрозрачный «водяной знак» за линией.
             Positioned(
-              top: 16,
-              height: 20,
-              left: size.width * 0.5,
-              right: 0,
+              left: size.width * trendStartFraction,
+              right: 8,
+              top: bandTop,
+              height: widget.bandHeight,
               child: ExcludeSemantics(
-                child: Center(
-                  child: Text(
-                    period,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: scheme.onPrimaryContainer.withValues(alpha: 0.5),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      period,
+                      key: const ValueKey('trend-period'),
+                      style: theme.textTheme.displaySmall?.copyWith(
+                        fontSize: widget.bandHeight * 0.78,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                        color: scheme.onPrimaryContainer.withValues(alpha: 0.09),
+                      ),
                     ),
                   ),
                 ),

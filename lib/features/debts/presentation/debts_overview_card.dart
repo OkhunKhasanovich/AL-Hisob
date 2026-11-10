@@ -88,20 +88,30 @@ class _Content extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    final stats = [
-      _Stat(
-        icon: Icons.groups_rounded,
-        text: l10n.debtsCountLabel(overview.debtorCount),
-        color: scheme.onPrimaryContainer,
-      ),
-      if (overview.overdueCount > 0)
+    // Только значки с числами, в одну строку; полная подпись — для экранных дикторов.
+    final stats = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
         _Stat(
-          icon: Icons.schedule_rounded,
-          text: l10n.debtsOverdueLabel(overview.overdueCount),
-          color: scheme.error,
-          emphasize: true,
+          key: const ValueKey('stat-debtors'),
+          icon: Icons.groups_rounded,
+          value: overview.debtorCount,
+          label: l10n.debtsCountLabel(overview.debtorCount),
+          color: scheme.onPrimaryContainer,
         ),
-    ];
+        if (overview.overdueCount > 0) ...[
+          const SizedBox(width: 14),
+          _Stat(
+            key: const ValueKey('stat-overdue'),
+            icon: Icons.schedule_rounded,
+            value: overview.overdueCount,
+            label: l10n.debtsOverdueLabel(overview.overdueCount),
+            color: scheme.error,
+            emphasize: true,
+          ),
+        ],
+      ],
+    );
 
     return Padding(
       padding: _cardPadding,
@@ -122,21 +132,70 @@ class _Content extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          TweenAnimationBuilder<double>(
-            tween: Tween(end: overview.totalOwed.toDouble()),
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeOutCubic,
-            builder: (context, value, _) => FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
+          _Amount(amount: overview.totalOwed, currency: l10n.currencySum),
+          const SizedBox(height: 8),
+          if (hasChart)
+            // Сводка слева по центру полосы; с 40% ширины карточки начинается график.
+            SizedBox(
+              height: _bandHeight,
+              child: Align(alignment: Alignment.centerLeft, child: stats),
+            )
+          else
+            stats,
+        ],
+      ),
+    );
+  }
+}
+
+/// Сумма долга: с середины карточки число и «сум» плавно становятся прозрачнее к правому краю.
+class _Amount extends StatelessWidget {
+  const _Amount({required this.amount, required this.currency});
+
+  final int amount;
+  final String currency;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final innerWidth = constraints.maxWidth;
+        final cardWidth = innerWidth + _cardPadding.horizontal;
+        // Середина карточки в координатах текста (текст начинается после левого отступа).
+        final halfX = cardWidth / 2 - _cardPadding.left;
+
+        return TweenAnimationBuilder<double>(
+          tween: Tween(end: amount.toDouble()),
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, _) => FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: ShaderMask(
+              blendMode: BlendMode.dstIn,
+              shaderCallback: (bounds) {
+                // FittedBox сжимает длинную сумму: пересчитываем середину карточки в её единицах.
+                final scale = bounds.width <= innerWidth ? 1.0 : innerWidth / bounds.width;
+                final start = (halfX / scale / bounds.width).clamp(0.0, 1.0);
+                return LinearGradient(
+                  colors: [
+                    Colors.white,
+                    Colors.white,
+                    Colors.white.withValues(alpha: 0.22),
+                  ],
+                  stops: [0, start, 1],
+                ).createShader(bounds);
+              },
               child: Text.rich(
                 TextSpan(
                   text: formatAmount(value.round()),
                   children: [
-                    // Валюта на конце суммы — полупрозрачная, чтобы число читалось первым.
                     TextSpan(
-                      text: ' ${l10n.currencySum}',
-                      style: TextStyle(color: scheme.onPrimaryContainer.withValues(alpha: 0.55)),
+                      text: ' $currency',
+                      style: TextStyle(color: scheme.onPrimaryContainer.withValues(alpha: 0.6)),
                     ),
                   ],
                 ),
@@ -147,83 +206,56 @@ class _Content extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          if (hasChart)
-            // Слева — сводка столбиком, правее 40% ширины карточки начинается график.
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final cardWidth = constraints.maxWidth + _cardPadding.horizontal;
-                // Начало линии (40%) почти прозрачное, поэтому сводке можно чуть заходить правее.
-                final statsWidth = cardWidth * 0.46 - _cardPadding.left;
-                return SizedBox(
-                  height: _bandHeight,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: SizedBox(
-                      width: statsWidth,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          for (var i = 0; i < stats.length; i++) ...[
-                            if (i > 0) const SizedBox(height: 6),
-                            stats[i],
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            )
-          else
-            Wrap(spacing: 16, runSpacing: 6, children: stats),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-/// Строка сводки: значок в круге и подпись.
+/// Значок в круге и число; подпись целиком — в семантике.
 class _Stat extends StatelessWidget {
   const _Stat({
+    super.key,
     required this.icon,
-    required this.text,
+    required this.value,
+    required this.label,
     required this.color,
     this.emphasize = false,
   });
 
   final IconData icon;
-  final String text;
+  final int value;
+  final String label;
   final Color color;
   final bool emphasize;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.14)),
-          child: Padding(
-            padding: const EdgeInsets.all(4),
-            child: Icon(icon, size: 14, color: color),
-          ),
-        ),
-        const SizedBox(width: 7),
-        Flexible(
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: color,
-              fontWeight: emphasize ? FontWeight.w700 : FontWeight.w600,
+    return Semantics(
+      label: label,
+      child: ExcludeSemantics(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.16)),
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Icon(icon, size: 16, color: color),
+              ),
             ),
-          ),
+            const SizedBox(width: 7),
+            Text(
+              '$value',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: color,
+                fontWeight: emphasize ? FontWeight.w800 : FontWeight.w700,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
