@@ -20,12 +20,6 @@ class AppTheme {
         TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
       }),
       appBarTheme: const AppBarTheme(centerTitle: false, scrolledUnderElevation: 0),
-      navigationBarTheme: NavigationBarThemeData(
-        height: 56,
-        // Только значки; название вкладки остаётся в подсказке и для экранных дикторов.
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-        indicatorColor: scheme.secondaryContainer,
-      ),
       cardTheme: CardThemeData(
         elevation: 0,
         color: scheme.surfaceContainerHigh,

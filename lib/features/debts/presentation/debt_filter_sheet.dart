@@ -50,6 +50,8 @@ class DebtFilterButton extends ConsumerWidget {
 
 Future<void> showDebtFilterSheet(BuildContext context) {
   return showModalBottomSheet<void>(
+    // Поверх стеклянной панели вкладок, а не под ней.
+    useRootNavigator: true,
     context: context,
     // Без isScrollControlled лист ограничен 9/16 экрана, и на невысоких телефонах
     // или при крупном шрифте пункты не помещались.

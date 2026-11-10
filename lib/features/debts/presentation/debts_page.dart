@@ -19,6 +19,7 @@ import 'debt_filter_sheet.dart';
 import 'debtor_tile.dart';
 import 'debts_overview_card.dart';
 import 'debts_providers.dart';
+import '../../shell/glass_nav_bar.dart';
 
 class DebtsPage extends ConsumerWidget {
   const DebtsPage({super.key});
@@ -39,7 +40,7 @@ class DebtsPage extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: liftAboveNav(context, FloatingActionButton(
         // Вкладки живут в одном дереве: одинаковые Hero-теги кнопок вызывают ошибку при переходах.
         heroTag: null,
         tooltip: l10n.addDebtor,
@@ -48,7 +49,7 @@ class DebtsPage extends ConsumerWidget {
           context.push(Routes.debtorNew);
         },
         child: const Icon(Icons.person_add_alt_1_rounded),
-      ),
+      )),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(debtorSummariesProvider),
         child: summaries.when(
@@ -165,7 +166,7 @@ class _DebtorListState extends ConsumerState<_DebtorList> {
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+            padding: EdgeInsets.fromLTRB(16, 4, 16, 96 + MediaQuery.paddingOf(context).bottom),
             sliver: SliverList.builder(
               itemCount: rows.length,
               itemBuilder: (context, i) {

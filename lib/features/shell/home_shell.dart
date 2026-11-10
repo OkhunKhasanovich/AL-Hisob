@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
 import '../update/presentation/update_controller.dart';
+import 'glass_nav_bar.dart';
 import '../update/presentation/update_dialog.dart';
 
 /// Каркас с нижней навигацией. Вкладки сохраняют своё состояние
@@ -74,37 +75,48 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
     return Scaffold(
       body: navigationShell,
+      // Страницы заходят под стеклянную панель вкладок и просвечивают сквозь неё.
+      extendBody: true,
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const _DownloadStrip(),
-          NavigationBar(
+          GlassNavBar(
             selectedIndex: navigationShell.currentIndex,
-            onDestinationSelected: (index) {
+            onSelected: (index) {
               HapticFeedback.selectionClick();
               navigationShell.goBranch(
                 index,
                 initialLocation: index == navigationShell.currentIndex,
               );
             },
-            destinations: [
-              _destination(Icons.menu_book_outlined, Icons.menu_book_rounded, l10n.tabDebts),
-              _destination(
-                Icons.local_shipping_outlined,
-                Icons.local_shipping_rounded,
-                l10n.tabOrders,
+            items: [
+              GlassNavItem(
+                icon: Icons.menu_book_outlined,
+                selectedIcon: Icons.menu_book_rounded,
+                label: l10n.tabDebts,
               ),
-              _destination(Icons.inventory_2_outlined, Icons.inventory_2_rounded, l10n.tabCatalog),
-              _destination(Icons.settings_outlined, Icons.settings_rounded, l10n.tabMore),
+              GlassNavItem(
+                icon: Icons.local_shipping_outlined,
+                selectedIcon: Icons.local_shipping_rounded,
+                label: l10n.tabOrders,
+              ),
+              GlassNavItem(
+                icon: Icons.inventory_2_outlined,
+                selectedIcon: Icons.inventory_2_rounded,
+                label: l10n.tabCatalog,
+              ),
+              GlassNavItem(
+                icon: Icons.settings_outlined,
+                selectedIcon: Icons.settings_rounded,
+                label: l10n.tabMore,
+              ),
             ],
           ),
         ],
       ),
     );
   }
-
-  NavigationDestination _destination(IconData icon, IconData selected, String label) =>
-      NavigationDestination(icon: Icon(icon), selectedIcon: Icon(selected), label: label);
 }
 
 /// Тонкая полоса над вкладками: обновление скачивается в фоне, пользоваться приложением можно.

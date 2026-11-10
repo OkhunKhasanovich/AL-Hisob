@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:al_savdogar/core/l10n/l10n.dart';
 import 'package:al_savdogar/core/theme/app_theme.dart';
 import 'package:al_savdogar/core/widgets/fade_slide_in.dart';
+import 'package:al_savdogar/core/widgets/glass.dart';
 import 'package:al_savdogar/core/widgets/section_app_bar.dart';
 
 void main() {
@@ -31,6 +32,48 @@ void main() {
     });
   });
 
+  group('GlassCard', () {
+    testWidgets('есть непрозрачная поверхность под оттенком и работает нажатие', (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body: GlassCard(
+            tint: GlassTint.red,
+            onTap: () => taps++,
+            child: const Text('карточка'),
+          ),
+        ),
+      ));
+
+      // Поверхность — отдельный непрозрачный слой: иначе цветная тень просвечивает внутрь.
+      final surface = find
+          .descendant(of: find.byType(GlassCard), matching: find.byType(ColoredBox))
+          .evaluate()
+          .map((e) => (e.widget as ColoredBox).color)
+          .where((c) => c.a == 1);
+      expect(surface, isNotEmpty);
+
+      await tester.tap(find.text('карточка'));
+      expect(taps, 1);
+    });
+
+    testWidgets('светлая и тёмная темы рисуются без ошибок', (tester) async {
+      for (final theme in [AppTheme.light(), AppTheme.dark()]) {
+        await tester.pumpWidget(MaterialApp(
+          theme: theme,
+          home: const Scaffold(
+            body: Column(children: [
+              GlassCard(tint: GlassTint.green, child: Text('a')),
+              GlassPanel(child: SizedBox(height: 40, width: 200)),
+            ]),
+          ),
+        ));
+        expect(tester.takeException(), isNull);
+      }
+    });
+  });
+
   group('SectionAppBar', () {
     testWidgets('название приложения мелко, название раздела крупно; цвет не зависит от прокрутки',
         (tester) async {
@@ -53,11 +96,4 @@ void main() {
     });
   });
 
-  group('тема', () {
-    test('нижняя панель: только значки и невысокая', () {
-      final theme = AppTheme.light().navigationBarTheme;
-      expect(theme.labelBehavior, NavigationDestinationLabelBehavior.alwaysHide);
-      expect(theme.height, lessThanOrEqualTo(60));
-    });
-  });
 }

@@ -13,6 +13,7 @@ import '../../../core/widgets/skeleton.dart';
 import '../../profile/profile_providers.dart';
 import '../data/catalog_providers.dart';
 import 'product_card.dart';
+import '../../shell/glass_nav_bar.dart';
 
 /// Вкладка «Каталог». Оптовик ведёт свой каталог; для покупателя здесь
 /// появятся каталоги оптовиков после синхронизации (этапы 8–9).
@@ -51,7 +52,7 @@ class _WholesalerCatalog extends ConsumerWidget {
 
     return Scaffold(
       appBar: SectionAppBar(title: l10n.tabCatalog),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: liftAboveNav(context, FloatingActionButton.extended(
         // Вкладки живут в одном дереве: одинаковые Hero-теги кнопок вызывают ошибку при переходах.
         heroTag: null,
         onPressed: () {
@@ -60,7 +61,7 @@ class _WholesalerCatalog extends ConsumerWidget {
         },
         icon: const Icon(Icons.add_rounded),
         label: Text(l10n.addProduct),
-      ),
+      )),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(productSummariesProvider),
         child: summaries.when(
@@ -148,7 +149,7 @@ class _ProductGrid extends ConsumerWidget {
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 96 + MediaQuery.paddingOf(context).bottom),
             sliver: SliverGrid.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,

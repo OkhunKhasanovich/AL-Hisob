@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:al_savdogar/app.dart';
+import 'package:al_savdogar/features/shell/glass_nav_bar.dart';
 import 'package:al_savdogar/core/database/app_database.dart';
 import 'package:al_savdogar/core/domain/product_unit.dart';
 import 'package:al_savdogar/core/domain/shop_role.dart';
@@ -79,7 +80,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1900));
     await tester.pump(const Duration(milliseconds: 800));
     await settle(tester);
-    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.byTooltip('Каталог')));
+    await tester.tap(find.descendant(of: find.byType(GlassNavBar), matching: find.byTooltip('Каталог')));
     await settle(tester);
   }
 

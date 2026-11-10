@@ -1,0 +1,238 @@
+import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
+
+import 'package:flutter/material.dart';
+
+/// Оттенки подсветки стекла. Карточка берёт оттенок по своему состоянию
+/// (как турниры в шашках: активный — зелёный, закрытый — красный и т. д.).
+abstract final class GlassTint {
+  static const blue = Color(0xFF5A96FF);
+  static const green = Color(0xFF28C88C);
+  static const amber = Color(0xFFF5A028);
+  static const red = Color(0xFFEB5050);
+  static const purple = Color(0xFFAA64FF);
+  static const gray = Color(0xFF9696A0);
+}
+
+/// Карточка «матовое стекло». Рецепт:
+/// 1. подложка цвета поверхности;
+/// 2. диагональная заливка оттенком (плотнее в углу, к другому краю гаснет);
+/// 3. светлый блик сверху слева;
+/// 4. тонкая рамка и светлая «кромка» по верхнему краю;
+/// 5. наклонная полоса-отсвет и мягкая цветная тень снизу.
+///
+/// В тёмной теме всё спокойнее: меньше света в оттенке и блике.
+class GlassCard extends StatelessWidget {
+  const GlassCard({
+    super.key,
+    required this.child,
+    this.tint = GlassTint.blue,
+    this.radius = 20,
+    this.padding = const EdgeInsets.all(14),
+    this.margin = EdgeInsets.zero,
+    this.onTap,
+    this.shadow = true,
+  });
+
+  final Widget child;
+  final Color tint;
+  final double radius;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry margin;
+  final VoidCallback? onTap;
+
+  /// Цветная тень под карточкой; в длинных списках можно выключить.
+  final bool shadow;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final borderRadius = BorderRadius.circular(radius);
+
+    final surface = theme.colorScheme.surfaceContainerHigh;
+    final tintTop = tint.withValues(alpha: dark ? 0.30 : 0.28);
+    final tintMid = tint.withValues(alpha: dark ? 0.14 : 0.07);
+    final highlight = Colors.white.withValues(alpha: dark ? 0.08 : 0.20);
+    final highlightEnd = Colors.white.withValues(alpha: dark ? 0 : 0.03);
+    final border = dark ? Colors.white.withValues(alpha: 0.14) : tint.withValues(alpha: 0.38);
+
+    return Padding(
+      padding: margin,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: borderRadius,
+          boxShadow: [
+            if (shadow)
+              BoxShadow(
+                color: tint.withValues(alpha: dark ? 0.35 : 0.55),
+                blurRadius: 28,
+                offset: const Offset(0, 14),
+                spreadRadius: -20,
+              ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: Stack(
+            children: [
+              // 1. Поверхность. (Цвет и градиент в одном BoxDecoration не накладываются друг на друга,
+              // поэтому поверхность — отдельным слоем: иначе тень просвечивает внутрь карточки.)
+              Positioned.fill(child: ColoredBox(color: surface)),
+              // 2. Оттенок.
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [tintTop, tintMid],
+                      stops: const [0, 0.7],
+                    ),
+                  ),
+                ),
+              ),
+              // 3. Блик.
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [highlight, highlightEnd, Colors.white.withValues(alpha: 0)],
+                      stops: const [0, 0.52, 1],
+                    ),
+                  ),
+                ),
+              ),
+              // 5. Наклонная полоса-отсвет справа.
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: LayoutBuilder(
+                    builder: (context, c) => OverflowBox(
+                      maxWidth: double.infinity,
+                      maxHeight: double.infinity,
+                      alignment: Alignment.topRight,
+                      child: Transform.translate(
+                        offset: Offset(c.maxWidth * 0.2, -c.maxHeight * 0.4),
+                        child: Transform.rotate(
+                          angle: 20 * math.pi / 180,
+                          child: Container(
+                            width: c.maxWidth * 0.55,
+                            height: c.maxHeight * 1.4,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.white.withValues(alpha: 0),
+                                  Colors.white.withValues(alpha: dark ? 0.05 : 0.10),
+                                  Colors.white.withValues(alpha: 0),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Содержимое и нажатие.
+              Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  borderRadius: borderRadius,
+                  onTap: onTap,
+                  child: Padding(padding: padding, child: child),
+                ),
+              ),
+              // 4. Рамка и светлая кромка сверху.
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: borderRadius,
+                      border: Border.all(color: border),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                left: radius * 0.6,
+                right: radius * 0.6,
+                height: 1,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: 0),
+                          Colors.white.withValues(alpha: dark ? 0.28 : 0.55),
+                          Colors.white.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Плоская «стеклянная» панель с размытием того, что под ней (нижняя панель вкладок, шапки).
+class GlassPanel extends StatelessWidget {
+  const GlassPanel({super.key, required this.child, this.radius = 28, this.blur = 20});
+
+  final Widget child;
+  final double radius;
+  final double blur;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    final borderRadius = BorderRadius.circular(radius);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: dark ? 0.45 : 0.18),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -8,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: ColoredBox(
+            color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: dark ? 0.62 : 0.72),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: borderRadius,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(alpha: dark ? 0.10 : 0.35),
+                    Colors.white.withValues(alpha: dark ? 0.02 : 0.05),
+                  ],
+                ),
+                border: Border.all(color: Colors.white.withValues(alpha: dark ? 0.16 : 0.5)),
+              ),
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
