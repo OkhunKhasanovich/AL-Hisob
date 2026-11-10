@@ -382,5 +382,9 @@
   },
   "updateOpenInBrowser": "Через браузер",
   "unitKbPerSec": "КБ/с",
-  "unitMbPerSec": "МБ/с"
+  "unitMbPerSec": "МБ/с",
+  "backdropTitle": "Фон",
+  "backdropOrnament": "Узор",
+  "backdropAurora": "Сияние",
+  "backdropPlain": "Без фона"
 }

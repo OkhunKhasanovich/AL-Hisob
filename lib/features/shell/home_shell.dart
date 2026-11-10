@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
 import '../update/presentation/update_controller.dart';
+import '../../core/settings/settings_providers.dart';
+import '../../core/widgets/app_backdrop.dart';
 import 'glass_nav_bar.dart';
 import '../update/presentation/update_dialog.dart';
 
@@ -73,8 +75,19 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       if (offer) _showUpdate();
     });
 
+    // Вкладки лежат на общем фоне: их Scaffold прозрачны, а стекло карточек его просвечивает.
+    // Страницы, открытые поверх вкладок, и шторки остаются с обычным непрозрачным фоном.
+    final theme = Theme.of(context);
     return Scaffold(
-      body: navigationShell,
+      body: Stack(
+        children: [
+          Positioned.fill(child: AppBackdrop(style: ref.watch(backdropStyleProvider))),
+          Theme(
+            data: theme.copyWith(scaffoldBackgroundColor: Colors.transparent),
+            child: navigationShell,
+          ),
+        ],
+      ),
       // Страницы заходят под стеклянную панель вкладок и просвечивают сквозь неё.
       extendBody: true,
       bottomNavigationBar: Column(

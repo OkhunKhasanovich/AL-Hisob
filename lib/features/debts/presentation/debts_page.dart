@@ -111,7 +111,7 @@ class _DebtorListState extends ConsumerState<_DebtorList> {
           pinned: true,
           delegate: _PinnedHeader(
             height: 60,
-            color: Theme.of(context).scaffoldBackgroundColor,
+            color: Theme.of(context).colorScheme.surface,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: DebouncedSearchField(

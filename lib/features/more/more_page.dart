@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
+import '../../core/widgets/app_backdrop.dart';
 import '../../core/widgets/section_app_bar.dart';
 import '../../core/router/routes.dart';
 import '../../core/settings/settings_providers.dart';
@@ -74,6 +75,33 @@ class MorePage extends ConsumerWidget {
             onSelectionChanged: (s) {
               HapticFeedback.selectionClick();
               ref.read(themeModeProvider.notifier).select(s.first);
+            },
+          ),
+          const SizedBox(height: 24),
+          Text(l10n.backdropTitle, style: theme.textTheme.titleMedium),
+          const SizedBox(height: 12),
+          SegmentedButton<AppBackdropStyle>(
+            segments: [
+              ButtonSegment(
+                value: AppBackdropStyle.ornament,
+                icon: const Icon(Icons.grid_view_rounded),
+                label: Text(l10n.backdropOrnament),
+              ),
+              ButtonSegment(
+                value: AppBackdropStyle.aurora,
+                icon: const Icon(Icons.blur_on_rounded),
+                label: Text(l10n.backdropAurora),
+              ),
+              ButtonSegment(
+                value: AppBackdropStyle.plain,
+                icon: const Icon(Icons.crop_square_rounded),
+                label: Text(l10n.backdropPlain),
+              ),
+            ],
+            selected: {ref.watch(backdropStyleProvider)},
+            onSelectionChanged: (s) {
+              HapticFeedback.selectionClick();
+              ref.read(backdropStyleProvider.notifier).select(s.first);
             },
           ),
           const SizedBox(height: 32),
