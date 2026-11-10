@@ -1,8 +1,8 @@
 import '../../../../core/utils/phone.dart';
 import '../debt_summary.dart';
 import 'phone_matcher.dart';
-import 'text_normalizer.dart';
-import 'token_matcher.dart';
+import '../../../../core/search/text_normalizer.dart';
+import '../../../../core/search/token_matcher.dart';
 
 /// Вес названия магазина относительно имени должника.
 const _shopWeight = 0.85;

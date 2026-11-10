@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/features/debts/domain/search/text_normalizer.dart';
+import 'package:al_savdogar/core/search/text_normalizer.dart';
 
 void main() {
   /// Все написания должны давать один ключ.
@@ -58,6 +58,11 @@ void main() {
 
     test('двойные согласные схлопываются: Muhammad = Muhamad', () {
       sameKey(['Muhammad', 'Muhamad', 'Мухаммад'], expected: 'muhamad');
+    });
+
+    test('латинская c: «к» (Coca-Cola) или «с» перед e/i/y (Cement)', () {
+      sameKey(['Coca-Cola', 'Кока-кола', 'Koka Kola']);
+      sameKey(['Cement', 'Цемент'], expected: 'sement');
     });
 
     test('w → v, ц → s', () {

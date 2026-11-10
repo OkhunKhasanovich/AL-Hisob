@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/features/debts/domain/search/token_matcher.dart';
+import 'package:al_savdogar/core/search/token_matcher.dart';
 
 void main() {
   test('допустимое число опечаток растёт с длиной слова', () {

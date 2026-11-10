@@ -57,6 +57,10 @@ String toSearchKey(String input) {
       .replaceAll('dj', 'j')
       .replaceAll('ts', 's');
 
+  // Латинская «c» в заимствованных словах: перед e/i/y — «с» (Cement),
+  // иначе «к» (Coca-Cola). «ch» уже заменено на `C` выше.
+  s = s.replaceAllMapped(RegExp(r'c(?=[eiy])'), (_) => 's').replaceAll('c', 'k');
+
   // Одиночные буквы с разным написанием.
   s = s
       .replaceAll('q', 'k')

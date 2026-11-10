@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/sync_columns.dart';
+import '../../../core/database/watch.dart';
 import '../../../core/domain/debt_kind.dart';
 import '../../../core/utils/money.dart';
 import '../../../core/utils/phone.dart';
@@ -55,42 +54,8 @@ class DebtorsRepository {
   /// Список должников; обновляется при любом изменении связанных таблиц.
   Stream<List<DebtorSummary>> watchSummaries() => _watch(loadSummaries);
 
-  /// Выдаёт результат [load] сразу и после каждого изменения таблиц.
-  ///
-  /// Не `async*`: у генератора `cancel()` не срабатывает, пока он ждёт
-  /// событие, и подписка висела бы после ухода с экрана. Результаты
-  /// устаревших загрузок отбрасываются, чтобы порядок не нарушался.
-  Stream<T> _watch<T>(Future<T> Function() load) {
-    late final StreamController<T> controller;
-    StreamSubscription<Set<TableUpdate>>? changes;
-    var generation = 0;
-
-    Future<void> emit() async {
-      final mine = ++generation;
-      try {
-        final value = await load();
-        if (mine == generation && !controller.isClosed) controller.add(value);
-      } catch (e, st) {
-        if (mine == generation && !controller.isClosed) controller.addError(e, st);
-      }
-    }
-
-    controller = StreamController<T>(
-      onListen: () {
-        changes = _changes().listen((_) => emit());
-        emit();
-      },
-      onCancel: () async {
-        await changes?.cancel();
-        await controller.close();
-      },
-    );
-    return controller.stream;
-  }
-
-  Stream<Set<TableUpdate>> _changes() => _db.tableUpdates(
-        TableUpdateQuery.onAllTables([_db.debtors, _db.debtorPhones, _db.debtTransactions]),
-      );
+  Stream<T> _watch<T>(Future<T> Function() load) =>
+      watchTables(_db, [_db.debtors, _db.debtorPhones, _db.debtTransactions], load);
 
   Future<DebtorDetails?> loadDetails(String debtorId) async {
     final debtor = await (_db.select(_db.debtors)

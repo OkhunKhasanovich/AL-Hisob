@@ -2,11 +2,13 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
 import '../domain/debt_kind.dart';
+import '../domain/product_unit.dart';
 import '../domain/shop_role.dart';
 import '../domain/sms_status.dart';
 import 'schema_versions.dart';
 import 'sync_columns.dart';
 import 'tables/debts.dart';
+import 'tables/products.dart';
 import 'tables/shop_profiles.dart';
 import 'tables/sms.dart';
 
@@ -22,7 +24,7 @@ class AppSettings extends Table {
   Set<Column> get primaryKey => {key};
 }
 
-@DriftDatabase(tables: [AppSettings, ShopProfiles, Debtors, DebtorPhones, DebtTransactions, SmsTemplates, SmsLogs])
+@DriftDatabase(tables: [AppSettings, ShopProfiles, Debtors, DebtorPhones, DebtTransactions, SmsTemplates, SmsLogs, Products, ProductPhotos])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
       : super(executor ?? driftDatabase(name: 'al_savdogar'));
@@ -30,7 +32,7 @@ class AppDatabase extends _$AppDatabase {
   /// Увеличивать при каждом изменении схемы и выполнять
   /// `dart run drift_dev schema dump ...` (см. README).
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -50,6 +52,11 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(schema.smsTemplates);
             await m.createTable(schema.smsLogs);
             await m.create(schema.idxSmsLogsDebtor);
+          },
+          from4To5: (m, schema) async {
+            await m.createTable(schema.products);
+            await m.createTable(schema.productPhotos);
+            await m.create(schema.idxProductPhotosProduct);
           },
         ),
         beforeOpen: (details) async {

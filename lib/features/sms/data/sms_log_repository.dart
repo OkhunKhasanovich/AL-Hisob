@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/sync_columns.dart';
+import '../../../core/database/watch.dart';
 import '../../../core/domain/sms_status.dart';
 
 class SmsLogRepository {
@@ -35,35 +34,8 @@ class SmsLogRepository {
             ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
           .get();
 
-  Stream<List<SmsLog>> watchForDebtor(String debtorId) {
-    late final StreamController<List<SmsLog>> controller;
-    StreamSubscription<Set<TableUpdate>>? sub;
-    var generation = 0;
-
-    Future<void> emit() async {
-      final mine = ++generation;
-      try {
-        final value = await forDebtor(debtorId);
-        if (mine == generation && !controller.isClosed) controller.add(value);
-      } catch (e, st) {
-        if (mine == generation && !controller.isClosed) controller.addError(e, st);
-      }
-    }
-
-    controller = StreamController<List<SmsLog>>(
-      onListen: () {
-        sub = _db
-            .tableUpdates(TableUpdateQuery.onTable(_db.smsLogs))
-            .listen((_) => emit());
-        emit();
-      },
-      onCancel: () async {
-        await sub?.cancel();
-        await controller.close();
-      },
-    );
-    return controller.stream;
-  }
+  Stream<List<SmsLog>> watchForDebtor(String debtorId) =>
+      watchTables(_db, [_db.smsLogs], () => forDebtor(debtorId));
 
   Future<void> softDeleteForDebtor(String debtorId) {
     final now = DateTime.now();
