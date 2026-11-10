@@ -17,13 +17,33 @@ int? packDiscountPercent(Product p) {
 }
 
 /// Стоимость [quantity] единиц: сначала целые упаковки по цене упаковки,
-/// остаток — по цене за единицу.
-int orderTotal(Product p, int quantity) {
+/// остаток — по цене за единицу. Упаковка учитывается, только если заданы
+/// и [packSize], и [packPrice].
+int lineTotal({
+  required int unitPrice,
+  required int quantity,
+  int? packSize,
+  int? packPrice,
+}) {
   if (quantity <= 0) return 0;
-  if (!hasPack(p)) return quantity * p.unitPrice;
-  final packs = quantity ~/ p.packSize!;
-  final rest = quantity % p.packSize!;
-  return packs * p.packPrice! + rest * p.unitPrice;
+  if (packSize == null || packPrice == null || packSize <= 0) return quantity * unitPrice;
+  final packs = quantity ~/ packSize;
+  final rest = quantity % packSize;
+  return packs * packPrice + rest * unitPrice;
+}
+
+/// То же для товара каталога.
+int orderTotal(Product p, int quantity) => lineTotal(
+      unitPrice: p.unitPrice,
+      quantity: quantity,
+      packSize: hasPack(p) ? p.packSize : null,
+      packPrice: hasPack(p) ? p.packPrice : null,
+    );
+
+/// Сколько целых упаковок и сколько штук сверху в [quantity] единиц.
+({int packs, int rest}) packBreakdown(int quantity, int? packSize) {
+  if (packSize == null || packSize <= 0) return (packs: 0, rest: quantity);
+  return (packs: quantity ~/ packSize, rest: quantity % packSize);
 }
 
 /// Объём заказа не меньше минимальной партии.
