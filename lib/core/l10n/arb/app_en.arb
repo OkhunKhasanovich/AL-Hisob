@@ -453,5 +453,41 @@
   "orderFullyPaidHint": "Fully paid — no debt",
   "orderAmountTooBig": "More than the order total",
   "orderDebtRecorded": "Debt recorded in the debt book",
-  "orderOpenCustomer": "Open customer"
+  "orderOpenCustomer": "Open customer",
+  "loginTitle": "Sign in",
+  "loginIntro": "Sign in to keep your data safe and to share your catalog and orders with other phones. The app also works without an account.",
+  "loginTelegramButton": "Sign in with Telegram",
+  "loginHow": "A bot opens in Telegram: tap Start and share your phone number with the button.",
+  "loginWaiting": "Waiting for confirmation in Telegram…",
+  "loginOpenTelegram": "Open Telegram again",
+  "loginSuccess": "Signed in as {phone}",
+  "@loginSuccess": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "loginErrorNetwork": "No connection to the server. Check your internet and try again.",
+  "loginErrorExpired": "The sign-in request has expired. Try again.",
+  "loginErrorServer": "Could not start sign-in. Try again later.",
+  "loginErrorRate": "Too many attempts. Wait a minute and try again.",
+  "loginErrorNoTelegram": "Could not open Telegram. Install it or open the link in a browser.",
+  "loginErrorBot": "Sign-in is not available on the server yet.",
+  "accountTitle": "Account",
+  "accountSignedInAs": "Signed in: {phone}",
+  "@accountSignedInAs": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "accountSignedOut": "Not signed in — data is only on this phone",
+  "accountSignIn": "Sign in",
+  "accountSignOut": "Sign out",
+  "accountSignOutTitle": "Sign out?",
+  "accountSignOutBody": "Your data stays on this phone. You can sign in again at any time.",
+  "loginPromptTitle": "Don’t lose your data",
+  "loginPromptBody": "Sign in to keep your data safe and share it with other phones."
 }

@@ -76,7 +76,8 @@ jobs:
             --build-name="${{ steps.ver.outputs.name }}" \
             --build-number="${{ github.run_number }}" \
             --dart-define=BUILD_NUMBER="${{ github.run_number }}" \
-            --dart-define=APP_VERSION="${{ steps.ver.outputs.name }}"
+            --dart-define=APP_VERSION="${{ steps.ver.outputs.name }}" \
+            --dart-define=API_BASE_URL="${{ vars.API_BASE_URL }}"
 
       - name: Check APK size (< 50 MB)
         id: apk

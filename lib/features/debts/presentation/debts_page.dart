@@ -10,6 +10,7 @@ import '../../../core/utils/money.dart';
 import '../../../core/widgets/debounced_search_field.dart';
 import '../../../core/widgets/fade_slide_in.dart';
 import '../../../core/widgets/skeleton.dart';
+import '../../auth/presentation/login_prompt.dart';
 import '../domain/debt_filter.dart';
 import '../domain/debt_summary.dart';
 import '../domain/search/debtor_search.dart';
@@ -82,6 +83,7 @@ class _DebtorList extends ConsumerWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
+        const SliverToBoxAdapter(child: LoginPromptCard()),
         const SliverToBoxAdapter(child: _SearchField()),
         if (hits != null) ...[
           if (hits.isEmpty)
@@ -370,6 +372,7 @@ class _EmptyBook extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(32),
       children: [
+        const LoginPromptCard(),
         const SizedBox(height: 48),
         Icon(Icons.menu_book_rounded, size: 72, color: theme.colorScheme.primary),
         const SizedBox(height: 16),

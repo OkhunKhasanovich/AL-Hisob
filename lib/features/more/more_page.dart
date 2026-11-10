@@ -7,6 +7,7 @@ import '../../core/l10n/l10n.dart';
 import '../../core/router/routes.dart';
 import '../../core/settings/settings_providers.dart';
 import '../debts/presentation/debt_settings_section.dart';
+import '../auth/presentation/account_tile.dart';
 import '../profile/profile_card.dart';
 import '../update/presentation/update_tile.dart';
 
@@ -27,6 +28,7 @@ class MorePage extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         children: [
           const ProfileCard(),
+          const AccountTile(),
           const SizedBox(height: 32),
           Text(l10n.settingsLanguage, style: theme.textTheme.titleMedium),
           const SizedBox(height: 12),

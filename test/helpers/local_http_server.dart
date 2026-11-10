@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 /// Маленький HTTP-сервер на loopback для тестов скачивания.
@@ -8,8 +9,13 @@ class LocalHttpServer {
   final HttpServer _server;
   final requests = <String>[];
 
+  /// Вызывается для каждого запроса вместе с телом (для проверки того, что отправил клиент).
+  void Function(HttpRequest request, String body)? onRequest;
+
   /// Что отдавать по пути; по умолчанию 404.
   final routes = <String, FutureOr<void> Function(HttpResponse)>{};
+
+  int get port => _server.port;
 
   Uri url(String path) => Uri.parse('http://127.0.0.1:${_server.port}$path');
 
@@ -18,6 +24,8 @@ class LocalHttpServer {
     final local = LocalHttpServer._(server);
     server.listen((request) async {
       local.requests.add(request.uri.path);
+      final body = await utf8.decoder.bind(request).join();
+      local.onRequest?.call(request, body);
       final handler = local.routes[request.uri.path];
       if (handler == null) {
         request.response.statusCode = HttpStatus.notFound;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/login_page.dart';
 import '../../features/catalog/presentation/catalog_page.dart';
 import '../../features/catalog/presentation/product_details_page.dart';
 import '../../features/catalog/presentation/product_form_page.dart';
@@ -41,6 +42,10 @@ GoRouter createRouter({String initialLocation = Routes.splash}) {
           transitionsBuilder: (context, animation, _, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
+      ),
+      GoRoute(
+        path: Routes.login,
+        builder: (_, _) => const LoginPage(),
       ),
       GoRoute(
         path: Routes.orderNew,
