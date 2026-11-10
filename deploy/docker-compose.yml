@@ -1,0 +1,35 @@
+# Запуск на VPS: `docker compose up -d --build` из этой папки.
+# Файл .env лежит только на сервере (шаблон — .env.example), в git его нет.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: alsavdogar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: alsavdogar
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alsavdogar -d alsavdogar"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ../backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://alsavdogar:${POSTGRES_PASSWORD}@db:5432/alsavdogar
+      ENV: production
+      TRUST_PROXY: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Наружу порт не публикуется: только nginx на этом же сервере (127.0.0.1).
+    ports:
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  pgdata:

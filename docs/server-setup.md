@@ -1,0 +1,119 @@
+# Настройка сервера (VPS)
+
+Один раз настраиваете сервер, дальше он обновляется сам: после каждого изменения в `backend/`
+GitHub прогоняет тесты и выкладывает новую версию на VPS.
+
+Что понадобится: VPS с Ubuntu 22.04/24.04 (или Debian 12), доступ `root` по SSH, домен или поддомен.
+
+> **Секреты в чат не присылайте.** Токен бота, пароли и ключи вводятся только на сервере или в
+> настройках GitHub. Мне они не нужны.
+
+## 1. Домен
+
+В панели, где вы купили домен, создайте **A-запись**: имя `api` (получится `api.ваш-домен`), значение —
+IP вашего VPS. Подождите несколько минут и проверьте с любого компьютера:
+
+```bash
+ping api.ваш-домен
+```
+
+В ответе должен быть IP вашего VPS.
+
+## 2. Telegram-бот для входа
+
+Нужен **новый** бот, отдельный от того, что присылает APK.
+
+1. В Telegram откройте `@BotFather` → `/newbot`.
+2. Название: `Al-Savdogar Login`. Имя пользователя: что-то вроде `AlSavdogarLoginBot`
+   (должно заканчиваться на `bot`).
+3. BotFather пришлёт токен вида `123456:ABC...`. **Не пересылайте его никому**, он понадобится на шаге 4.
+   Запомните имя пользователя бота без `@`.
+
+## 3. Первый запуск на VPS
+
+Подключитесь к серверу (на Windows — в программе PuTTY или в PowerShell командой `ssh`):
+
+```bash
+ssh root@IP-вашего-VPS
+```
+
+Скачайте и запустите скрипт настройки (подставьте свой домен и почту):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/OkhunKhasanovich/Al-Savdogar/main/deploy/bootstrap.sh -o bootstrap.sh
+DOMAIN=api.ваш-домен EMAIL=ваша@почта bash bootstrap.sh
+```
+
+Скрипт установит Docker, nginx и сертификат HTTPS, создаст пользователя `deploy`, скачает код и
+сгенерирует случайные пароли в файле `/opt/al-savdogar/deploy/.env`.
+
+## 4. Токен бота на сервере
+
+```bash
+nano /opt/al-savdogar/deploy/.env
+```
+
+Впишите после `=` значения строк `TELEGRAM_BOT_TOKEN` (токен из BotFather) и `TELEGRAM_BOT_USERNAME`
+(имя бота без `@`). Сохранить: `Ctrl+O`, `Enter`, выйти: `Ctrl+X`. Затем:
+
+```bash
+cd /opt/al-savdogar/deploy
+docker compose up -d --build
+docker compose exec -T api python -m app.cli set-webhook
+```
+
+Проверка (с любого компьютера):
+
+```bash
+curl https://api.ваш-домен/health
+```
+
+Должно вернуться `{"status":"ok","db":true}`.
+
+## 5. Автоматический деплой из GitHub
+
+На **своём компьютере** создайте отдельный ключ для деплоя:
+
+```bash
+ssh-keygen -t ed25519 -f deploy_key -N "" -C "github-deploy"
+```
+
+Будет два файла: `deploy_key` (секретный) и `deploy_key.pub` (публичный).
+
+Добавьте публичный ключ на сервер (на VPS, от root):
+
+```bash
+echo "СОДЕРЖИМОЕ-deploy_key.pub" >> /home/deploy/.ssh/authorized_keys
+```
+
+Отпечаток сервера (на своём компьютере):
+
+```bash
+ssh-keyscan -H IP-вашего-VPS
+```
+
+Добавьте в репозиторий (Settings → Secrets and variables → Actions) **secrets**:
+
+| Имя | Значение |
+|---|---|
+| `DEPLOY_HOST` | IP вашего VPS |
+| `DEPLOY_USER` | `deploy` |
+| `DEPLOY_SSH_KEY` | всё содержимое файла `deploy_key` |
+| `DEPLOY_KNOWN_HOSTS` | весь вывод `ssh-keyscan -H ...` |
+| `DEPLOY_PORT` | порт SSH, только если он не 22 |
+
+…и **variables** (вкладка Variables):
+
+| Имя | Значение |
+|---|---|
+| `API_DOMAIN` | `api.ваш-домен` |
+| `API_BASE_URL` | `https://api.ваш-домен` |
+
+После этого файл `deploy_key` на своём компьютере удалите: ключ лежит в GitHub Secrets.
+
+## Обслуживание
+
+* Логи: `cd /opt/al-savdogar/deploy && docker compose logs -f api`
+* Резервная копия базы (по желанию, раз в сутки через `cron`):
+  `docker compose exec -T db pg_dump -U alsavdogar alsavdogar | gzip > /root/backup-$(date +%F).sql.gz`
+* Файл `.env` никому не показывайте и не добавляйте в git.

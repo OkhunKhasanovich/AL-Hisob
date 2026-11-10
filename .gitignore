@@ -60,3 +60,9 @@ android/app/*.keystore
 # Сгенерированный код (build_runner / gen-l10n)
 *.g.dart
 lib/core/l10n/generated/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/

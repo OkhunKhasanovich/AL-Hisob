@@ -1,0 +1,83 @@
+name: Deploy backend
+
+# Деплой сервера на VPS по SSH после зелёных тестов. Только main.
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**', 'deploy/**', '.github/workflows/deploy-backend.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    uses: ./.github/workflows/backend-tests.yml
+
+  deploy:
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check secrets
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          for v in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS; do
+            if [ -z "${!v}" ]; then echo "::error::Secret $v is not set (see docs/server-setup.md)"; exit 1; fi
+          done
+
+      - name: Deploy over SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT:-22}" -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /opt/al-savdogar
+          git fetch --quiet origin main
+          git reset --hard origin/main
+          cd deploy
+          docker compose up -d --build
+          docker compose exec -T api python -m app.cli migrate
+          docker image prune -f >/dev/null
+          REMOTE
+
+      - name: Smoke test
+        env:
+          API_DOMAIN: ${{ vars.API_DOMAIN }}
+        run: |
+          [ -n "${API_DOMAIN:-}" ] || { echo "API_DOMAIN variable is not set, skipping smoke test"; exit 0; }
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS "https://${API_DOMAIN}/health" | grep -q '"db":true'; then echo "healthy"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::Health check failed"; exit 1
+
+      - name: Notify Telegram about failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ] || exit 0
+          TEXT=$(printf '❌ Деплой сервера Al-Savdogar упал\n%s/%s/actions/runs/%s' \
+            "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
+          curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode chat_id="$TELEGRAM_CHAT_ID" --data-urlencode text="$TEXT" || true
