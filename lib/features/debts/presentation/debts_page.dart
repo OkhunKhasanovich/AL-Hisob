@@ -27,7 +27,16 @@ class DebtsPage extends ConsumerWidget {
     final summaries = ref.watch(debtorSummariesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.tabDebts)),
+      appBar: AppBar(
+        title: Text(l10n.tabDebts),
+        actions: [
+          IconButton(
+            tooltip: l10n.bulkSmsTitle,
+            icon: const Icon(Icons.campaign_rounded),
+            onPressed: () => context.push(Routes.bulkSms),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           HapticFeedback.selectionClick();

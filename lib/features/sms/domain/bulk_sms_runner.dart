@@ -51,17 +51,33 @@ class BulkSmsRunner {
     required this.send,
     this.pause = const Duration(seconds: 3),
     Future<void> Function(Duration)? delay,
-  }) : _delay = delay ?? Future<void>.delayed;
+  }) : _delay = delay; // ignore: prefer_initializing_formals
 
   final BulkSmsSend send;
   final Duration pause;
-  final Future<void> Function(Duration) _delay;
+  final Future<void> Function(Duration)? _delay;
   final Completer<void> _cancel = Completer<void>();
 
   bool get isCancelled => _cancel.isCompleted;
 
   void cancel() {
     if (!_cancel.isCompleted) _cancel.complete();
+  }
+
+  /// Пауза, которую [cancel] прерывает сразу и без «висящего» таймера.
+  Future<void> _wait(Duration duration) {
+    final custom = _delay;
+    if (custom != null) return Future.any<void>([custom(duration), _cancel.future]);
+
+    final done = Completer<void>();
+    final timer = Timer(duration, () {
+      if (!done.isCompleted) done.complete();
+    });
+    _cancel.future.then((_) {
+      timer.cancel();
+      if (!done.isCompleted) done.complete();
+    });
+    return done.future;
   }
 
   /// Поток прогресса; последнее событие имеет `finished == true`.
@@ -99,7 +115,7 @@ class BulkSmsRunner {
 
       final hasNext = i < items.length - 1;
       if (hasNext && !isCancelled && pause > Duration.zero) {
-        await Future.any<void>([_delay(pause), _cancel.future]);
+        await _wait(pause);
       }
     }
     yield snapshot(null, finished: true);

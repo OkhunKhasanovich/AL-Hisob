@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
+import '../../core/router/routes.dart';
 import '../../core/settings/settings_providers.dart';
 import '../debts/presentation/debt_settings_section.dart';
 import '../profile/profile_card.dart';
@@ -71,6 +73,14 @@ class MorePage extends ConsumerWidget {
           ),
           const SizedBox(height: 32),
           const DebtSettingsSection(),
+          const SizedBox(height: 16),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.sms_rounded),
+            title: Text(l10n.smsTemplatesTitle),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => context.push(Routes.smsTemplates),
+          ),
         ],
       ),
     );

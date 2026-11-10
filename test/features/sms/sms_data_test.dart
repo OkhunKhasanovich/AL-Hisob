@@ -15,37 +15,7 @@ import 'package:al_savdogar/features/sms/domain/reminder_text.dart';
 import 'package:al_savdogar/features/sms/domain/sms_sender.dart';
 import 'package:al_savdogar/features/sms/domain/sms_template.dart';
 
-class FakeSender implements SmsSender {
-  FakeSender([this.nextResult = const SmsSendResult.sent()]);
-
-  SmsSendResult nextResult;
-  final sent = <({String phone, String body, int? sim})>[];
-  bool throwOnSend = false;
-
-  @override
-  bool get silent => true;
-  @override
-  bool get supportsSimSelection => true;
-  @override
-  Future<SmsPermissions> permissions() async => const SmsPermissions(canSend: true, canListSims: true);
-  @override
-  Future<SmsPermissions> requestPermissions() => permissions();
-  @override
-  Future<List<SimInfo>> listSims() async => const [];
-  @override
-  Future<void> openAppSettings() async {}
-
-  @override
-  Future<SmsSendResult> send({
-    required String phone,
-    required String body,
-    int? subscriptionId,
-  }) async {
-    if (throwOnSend) throw StateError('modem exploded');
-    sent.add((phone: phone, body: body, sim: subscriptionId));
-    return nextResult;
-  }
-}
+import '../../helpers/fake_sms_sender.dart';
 
 void main() {
   late AppDatabase db;
@@ -118,7 +88,7 @@ void main() {
   group('SmsService', () {
     test('успешная отправка уходит отправителю с SIM и пишется в журнал', () async {
       final id = await newDebtor();
-      final sender = FakeSender();
+      final sender = FakeSmsSender();
       final service = SmsService(sender: sender, log: SmsLogRepository(db));
 
       final result = await service.send(
@@ -133,7 +103,7 @@ void main() {
     test('ошибка отправителя сохраняется в журнале', () async {
       final id = await newDebtor();
       final service = SmsService(
-          sender: FakeSender(const SmsSendResult.failed('no_service')),
+          sender: FakeSmsSender(nextResult: const SmsSendResult.failed('no_service')),
           log: SmsLogRepository(db));
 
       final result = await service.send(debtorId: id, phone: '+998901234567', body: 'x');
@@ -145,7 +115,7 @@ void main() {
 
     test('исключение отправителя превращается в failed и тоже логируется', () async {
       final id = await newDebtor();
-      final sender = FakeSender()..throwOnSend = true;
+      final sender = FakeSmsSender()..throwOnSend = true;
       final service = SmsService(sender: sender, log: SmsLogRepository(db));
 
       final result = await service.send(debtorId: id, phone: '+998901234567', body: 'x');
@@ -158,7 +128,7 @@ void main() {
     test('окно SMS (iOS): статус composerOpened не считается ошибкой', () async {
       final id = await newDebtor();
       final service = SmsService(
-          sender: FakeSender(const SmsSendResult(SmsStatus.composerOpened)),
+          sender: FakeSmsSender(nextResult: const SmsSendResult(SmsStatus.composerOpened)),
           log: SmsLogRepository(db));
 
       final result = await service.send(debtorId: id, phone: '+998901234567', body: 'x');

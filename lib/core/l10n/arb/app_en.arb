@@ -89,5 +89,135 @@
   "settingValueError": "Enter a positive number",
   "searchHint": "Search by name or phone",
   "searchNoResults": "Nothing found",
-  "searchClear": "Clear"
+  "searchClear": "Clear",
+  "smsReminderTitle": "SMS reminder",
+  "smsNoPhone": "This debtor has no phone number",
+  "smsLanguageLabel": "Message language",
+  "smsDueDateLabel": "Pay by",
+  "smsSimLabel": "Send from",
+  "smsPreviewLabel": "Message",
+  "smsLengthInfo": "{chars} characters · {parts} SMS",
+  "@smsLengthInfo": {
+    "placeholders": {
+      "chars": {
+        "type": "int"
+      },
+      "parts": {
+        "type": "int"
+      }
+    }
+  },
+  "smsSendButton": "Send SMS",
+  "smsOpenComposerButton": "Open SMS app",
+  "smsSentOk": "SMS sent",
+  "smsComposerOpened": "SMS app opened — confirm sending there",
+  "smsFailed": "SMS not sent: {reason}",
+  "@smsFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "smsReasonNoPermission": "no SMS permission",
+  "smsReasonNoService": "no network",
+  "smsReasonRadioOff": "airplane mode is on",
+  "smsReasonTimeout": "timed out",
+  "smsReasonOther": "send error",
+  "smsPermissionTitle": "Allow sending SMS",
+  "smsPermissionBody": "The app sends reminders from your SIM card. Allow SMS access when your phone asks.",
+  "smsPermissionSettingsBody": "SMS access is blocked. Open settings and allow “SMS” for this app.",
+  "openSettingsButton": "Open settings",
+  "smsLogTitle": "SMS history",
+  "smsLogEmpty": "No SMS sent yet",
+  "smsStatusSent": "Sent",
+  "smsStatusFailed": "Failed",
+  "smsStatusComposer": "Opened in SMS app",
+  "bulkSmsTitle": "Bulk reminders",
+  "bulkSelectAll": "All",
+  "bulkSelectOverdue": "Overdue",
+  "bulkSelectNone": "None",
+  "bulkPauseLabel": "Pause between SMS: {seconds} s",
+  "@bulkPauseLabel": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkNoRecipients": "No debtors with a debt and a phone number",
+  "bulkSendButton": "Send {count} SMS",
+  "@bulkSendButton": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkConfirmTitle": "Send {count} SMS?",
+  "@bulkConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkConfirmBody": "About {parts} SMS parts in total, {seconds} s pause between messages. Your carrier’s rates apply.",
+  "@bulkConfirmBody": {
+    "placeholders": {
+      "parts": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkSending": "Sending…",
+  "bulkProgress": "{done} of {total}",
+  "@bulkProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkSentCount": "Sent: {count}",
+  "@bulkSentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkFailedCount": "Failed: {count}",
+  "@bulkFailedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkStop": "Stop",
+  "bulkDone": "Done",
+  "bulkStopped": "Stopped",
+  "bulkFinished": "Finished",
+  "bulkComposerUnsupported": "Bulk sending needs direct SMS access, which is not available on this device. Send reminders from the debtor’s card.",
+  "smsTemplatesTitle": "SMS templates",
+  "smsTemplateEdited": "Edited",
+  "smsTemplateReset": "Reset to default",
+  "smsTemplateVariables": "Insert variable",
+  "smsTemplatePreview": "Preview",
+  "smsTemplateUnknown": "Unknown variables: {names}",
+  "@smsTemplateUnknown": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "smsTemplateEmpty": "Template cannot be empty"
 }

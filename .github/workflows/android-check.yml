@@ -37,5 +37,6 @@ jobs:
       - run: flutter analyze
       - run: flutter test
 
-      - name: Build debug APK (compiles Kotlin and Gradle config)
-        run: flutter build apk --debug --target-platform android-arm64
+      # Release, как на main (R8, lint), но без подписи: подпись — только в build-apk.yml.
+      - name: Build release APK (compiles Kotlin, runs R8 and lint)
+        run: flutter build apk --release --target-platform android-arm64

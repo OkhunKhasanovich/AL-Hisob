@@ -136,4 +136,18 @@ void main() {
     await runner.run([item(1), item(2)]).toList();
     expect(delays, 0);
   });
+
+  test('пауза по умолчанию (реальный таймер) прерывается отменой', () async {
+    final runner = BulkSmsRunner(
+      pause: const Duration(hours: 1),
+      send: (_) async => const SmsSendResult.sent(),
+    );
+    final future = runner.run([item(1), item(2)]).toList();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    runner.cancel();
+    final events = await future.timeout(const Duration(seconds: 5));
+
+    expect(events.last.cancelled, isTrue);
+    expect(events.last.sent, 1);
+  });
 }

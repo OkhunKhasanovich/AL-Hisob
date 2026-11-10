@@ -11,6 +11,8 @@ import '../../../core/utils/money.dart';
 import '../../../core/utils/phone.dart';
 import '../data/debtors_repository.dart';
 import '../domain/debt_summary.dart';
+import '../../sms/presentation/send_sms_sheet.dart';
+import '../../sms/presentation/sms_log_section.dart';
 import 'balance_style.dart';
 import 'debtor_avatar.dart';
 import 'debts_providers.dart';
@@ -152,6 +154,21 @@ class _DetailsContent extends ConsumerWidget {
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () {
+              if (summary.phones.isEmpty) {
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(SnackBar(content: Text(l10n.smsNoPhone)));
+              } else {
+                showSendSmsSheet(context, summary);
+              }
+            },
+            icon: const Icon(Icons.sms_rounded),
+            label: Text(l10n.smsReminderTitle),
+            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+          ),
           if (_hasInfo(summary)) ...[
             const SizedBox(height: 12),
             Card(
@@ -187,6 +204,8 @@ class _DetailsContent extends ConsumerWidget {
             )
           else
             for (final t in details.transactions) _TransactionTile(transaction: t),
+          const SizedBox(height: 24),
+          SmsLogSection(debtorId: d.id),
         ],
       ),
     );

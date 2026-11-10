@@ -9,6 +9,8 @@ import '../../features/more/more_page.dart';
 import '../../features/onboarding/onboarding_page.dart';
 import '../../features/orders/orders_page.dart';
 import '../../features/shell/home_shell.dart';
+import '../../features/sms/presentation/bulk_sms_page.dart';
+import '../../features/sms/presentation/sms_templates_page.dart';
 import '../../features/splash/splash_page.dart';
 import 'routes.dart';
 
@@ -35,6 +37,14 @@ GoRouter createRouter({String initialLocation = Routes.splash}) {
           transitionsBuilder: (context, animation, _, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
+      ),
+      GoRoute(
+        path: Routes.bulkSms,
+        builder: (_, _) => const BulkSmsPage(),
+      ),
+      GoRoute(
+        path: Routes.smsTemplates,
+        builder: (_, _) => const SmsTemplatesPage(),
       ),
       GoRoute(
         path: Routes.debtorNew,

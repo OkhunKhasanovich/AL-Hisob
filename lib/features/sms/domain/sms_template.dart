@@ -92,3 +92,15 @@ List<String> unknownPlaceholders(String template) => [
       for (final m in _placeholder.allMatches(template))
         if (SmsVariable.byAlias(m[1]!) == null) m[0]!,
     ];
+
+/// Как называется переменная в шаблоне на данном языке (то, что вставляет кнопка
+/// «Вставить переменную»). Совпадает с именами в [defaultSmsTemplates].
+const smsVariableTags = <String, Map<SmsVariable, String>>{
+  'ru': {SmsVariable.name: 'имя', SmsVariable.amount: 'сумма', SmsVariable.shop: 'магазин', SmsVariable.date: 'дата'},
+  'uz': {SmsVariable.name: 'ism', SmsVariable.amount: 'summa', SmsVariable.shop: 'dokon', SmsVariable.date: 'sana'},
+  'en': {SmsVariable.name: 'name', SmsVariable.amount: 'amount', SmsVariable.shop: 'shop', SmsVariable.date: 'date'},
+  'kaa': {SmsVariable.name: 'ati', SmsVariable.amount: 'summa', SmsVariable.shop: 'dokon', SmsVariable.date: 'sane'},
+};
+
+String variableTag(String language, SmsVariable variable) =>
+    '{${smsVariableTags[language]?[variable] ?? variable.primary}}';
