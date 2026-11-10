@@ -379,5 +379,8 @@
         "type": "int"
       }
     }
-  }
+  },
+  "updateOpenInBrowser": "Через браузер",
+  "unitKbPerSec": "КБ/с",
+  "unitMbPerSec": "МБ/с"
 }

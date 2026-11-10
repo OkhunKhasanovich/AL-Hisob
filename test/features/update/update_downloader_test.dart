@@ -300,6 +300,180 @@ void main() {
       expect(seen.last, (bytes.length, bytes.length));
     });
   });
+
+  group('параллельная загрузка блоками', () {
+    UpdateDownloader parallel({int connections = 4, int block = 50000, int maxAttempts = 4}) =>
+        UpdateDownloader(
+          directory: dir,
+          isAllowed: (_) => true,
+          maxAttempts: maxAttempts,
+          stallTimeout: const Duration(seconds: 3),
+          retryDelay: Duration.zero,
+          connections: connections,
+          blockSize: block,
+          parallelMinSize: 0,
+        );
+
+    var active = 0;
+    var maxActive = 0;
+
+    /// Отдаёт [bytes] по Range; [flaky] может испортить выбранный запрос.
+    void serveRanged(
+      String path, {
+      bool supportRange = true,
+      Future<bool> Function(HttpRequest request, int call)? flaky,
+    }) {
+      var call = 0;
+      server.requestRoutes[path] = (request) async {
+        call++;
+        if (flaky != null && await flaky(request, call)) return;
+        final response = request.response;
+        final range = request.headers.value(HttpHeaders.rangeHeader);
+        if (range == null || !supportRange) {
+          response.contentLength = bytes.length;
+          response.add(bytes);
+          await response.close();
+          return;
+        }
+        final m = RegExp(r'bytes=(\d+)-(\d+)').firstMatch(range)!;
+        final start = int.parse(m.group(1)!);
+        final end = int.parse(m.group(2)!).clamp(0, bytes.length - 1);
+        response.statusCode = HttpStatus.partialContent;
+        response.headers.set(HttpHeaders.contentRangeHeader, 'bytes $start-$end/${bytes.length}');
+        response.contentLength = end - start + 1;
+        active++;
+        if (active > maxActive) maxActive = active;
+        await Future<void>.delayed(const Duration(milliseconds: 25));
+        response.add(bytes.sublist(start, end + 1));
+        await response.close();
+        active--;
+      };
+    }
+
+    setUp(() {
+      active = 0;
+      maxActive = 0;
+    });
+
+    test('качает несколькими соединениями сразу; файл собран верно, прогресс не убывает', () async {
+      serveRanged('/p.apk');
+      final progress = <double>[];
+      final file = await parallel().download(info(path: '/p.apk'), onProgress: progress.add);
+
+      expect(await file.readAsBytes(), bytes);
+      expect(maxActive, greaterThan(1), reason: 'запросы шли одновременно');
+      final starts = server.rangeHeaders.whereType<String>().toSet();
+      expect(starts.length, greaterThanOrEqualTo((bytes.length / 50000).ceil()), reason: 'каждый блок — свой Range');
+      expect(progress.last, 1);
+      expect(progress, orderedEquals([...progress]..sort()));
+      expect(
+        (await dir.list().toList()).map((e) => e.uri.pathSegments.last).toList(),
+        ['al-savdogar-7.apk'],
+        reason: 'служебные файлы убраны',
+      );
+    });
+
+    test('один блок упал (503) — повторяется, остальные не перекачиваются', () async {
+      serveRanged('/p2.apk', flaky: (request, call) async {
+        if (call == 3) {
+          request.response.statusCode = HttpStatus.serviceUnavailable;
+          await request.response.close();
+          return true;
+        }
+        return false;
+      });
+      var retries = 0;
+      final file =
+          await parallel().download(info(path: '/p2.apk'), onRetry: (_) => retries++);
+      expect(await file.readAsBytes(), bytes);
+      expect(retries, 1);
+    });
+
+    test('обрыв посреди блока: блок качается заново, файл целый', () async {
+      serveRanged('/p3.apk', flaky: (request, call) async {
+        if (call == 2) {
+          final body = bytes.sublist(0, 20000);
+          await _cutAfterHalf(request.response, body);
+          return true;
+        }
+        return false;
+      });
+      final file = await parallel().download(info(path: '/p3.apk'));
+      expect(await file.readAsBytes(), bytes);
+    });
+
+    test('сервер игнорирует Range (200): без падения качает одним потоком', () async {
+      serveRanged('/p4.apk', supportRange: false);
+      final file = await parallel().download(info(path: '/p4.apk'));
+      expect(await file.readAsBytes(), bytes);
+    });
+
+    test('редирект проходится один раз, а блоки идут по итоговому адресу', () async {
+      serveRanged('/real.apk');
+      server.redirect('/go.apk', '/real.apk');
+      final file = await parallel().download(info(path: '/go.apk'));
+      expect(await file.readAsBytes(), bytes);
+      expect(server.requests.where((p) => p == '/go.apk').length, 1);
+    });
+
+    test('ссылка CDN отозвана (403): адрес находится заново и загрузка заканчивается', () async {
+      var revoked = false;
+      serveRanged('/real2.apk', flaky: (request, call) async {
+        if (call == 4 && !revoked) {
+          revoked = true;
+          request.response.statusCode = HttpStatus.forbidden;
+          await request.response.close();
+          return true;
+        }
+        return false;
+      });
+      server.redirect('/go2.apk', '/real2.apk');
+      final file = await parallel().download(info(path: '/go2.apk'));
+      expect(await file.readAsBytes(), bytes);
+      expect(server.requests.where((p) => p == '/go2.apk').length, 2, reason: 'один раз заново');
+    });
+
+    test('прерванная загрузка продолжается: готовые блоки не качаются снова', () async {
+      serveRanged('/p5.apk');
+      var chunks = 0;
+      await expectLater(
+        parallel(connections: 2).download(
+          info(path: '/p5.apk'),
+          onBytes: (_, _) => chunks++,
+          isCancelled: () => chunks >= 6,
+        ),
+        throwsA(isA<UpdateCancelledException>()),
+      );
+      final firstRun = server.rangeHeaders.length;
+      expect(File('${dir.path}/al-savdogar-7.apk.part.blocks').existsSync(), isTrue);
+
+      final file = await parallel(connections: 2).download(info(path: '/p5.apk'));
+      expect(await file.readAsBytes(), bytes);
+      final totalBlocks = (bytes.length / 50000).ceil();
+      expect(server.rangeHeaders.length - firstRun, lessThan(totalBlocks), reason: 'часть блоков уже была');
+    });
+
+    test('блоки есть всегда: SHA не совпал — ошибка проверки и чистая папка', () async {
+      serveRanged('/p6.apk');
+      await expectLater(
+        parallel().download(info(path: '/p6.apk', sha: 'b' * 64)),
+        throwsA(isA<UpdateVerifyException>()),
+      );
+      expect(await dir.list().toList(), isEmpty);
+    });
+
+    test('постоянные ошибки блока: сдаётся с UpdateDownloadException', () async {
+      serveRanged('/p7.apk', flaky: (request, call) async {
+        request.response.statusCode = HttpStatus.serviceUnavailable;
+        await request.response.close();
+        return true;
+      });
+      await expectLater(
+        parallel(maxAttempts: 2).download(info(path: '/p7.apk')),
+        throwsA(isA<UpdateDownloadException>()),
+      );
+    });
+  });
 }
 
 /// Обещает [body] целиком, отдаёт половину и рвёт соединение — как пропавшая сеть.

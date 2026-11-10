@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../core/settings/settings_providers.dart';
@@ -36,6 +37,11 @@ final updateDownloaderProvider = Provider<Future<UpdateDownloader> Function()>(
     final cache = await getTemporaryDirectory();
     return UpdateDownloader(directory: Directory('${cache.path}/updates'));
   },
+);
+
+/// Открывает адрес в браузере (в тестах заменяется).
+final externalUrlLauncherProvider = Provider<Future<bool> Function(Uri)>(
+  (ref) => (uri) => launchUrl(uri, mode: LaunchMode.externalApplication),
 );
 
 final updatePrefsProvider = Provider<UpdatePrefs>(
@@ -78,6 +84,7 @@ class UpdateState {
     this.receivedBytes = 0,
     this.totalBytes,
     this.retry = 0,
+    this.bytesPerSecond = 0,
   });
 
   final UpdatePhase phase;
@@ -96,6 +103,9 @@ class UpdateState {
 
   /// Номер повторной попытки после обрыва связи; 0 — всё идёт гладко.
   final int retry;
+
+  /// Сглаженная скорость скачивания, байт/с (0 — пока неизвестна).
+  final double bytesPerSecond;
 }
 
 class UpdateController extends Notifier<UpdateState> {
@@ -196,10 +206,19 @@ class UpdateController extends Notifier<UpdateState> {
     // Данные приходят кусками по десятки КБ: обновляем состояние не чаще ~7 раз в секунду.
     final clock = Stopwatch()..start();
     var lastEmit = -1000;
+    var lastBytes = 0;
+    var speed = 0.0;
     void emit({required double progress, required int received, int? total, int retry = 0}) {
       final now = clock.elapsedMilliseconds;
       final finished = total != null && received >= total;
       if (!finished && retry == 0 && now - lastEmit < 150) return;
+      // Скорость: мгновенная между обновлениями, сглаженная, чтобы цифра не прыгала.
+      final dt = now - lastEmit;
+      if (lastEmit >= 0 && dt > 0 && received >= lastBytes) {
+        final instant = (received - lastBytes) * 1000 / dt;
+        speed = speed == 0 ? instant : speed * 0.7 + instant * 0.3;
+      }
+      lastBytes = received;
       lastEmit = now;
       state = UpdateState(
         phase: UpdatePhase.downloading,
@@ -208,6 +227,7 @@ class UpdateController extends Notifier<UpdateState> {
         receivedBytes: received,
         totalBytes: total,
         retry: retry,
+        bytesPerSecond: speed,
       );
     }
 
@@ -238,6 +258,15 @@ class UpdateController extends Notifier<UpdateState> {
       state = UpdateState(phase: UpdatePhase.error, info: info, errorKind: UpdateErrorKind.download);
     }
     return null;
+  }
+
+  /// Запасной путь: открыть файл в браузере (он качает быстро и сам умеет докачивать), а потом
+  /// открыть скачанный APK из «Загрузок». Текущая загрузка в приложении останавливается.
+  Future<void> openInBrowser() async {
+    final info = state.info;
+    if (info == null) return;
+    cancelDownload();
+    await ref.read(externalUrlLauncherProvider)(info.apkUrl);
   }
 
   /// «Отмена» в полосе загрузки: останавливает скачивание. Недокачанное остаётся на диске,

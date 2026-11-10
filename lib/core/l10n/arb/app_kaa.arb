@@ -379,5 +379,8 @@
         "type": "int"
       }
     }
-  }
+  },
+  "updateOpenInBrowser": "Brauzer arqalı",
+  "unitKbPerSec": "KB/s",
+  "unitMbPerSec": "MB/s"
 }

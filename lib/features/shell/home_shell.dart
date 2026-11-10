@@ -154,6 +154,13 @@ class _DownloadStrip extends ConsumerWidget {
                             ),
                           ),
                         ),
+                        IconButton(
+                          tooltip: context.l10n.updateOpenInBrowser,
+                          visualDensity: VisualDensity.compact,
+                          iconSize: 20,
+                          icon: const Icon(Icons.open_in_browser_rounded),
+                          onPressed: ref.read(updateControllerProvider.notifier).openInBrowser,
+                        ),
                         TextButton(
                           onPressed: ref.read(updateControllerProvider.notifier).cancelDownload,
                           style: TextButton.styleFrom(
@@ -180,5 +187,15 @@ String _statusText(BuildContext context, UpdateState state) {
   final percent = (state.progress * 100).round();
   final total = state.totalBytes;
   if (total == null || total <= 0) return l10n.updateDownloading(percent);
-  return l10n.updateDownloadingBytes(percent, _megabytes(state.receivedBytes), _megabytes(total));
+  final text = l10n.updateDownloadingBytes(
+    percent,
+    _megabytes(state.receivedBytes),
+    _megabytes(total),
+  );
+  final bps = state.bytesPerSecond;
+  if (bps <= 0) return text;
+  final speed = bps >= 1024 * 1024
+      ? '${(bps / (1024 * 1024)).toStringAsFixed(1)} ${l10n.unitMbPerSec}'
+      : '${(bps / 1024).round()} ${l10n.unitKbPerSec}';
+  return '$text · $speed';
 }

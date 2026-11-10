@@ -648,5 +648,8 @@
         "type": "int"
       }
     }
-  }
+  },
+  "updateOpenInBrowser": "Via browser",
+  "unitKbPerSec": "KB/s",
+  "unitMbPerSec": "MB/s"
 }

@@ -307,6 +307,58 @@ void main() {
       expect(installer.installed, isEmpty);
     });
 
+    test('скорость загрузки считается и попадает в состояние', () async {
+      server.requestRoutes['/apk'] = (request) async {
+        request.response.contentLength = apk.length;
+        for (var i = 0; i < apk.length; i += 5000) {
+          request.response.add(apk.sublist(i, i + 5000 > apk.length ? apk.length : i + 5000));
+          await request.response.flush();
+          await Future<void>.delayed(const Duration(milliseconds: 25));
+        }
+        await request.response.close();
+      };
+      latest = releaseOnServer(9);
+      makeContainer();
+      final speeds = <double>[];
+      container.listen(updateControllerProvider, (_, next) {
+        if (next.phase == UpdatePhase.downloading) speeds.add(next.bytesPerSecond);
+      });
+      await controller().check();
+      await controller().download();
+
+      expect(speeds.any((v) => v > 0), isTrue);
+      expect(speeds.every((v) => v.isFinite && v >= 0), isTrue);
+    });
+
+    test('«Через браузер»: открывает адрес файла и останавливает загрузку в приложении', () async {
+      final opened = <Uri>[];
+      latest = releaseOnServer(9);
+      makeContainer();
+      container = ProviderContainer(overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        currentBuildProvider.overrideWithValue(5),
+        apkInstallerProvider.overrideWithValue(installer),
+        updateCheckerProvider.overrideWithValue(_RedirectingChecker(
+          currentBuild: 5,
+          abis: installer.supportedAbis,
+          target: server.url('/apk'),
+          fetch: (_) async => latest!,
+        )),
+        updateDownloaderProvider.overrideWithValue(
+          () async => UpdateDownloader(directory: dir, isAllowed: (_) => true),
+        ),
+        externalUrlLauncherProvider.overrideWithValue((uri) async {
+          opened.add(uri);
+          return true;
+        }),
+      ]);
+      await controller().check();
+      await controller().openInBrowser();
+
+      expect(opened, hasLength(1));
+      expect(opened.single.path, '/apk', reason: 'адрес файла из релиза');
+    });
+
     test('в ready проверка и «Позже» ничего не сбрасывают', () async {
       latest = releaseOnServer(9);
       makeContainer();

@@ -37,6 +37,9 @@ class UpdateDownloader {
     this.maxAttempts = 12,
     this.stallTimeout = const Duration(seconds: 20),
     this.retryDelay = const Duration(seconds: 2),
+    this.connections = 6,
+    this.blockSize = 1024 * 1024,
+    this.parallelMinSize = 2 * 1024 * 1024,
     HttpClient Function()? clientFactory,
   })  : _isAllowed = isAllowed ?? isTrustedUpdateHost,
         _clientFactory = clientFactory ?? _defaultClient;
@@ -50,6 +53,17 @@ class UpdateDownloader {
 
   /// Пауза перед повтором; растёт с каждой неудачной попыткой, но не больше 8 секунд.
   final Duration retryDelay;
+
+  /// Сколько соединений качают файл одновременно. Провайдеры нередко режут скорость одного
+  /// соединения (браузеры потому и качают большие файлы в несколько потоков).
+  final int connections;
+
+  /// Файл делится на блоки такого размера; свободное соединение берёт следующий блок,
+  /// поэтому медленное соединение не тормозит остальные.
+  final int blockSize;
+
+  /// Файлы меньше этого размера качаются одним потоком.
+  final int parallelMinSize;
   final HttpClient Function() _clientFactory;
 
   static HttpClient _defaultClient() => HttpClient()
@@ -76,7 +90,10 @@ class UpdateDownloader {
 
     // Чистим старые загрузки, кроме нужной (и её недокачанной части).
     await for (final entity in directory.list()) {
-      if (entity is File && entity.path != target.path && entity.path != part.path) {
+      if (entity is File &&
+          entity.path != target.path &&
+          entity.path != part.path &&
+          entity.path != '${part.path}.blocks') {
         try {
           await entity.delete();
         } on FileSystemException {
@@ -93,8 +110,29 @@ class UpdateDownloader {
       await target.delete();
     }
 
+    var parallelDone = false;
+    final size = info.size;
+    if (connections > 1 && size != null && size >= parallelMinSize) {
+      try {
+        await _downloadParallel(
+          part,
+          info,
+          size,
+          onProgress: onProgress,
+          onBytes: onBytes,
+          onRetry: onRetry,
+          isCancelled: isCancelled,
+        );
+        parallelDone = true;
+      } on _RangeNotSupported {
+        // Сервер не умеет отдавать части: качаем одним потоком.
+        await _deleteQuietly(part);
+        await _deleteQuietly(File('${part.path}.blocks'));
+      }
+    }
+
     var failures = 0;
-    while (true) {
+    while (!parallelDone) {
       if (isCancelled?.call() ?? false) {
         throw UpdateCancelledException();
       }
@@ -115,8 +153,10 @@ class UpdateDownloader {
 
     if (!await _verify(part, info)) {
       await _deleteQuietly(part);
+      await _deleteQuietly(File('${part.path}.blocks'));
       throw UpdateVerifyException('size or checksum mismatch');
     }
+    await _deleteQuietly(File('${part.path}.blocks'));
     await part.rename(target.path);
     onProgress?.call(1);
     return target;
@@ -127,6 +167,257 @@ class UpdateDownloader {
     final delay = retryDelay * factor;
     const cap = Duration(seconds: 8);
     return delay > cap ? cap : delay;
+  }
+
+  /// Качает файл блоками по [connections] соединений сразу, записывая каждый блок на своё место
+  /// в `.part`. Какие блоки уже готовы, хранится в `.blocks`, поэтому после обрыва или
+  /// перезапуска приложения докачиваются только недостающие блоки.
+  Future<void> _downloadParallel(
+    File part,
+    UpdateInfo info,
+    int size, {
+    void Function(double fraction)? onProgress,
+    void Function(int received, int? total)? onBytes,
+    void Function(int attempt)? onRetry,
+    bool Function()? isCancelled,
+  }) async {
+    final blocksFile = File('${part.path}.blocks');
+    final blockCount = (size + blockSize - 1) ~/ blockSize;
+    int blockLength(int i) => i == blockCount - 1 ? size - i * blockSize : blockSize;
+
+    // Что уже скачано в прошлый раз (годится, только если файл нужного размера).
+    final done = <int>{};
+    if (await part.exists() && await part.length() == size && await blocksFile.exists()) {
+      for (final v in (await blocksFile.readAsString()).split(',')) {
+        final i = int.tryParse(v);
+        if (i != null && i >= 0 && i < blockCount) done.add(i);
+      }
+    } else {
+      await _deleteQuietly(part);
+      await _deleteQuietly(blocksFile);
+      final raf = await part.open(mode: FileMode.write);
+      await raf.truncate(size);
+      await raf.close();
+    }
+
+    var doneBytes = done.fold<int>(0, (sum, i) => sum + blockLength(i));
+    final inFlight = <int, int>{}; // блок → сколько байт уже получено в этой попытке
+    void report() {
+      final received = doneBytes + inFlight.values.fold<int>(0, (a, b) => a + b);
+      onProgress?.call((received / size).clamp(0.0, 1.0));
+      onBytes?.call(received, size);
+    }
+
+    final pending = [for (var i = 0; i < blockCount; i++) if (!done.contains(i)) i];
+    if (pending.isEmpty) return;
+    report();
+
+    final client = _clientFactory()..maxConnectionsPerHost = connections;
+    try {
+      // Редирект тоже может споткнуться о сеть: повторяем так же, как и блоки.
+      Future<Uri> resolveWithRetries() async {
+        var failures = 0;
+        while (true) {
+          if (isCancelled?.call() ?? false) throw UpdateCancelledException();
+          try {
+            return await _resolve(client, info.apkUrl);
+          } on _Retryable catch (e) {
+            failures++;
+            if (failures >= maxAttempts) {
+              throw UpdateDownloadException('gave up resolving url: ${e.reason}');
+            }
+            onRetry?.call(failures);
+            await Future<void>.delayed(_backoff(failures));
+          }
+        }
+      }
+
+      var url = await resolveWithRetries();
+      Future<Uri>? reresolving;
+      Future<Uri> refreshUrl(Uri stale) {
+        // Ссылка CDN временная: если её отозвали, заново проходим редирект (один раз для всех).
+        if (url != stale) return Future.value(url);
+        return reresolving ??= resolveWithRetries().then((fresh) {
+          url = fresh;
+          return fresh;
+        }).whenComplete(() => reresolving = null);
+      }
+
+      var next = 0;
+      var aborted = false;
+      var chain = Future<void>.value(); // записи в .blocks — по одной
+
+      Future<void> worker() async {
+        final raf = await part.open(mode: FileMode.append);
+        try {
+          while (!aborted && next < pending.length) {
+            if (isCancelled?.call() ?? false) throw UpdateCancelledException();
+            final block = pending[next++];
+            final start = block * blockSize;
+            final length = blockLength(block);
+
+            var failures = 0;
+            while (true) {
+              inFlight[block] = 0;
+              try {
+                await _fetchBlock(
+                  client,
+                  url,
+                  raf,
+                  start,
+                  length,
+                  isAborted: () => aborted || (isCancelled?.call() ?? false),
+                  onChunk: (n) {
+                    inFlight[block] = (inFlight[block] ?? 0) + n;
+                    report();
+                  },
+                  onExpired: refreshUrl,
+                  onNewUrl: (u) => url = u,
+                );
+                break;
+              } on _Retryable catch (e) {
+                inFlight.remove(block);
+                failures++;
+                if (failures >= maxAttempts) {
+                  throw UpdateDownloadException('gave up on block $block: ${e.reason}');
+                }
+                onRetry?.call(failures);
+                await Future<void>.delayed(_backoff(failures));
+              }
+            }
+
+            inFlight.remove(block);
+            done.add(block);
+            doneBytes += length;
+            report();
+            // Список готовых блоков записываем по очереди, чтобы файл не перемешался.
+            chain = chain.then((_) => blocksFile.writeAsString(done.join(',')));
+          }
+        } catch (_) {
+          aborted = true; // остальные соединения тоже останавливаются
+          rethrow;
+        } finally {
+          await raf.close();
+        }
+      }
+
+      final results = await Future.wait(
+        [for (var i = 0; i < connections && i < pending.length; i++) worker()],
+        eagerError: false,
+        // Ошибки соберём ниже, чтобы выбрать главную.
+      ).then<Object?>((_) => null).catchError((Object e) => e);
+      await chain;
+      if (results != null) throw results;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  /// Один блок: запрос с `Range`, запись в файл по смещению. Бросает [_Retryable],
+  /// если блок стоит попробовать снова, и [_RangeNotSupported], если сервер игнорирует Range.
+  Future<void> _fetchBlock(
+    HttpClient client,
+    Uri url,
+    RandomAccessFile raf,
+    int start,
+    int length, {
+    required bool Function() isAborted,
+    required void Function(int bytes) onChunk,
+    required Future<Uri> Function(Uri stale) onExpired,
+    required void Function(Uri fresh) onNewUrl,
+  }) async {
+    try {
+      final request = await client.getUrl(url).timeout(stallTimeout);
+      request.headers
+        ..set(HttpHeaders.userAgentHeader, 'al-savdogar-updater')
+        ..set(HttpHeaders.acceptEncodingHeader, 'identity')
+        ..set(HttpHeaders.rangeHeader, 'bytes=$start-${start + length - 1}');
+      final response = await request.close().timeout(stallTimeout);
+      final status = response.statusCode;
+
+      if (status == HttpStatus.ok) {
+        // Range проигнорирован: целиком файл по частям не собрать.
+        throw _RangeNotSupported();
+      }
+      if (status == HttpStatus.forbidden ||
+          status == HttpStatus.unauthorized ||
+          status == HttpStatus.gone) {
+        await response.drain<void>();
+        final fresh = await onExpired(url); // временная ссылка устарела
+        onNewUrl(fresh);
+        throw _Retryable('link expired');
+      }
+      if (status != HttpStatus.partialContent) {
+        await response.drain<void>();
+        if (status >= 500 || status == HttpStatus.tooManyRequests) throw _Retryable('HTTP $status');
+        throw UpdateDownloadException('HTTP $status');
+      }
+
+      var position = start;
+      var received = 0;
+      await for (final chunk in response.timeout(stallTimeout)) {
+        if (isAborted()) throw UpdateCancelledException();
+        await raf.setPosition(position);
+        await raf.writeFrom(chunk);
+        position += chunk.length;
+        received += chunk.length;
+        onChunk(chunk.length);
+      }
+      if (received != length) throw _Retryable('block cut short ($received of $length)');
+    } on TimeoutException {
+      throw _Retryable('stalled');
+    } on SocketException catch (e) {
+      throw _Retryable('network: ${e.message}');
+    } on HttpException catch (e) {
+      throw _Retryable('http: ${e.message}');
+    } on TlsException catch (e) {
+      throw _Retryable('tls: ${e.message}');
+    }
+  }
+
+  /// Проходит редиректы вручную (GitHub → CDN), проверяя каждый адрес, и убеждается,
+  /// что итоговый сервер понимает `Range`. Возвращает адрес, с которого можно качать блоки.
+  Future<Uri> _resolve(HttpClient client, Uri start) async {
+    var current = start;
+    for (var hop = 0; hop < 6; hop++) {
+      if (!_isAllowed(current)) {
+        throw UpdateDownloadException('untrusted url: ${current.host}');
+      }
+      try {
+        final request = await client.getUrl(current).timeout(stallTimeout);
+        request.followRedirects = false;
+        request.headers
+          ..set(HttpHeaders.userAgentHeader, 'al-savdogar-updater')
+          ..set(HttpHeaders.acceptEncodingHeader, 'identity')
+          ..set(HttpHeaders.rangeHeader, 'bytes=0-0');
+        final response = await request.close().timeout(stallTimeout);
+        final status = response.statusCode;
+        final location = response.headers.value(HttpHeaders.locationHeader);
+
+        if (status >= 300 && status < 400 && location != null) {
+          await response.drain<void>();
+          current = current.resolve(location);
+          continue;
+        }
+        if (status == HttpStatus.partialContent) {
+          await response.drain<void>();
+          return current;
+        }
+        if (status == HttpStatus.ok) throw _RangeNotSupported();
+        await response.drain<void>();
+        if (status >= 500 || status == HttpStatus.tooManyRequests) throw _Retryable('HTTP $status');
+        throw UpdateDownloadException('HTTP $status');
+      } on TimeoutException {
+        throw _Retryable('stalled');
+      } on SocketException catch (e) {
+        throw _Retryable('network: ${e.message}');
+      } on HttpException catch (e) {
+        throw _Retryable('http: ${e.message}');
+      } on TlsException catch (e) {
+        throw _Retryable('tls: ${e.message}');
+      }
+    }
+    throw UpdateDownloadException('too many redirects');
   }
 
   Future<int> _length(File file) async => await file.exists() ? await file.length() : 0;
@@ -237,3 +528,6 @@ class _Retryable implements Exception {
   _Retryable(this.reason);
   final String reason;
 }
+
+/// Сервер не поддерживает `Range`: блоками не скачать.
+class _RangeNotSupported implements Exception {}

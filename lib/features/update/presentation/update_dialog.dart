@@ -84,6 +84,14 @@ class UpdateDialog extends ConsumerWidget {
           actions: [
             TextButton(onPressed: controller.dismiss, child: Text(l10n.closeButton)),
             if (info != null)
+              TextButton(
+                onPressed: () {
+                  controller.openInBrowser();
+                  controller.dismiss();
+                },
+                child: Text(l10n.updateOpenInBrowser),
+              ),
+            if (info != null)
               FilledButton(
                 // Файл уже скачан (ошибка установки) — повторяем установку, иначе качаем заново.
                 onPressed: state.apkPath != null ? controller.install : controller.download,
@@ -122,6 +130,13 @@ class UpdateDialog extends ConsumerWidget {
           actions: [
             TextButton(onPressed: controller.skip, child: Text(l10n.updateSkip)),
             TextButton(onPressed: controller.dismiss, child: Text(l10n.updateLater)),
+            TextButton(
+              onPressed: () {
+                controller.openInBrowser();
+                controller.dismiss();
+              },
+              child: Text(l10n.updateOpenInBrowser),
+            ),
             FilledButton(onPressed: controller.download, child: Text(l10n.updateDownloadButton)),
           ],
         );
