@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:al_savdogar/core/database/app_database.dart';
 import 'package:al_savdogar/core/settings/settings_repository.dart';
+import 'package:al_savdogar/features/debts/domain/debt_filter.dart';
 
 void main() {
   late AppDatabase db;
@@ -29,6 +30,19 @@ void main() {
     final snapshot = await repo.load();
     expect(snapshot.locale, const Locale('kaa'));
     expect(snapshot.themeMode, ThemeMode.dark);
+  });
+
+  test('пороги долгов: значения по умолчанию и сохранение', () async {
+    var snapshot = await repo.load();
+    expect(snapshot.debtFilter.overdueDays, 30);
+    expect(snapshot.debtFilter.largeDebtThreshold, 1000000);
+
+    await repo.saveDebtFilter(
+      const DebtFilterConfig(overdueDays: 14, largeDebtThreshold: 5000000),
+    );
+    snapshot = await repo.load();
+    expect(snapshot.debtFilter.overdueDays, 14);
+    expect(snapshot.debtFilter.largeDebtThreshold, 5000000);
   });
 
   test('null сбрасывает язык на системный', () async {

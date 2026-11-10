@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/debts/domain/debt_filter.dart';
 import '../database/app_database.dart';
 import 'settings_repository.dart';
 
@@ -44,3 +45,20 @@ class ThemeModeController extends Notifier<ThemeMode> {
 
 final themeModeProvider =
     NotifierProvider<ThemeModeController, ThemeMode>(ThemeModeController.new);
+
+class DebtFilterConfigController extends Notifier<DebtFilterConfig> {
+  @override
+  DebtFilterConfig build() => ref.watch(initialSettingsProvider).debtFilter;
+
+  Future<void> update({int? overdueDays, int? largeDebtThreshold}) async {
+    state = DebtFilterConfig(
+      overdueDays: overdueDays ?? state.overdueDays,
+      largeDebtThreshold: largeDebtThreshold ?? state.largeDebtThreshold,
+    );
+    await ref.read(settingsRepositoryProvider).saveDebtFilter(state);
+  }
+}
+
+final debtFilterConfigProvider =
+    NotifierProvider<DebtFilterConfigController, DebtFilterConfig>(
+        DebtFilterConfigController.new);
