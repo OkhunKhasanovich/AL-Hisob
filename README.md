@@ -60,6 +60,8 @@ dart run drift_dev schema generate drift_schemas/ test/generated_migrations/
 
 > Отправка APK в Telegram сейчас **выключена** (приложение обновляется само). Включить: переменная
 > репозитория `SEND_APK_TO_TELEGRAM` = `true`. Сообщения о падении сборки по-прежнему приходят в Telegram.
+> Анализ и тесты в сборке на `main` отключены (они идут в `android-check.yml` на рабочей ветке);
+> включить: переменная `RUN_TESTS_ON_MAIN` = `true`.
 
 Workflow `.github/workflows/build-apk.yml` запускается на push в `main` и вручную
 (Actions → Build APK → Run workflow). Он прогоняет `analyze` и `test`, собирает
