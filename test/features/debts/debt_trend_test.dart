@@ -132,7 +132,7 @@ void main() {
 
   group('геометрия линии', () {
     test('начинается с 40% ширины и кончается у правого края, рост — вверх', () {
-      const size = Size(400, 140);
+      const size = Size(400, 68);
       final o = trendOffsets([0, 50, 100], size);
       expect(o.first.dx, closeTo(160, 1e-9));
       expect(o.last.dx, lessThanOrEqualTo(400));
@@ -141,7 +141,7 @@ void main() {
     });
 
     test('ровная линия — по центру', () {
-      final o = trendOffsets([5, 5, 5], const Size(400, 100));
+      final o = trendOffsets([5, 5, 5], const Size(400, 68));
       expect(o.map((e) => e.dy).toSet().length, 1);
     });
   });
@@ -196,6 +196,55 @@ void main() {
           reason: 'подпись периода — на 3/4 ширины');
       expect(period.dy - card.top, lessThan(40), reason: 'вверху карточки');
       expect(percent.dy, greaterThan(period.dy), reason: 'процент у конца линии, а не в шапке');
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('элементы карточки не накладываются друг на друга', (tester) async {
+      tester.view.physicalSize = const Size(1233, 1600);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      // Реальные шрифты уже тестового, поэтому масштабируем текст.
+      await tester.pumpWidget(MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(0.55)),
+        child: MaterialApp(
+          localizationsDelegates: appLocalizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+          home: const Scaffold(
+            body: DebtsOverviewCard(
+              overview: DebtsOverview(
+                totalOwed: 234221000,
+                debtorCount: 51,
+                overdueCount: 17,
+                overdueAmount: 0,
+              ),
+              trend: DebtTrend(points: [200, 200, 206, 205, 215, 222, 234]),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 1500));
+
+      final card = tester.getRect(find.byType(DebtsOverviewCard));
+      final amount = tester.getRect(find.textContaining('сум'));
+      final period = tester.getRect(find.text('за 7 дн.'));
+      final percent = tester.getRect(find.text('+17%'));
+      final debtors = tester.getRect(find.text('Должников: 51'));
+      final overdue = tester.getRect(find.text('Просрочено: 17'));
+
+      bool overlaps(Rect a, Rect b) => a.overlaps(b);
+      expect(overlaps(percent, period), isFalse, reason: 'процент и период');
+      expect(overlaps(percent, amount), isFalse, reason: 'процент и сумма');
+      expect(overlaps(period, amount), isFalse, reason: 'период и сумма');
+      expect(overlaps(debtors, overdue), isFalse);
+      // Сводка слева не заходит на линию (она начинается с 40% ширины, почти прозрачная).
+      final limit = card.left + card.width * 0.47;
+      expect(debtors.right, lessThanOrEqualTo(limit));
+      expect(overdue.right, lessThanOrEqualTo(limit));
+      // Всё внутри карточки.
+      for (final r in [amount, period, percent, debtors, overdue]) {
+        expect(card.contains(r.topLeft) && card.contains(r.bottomRight), isTrue);
+      }
       await tester.pumpWidget(const SizedBox.shrink());
     });
 

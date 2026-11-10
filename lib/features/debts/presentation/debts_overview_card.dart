@@ -6,8 +6,15 @@ import '../domain/debt_filter.dart';
 import '../domain/debt_trend.dart';
 import 'debt_trend_backdrop.dart';
 
-/// Верхняя карточка экрана «Долги»: сколько вам должны всего, сколько должников
-/// и сколько из них просрочено.
+/// Высота нижней полосы: слева сводка, справа график.
+const _bandHeight = 68.0;
+const _cardPadding = EdgeInsets.fromLTRB(20, 16, 20, 16);
+
+/// Верхняя карточка экрана «Долги»: сколько вам должны всего, динамика за неделю,
+/// сколько должников и сколько из них просрочено.
+///
+/// Раскладка не даёт элементам накладываться: сверху подпись и сумма, внизу слева —
+/// сводка, справа (с 40% ширины) — линия динамики.
 class DebtsOverviewCard extends StatelessWidget {
   const DebtsOverviewCard({super.key, required this.overview, this.trend});
 
@@ -18,44 +25,101 @@ class DebtsOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final scheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(28);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: radius,
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [scheme.primaryContainer, scheme.secondaryContainer],
           ),
+          border: Border.all(color: scheme.onPrimaryContainer.withValues(alpha: 0.08)),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: radius,
           child: Stack(
             children: [
-              // График — на заднем плане, под текстом.
-              if (trend != null) Positioned.fill(child: DebtTrendBackdrop(trend: trend!)),
-              _content(context, theme, scheme),
+              // Мягкий блик в левом верхнем углу — карточка не выглядит плоской.
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(-0.9, -1.1),
+                      radius: 1.1,
+                      colors: [
+                        scheme.onPrimaryContainer.withValues(alpha: 0.10),
+                        scheme.onPrimaryContainer.withValues(alpha: 0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (trend != null)
+                Positioned.fill(
+                  child: DebtTrendBackdrop(
+                    trend: trend!,
+                    bandHeight: _bandHeight,
+                    bottomInset: _cardPadding.bottom,
+                  ),
+                ),
+              _Content(overview: overview, hasChart: trend != null),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _content(BuildContext context, ThemeData theme, ColorScheme scheme) {
+class _Content extends StatelessWidget {
+  const _Content({required this.overview, required this.hasChart});
+
+  final DebtsOverview overview;
+  final bool hasChart;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    final stats = [
+      _Stat(
+        icon: Icons.groups_rounded,
+        text: l10n.debtsCountLabel(overview.debtorCount),
+        color: scheme.onPrimaryContainer,
+      ),
+      if (overview.overdueCount > 0)
+        _Stat(
+          icon: Icons.schedule_rounded,
+          text: l10n.debtsOverdueLabel(overview.overdueCount),
+          color: scheme.error,
+          emphasize: true,
+        ),
+    ];
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      padding: _cardPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            l10n.debtsTotalLabel,
-            style: theme.textTheme.labelLarge?.copyWith(color: scheme.onPrimaryContainer),
+          SizedBox(
+            height: 20,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                l10n.debtsTotalLabel,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: scheme.onPrimaryContainer.withValues(alpha: 0.85),
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 2),
           TweenAnimationBuilder<double>(
@@ -83,60 +147,83 @@ class DebtsOverviewCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              _Pill(
-                icon: Icons.groups_rounded,
-                text: l10n.debtsCountLabel(overview.debtorCount),
-                background: scheme.surface.withValues(alpha: 0.55),
-                foreground: scheme.onSurface,
-              ),
-              if (overview.overdueCount > 0)
-                _Pill(
-                  icon: Icons.schedule_rounded,
-                  text: l10n.debtsOverdueLabel(overview.overdueCount),
-                  background: scheme.errorContainer,
-                  foreground: scheme.onErrorContainer,
-                ),
-            ],
-          ),
+          const SizedBox(height: 8),
+          if (hasChart)
+            // Слева — сводка столбиком, правее 40% ширины карточки начинается график.
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final cardWidth = constraints.maxWidth + _cardPadding.horizontal;
+                // Начало линии (40%) почти прозрачное, поэтому сводке можно чуть заходить правее.
+                final statsWidth = cardWidth * 0.46 - _cardPadding.left;
+                return SizedBox(
+                  height: _bandHeight,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                      width: statsWidth,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var i = 0; i < stats.length; i++) ...[
+                            if (i > 0) const SizedBox(height: 6),
+                            stats[i],
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            )
+          else
+            Wrap(spacing: 16, runSpacing: 6, children: stats),
         ],
       ),
     );
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill({
+/// Строка сводки: значок в круге и подпись.
+class _Stat extends StatelessWidget {
+  const _Stat({
     required this.icon,
     required this.text,
-    required this.background,
-    required this.foreground,
+    required this.color,
+    this.emphasize = false,
   });
 
   final IconData icon;
   final String text;
-  final Color background;
-  final Color foreground;
+  final Color color;
+  final bool emphasize;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 15, color: foreground),
-            const SizedBox(width: 5),
-            Text(text, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: foreground)),
-          ],
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.14)),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Icon(icon, size: 14, color: color),
+          ),
         ),
-      ),
+        const SizedBox(width: 7),
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: color,
+              fontWeight: emphasize ? FontWeight.w700 : FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
