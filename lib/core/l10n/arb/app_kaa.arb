@@ -356,5 +356,28 @@
   "updateDownloadButton": "Júklep alıw",
   "updateBackgroundHint": "Júklew fonda ketedi, qosımshadan ádettegidey paydalana alasız. Pitkende ornatıwdı usınamız.",
   "updateReadyTitle": "Jańalaw júklendi",
-  "updateInstallButton": "Ornatıw"
+  "updateInstallButton": "Ornatıw",
+  "updateDownloadingBytes": "Júklep alınbaqta… {percent}% · {done} / {total} MB",
+  "updateReconnecting": "Baylanıs úzildi, qayta urinamız… ({attempt})",
+  "updateCancel": "Biykarlaw",
+  "@updateDownloadingBytes": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "@updateReconnecting": {
+    "placeholders": {
+      "attempt": {
+        "type": "int"
+      }
+    }
+  }
 }

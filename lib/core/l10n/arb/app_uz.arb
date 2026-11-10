@@ -356,5 +356,28 @@
   "updateDownloadButton": "Yuklab olish",
   "updateBackgroundHint": "Yuklash fonda ketadi, ilovadan odatdagidek foydalanishingiz mumkin. Tugagach, o‘rnatishni taklif qilamiz.",
   "updateReadyTitle": "Yangilanish yuklandi",
-  "updateInstallButton": "O‘rnatish"
+  "updateInstallButton": "O‘rnatish",
+  "updateDownloadingBytes": "Yuklab olinmoqda… {percent}% · {done} / {total} MB",
+  "updateReconnecting": "Aloqa uzildi, qayta urinamiz… ({attempt})",
+  "updateCancel": "Bekor qilish",
+  "@updateDownloadingBytes": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "@updateReconnecting": {
+    "placeholders": {
+      "attempt": {
+        "type": "int"
+      }
+    }
+  }
 }

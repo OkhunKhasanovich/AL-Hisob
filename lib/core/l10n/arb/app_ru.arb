@@ -356,5 +356,28 @@
   "updateDownloadButton": "Скачать",
   "updateBackgroundHint": "Загрузка пойдёт в фоне, пользоваться приложением можно как обычно. Когда закончится, предложим установить.",
   "updateReadyTitle": "Обновление загружено",
-  "updateInstallButton": "Установить"
+  "updateInstallButton": "Установить",
+  "updateDownloadingBytes": "Скачивание… {percent}% · {done} из {total} МБ",
+  "updateReconnecting": "Связь прервалась, повторяем… ({attempt})",
+  "updateCancel": "Отмена",
+  "@updateDownloadingBytes": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "@updateReconnecting": {
+    "placeholders": {
+      "attempt": {
+        "type": "int"
+      }
+    }
+  }
 }

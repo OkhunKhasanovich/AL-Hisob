@@ -75,6 +75,9 @@ class UpdateState {
     this.progress = 0,
     this.errorKind,
     this.apkPath,
+    this.receivedBytes = 0,
+    this.totalBytes,
+    this.retry = 0,
   });
 
   final UpdatePhase phase;
@@ -86,10 +89,18 @@ class UpdateState {
 
   /// Скачанный и проверенный APK (фазы `ready`, `needsPermission`).
   final String? apkPath;
+
+  /// Сколько байт скачано и сколько всего (если известно) — для строки «12,3 из 23,1 МБ».
+  final int receivedBytes;
+  final int? totalBytes;
+
+  /// Номер повторной попытки после обрыва связи; 0 — всё идёт гладко.
+  final int retry;
 }
 
 class UpdateController extends Notifier<UpdateState> {
   bool _busy = false;
+  bool _cancelRequested = false;
 
   @override
   UpdateState build() => const UpdateState();
@@ -176,16 +187,49 @@ class UpdateController extends Notifier<UpdateState> {
     }
   }
 
-  /// Скачивание с проверкой. Возвращает путь к файлу или `null`, записав ошибку в состояние.
+  /// Скачивание с проверкой. Возвращает путь к файлу или `null`, записав в состояние
+  /// ошибку (или сброс, если пользователь отменил).
   Future<String?> _downloadFile(UpdateInfo info) async {
+    _cancelRequested = false;
     state = UpdateState(phase: UpdatePhase.downloading, info: info);
+
+    // Данные приходят кусками по десятки КБ: обновляем состояние не чаще ~7 раз в секунду.
+    final clock = Stopwatch()..start();
+    var lastEmit = -1000;
+    void emit({required double progress, required int received, int? total, int retry = 0}) {
+      final now = clock.elapsedMilliseconds;
+      final finished = total != null && received >= total;
+      if (!finished && retry == 0 && now - lastEmit < 150) return;
+      lastEmit = now;
+      state = UpdateState(
+        phase: UpdatePhase.downloading,
+        info: info,
+        progress: progress,
+        receivedBytes: received,
+        totalBytes: total,
+        retry: retry,
+      );
+    }
+
     try {
       final downloader = await ref.read(updateDownloaderProvider)();
+      var received = 0;
+      int? total;
+      var progress = 0.0;
       final file = await downloader.download(
         info,
-        onProgress: (p) => state = UpdateState(phase: UpdatePhase.downloading, info: info, progress: p),
+        isCancelled: () => _cancelRequested,
+        onProgress: (p) => progress = p,
+        onBytes: (r, t) {
+          received = r;
+          total = t;
+          emit(progress: progress, received: r, total: t);
+        },
+        onRetry: (attempt) => emit(progress: progress, received: received, total: total, retry: attempt),
       );
       return file.path;
+    } on UpdateCancelledException {
+      state = UpdateState(phase: UpdatePhase.idle, info: info);
     } on UpdateVerifyException {
       state = UpdateState(phase: UpdatePhase.error, info: info, errorKind: UpdateErrorKind.verify);
     } on UpdateDownloadException {
@@ -194,6 +238,12 @@ class UpdateController extends Notifier<UpdateState> {
       state = UpdateState(phase: UpdatePhase.error, info: info, errorKind: UpdateErrorKind.download);
     }
     return null;
+  }
+
+  /// «Отмена» в полосе загрузки: останавливает скачивание. Недокачанное остаётся на диске,
+  /// и повторная загрузка продолжит с того же места.
+  void cancelDownload() {
+    if (state.phase == UpdatePhase.downloading) _cancelRequested = true;
   }
 
   Future<void> openInstallSettings() => ref.read(apkInstallerProvider).openInstallSettings();

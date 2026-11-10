@@ -625,5 +625,28 @@
   "updateDownloadButton": "Download",
   "updateBackgroundHint": "The download runs in the background, so you can keep using the app. When it finishes, we will offer to install.",
   "updateReadyTitle": "Update downloaded",
-  "updateInstallButton": "Install"
+  "updateInstallButton": "Install",
+  "updateDownloadingBytes": "Downloading… {percent}% · {done} of {total} MB",
+  "updateReconnecting": "Connection lost, retrying… ({attempt})",
+  "updateCancel": "Cancel",
+  "@updateDownloadingBytes": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "@updateReconnecting": {
+    "placeholders": {
+      "attempt": {
+        "type": "int"
+      }
+    }
+  }
 }

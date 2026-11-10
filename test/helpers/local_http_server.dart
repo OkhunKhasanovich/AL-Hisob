@@ -15,6 +15,12 @@ class LocalHttpServer {
   /// Что отдавать по пути; по умолчанию 404.
   final routes = <String, FutureOr<void> Function(HttpResponse)>{};
 
+  /// Обработчики, которым нужен сам запрос (например, заголовок `Range`); важнее [routes].
+  final requestRoutes = <String, FutureOr<void> Function(HttpRequest)>{};
+
+  /// Заголовки `Range` всех запросов по порядку (`null` — запрос без Range).
+  final rangeHeaders = <String?>[];
+
   int get port => _server.port;
 
   Uri url(String path) => Uri.parse('http://127.0.0.1:${_server.port}$path');
@@ -26,6 +32,12 @@ class LocalHttpServer {
       local.requests.add(request.uri.path);
       final body = await utf8.decoder.bind(request).join();
       local.onRequest?.call(request, body);
+      local.rangeHeaders.add(request.headers.value(HttpHeaders.rangeHeader));
+      final withRequest = local.requestRoutes[request.uri.path];
+      if (withRequest != null) {
+        await withRequest(request);
+        return;
+      }
       final handler = local.routes[request.uri.path];
       if (handler == null) {
         request.response.statusCode = HttpStatus.notFound;

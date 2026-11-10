@@ -261,6 +261,52 @@ void main() {
       expect(state().phase, UpdatePhase.idle);
     });
 
+    test('состояние загрузки содержит скачанное и общий размер в байтах', () async {
+      latest = releaseOnServer(9);
+      makeContainer();
+      final seen = <UpdateState>[];
+      container.listen(updateControllerProvider, (_, next) {
+        if (next.phase == UpdatePhase.downloading) seen.add(next);
+      });
+      await controller().check();
+      await controller().download();
+
+      expect(seen, isNotEmpty);
+      expect(seen.last.receivedBytes, apk.length);
+      expect(seen.last.totalBytes, apk.length);
+      expect(seen.last.retry, 0);
+    });
+
+    test('«Отмена» во время загрузки останавливает её; фаза idle, предложение не теряется', () async {
+      // Медленный сервер: отдаёт по кусочку, пока не отменят.
+      server.requestRoutes['/apk'] = (request) async {
+        request.response.contentLength = apk.length;
+        try {
+          for (var i = 0; i < apk.length; i += 5000) {
+            request.response.add(apk.sublist(i, i + 5000 > apk.length ? apk.length : i + 5000));
+            await request.response.flush();
+            await Future<void>.delayed(const Duration(milliseconds: 20));
+          }
+          await request.response.close();
+        } on Object {
+          // клиент ушёл
+        }
+      };
+      latest = releaseOnServer(9);
+      makeContainer();
+      await controller().check();
+
+      final done = controller().download();
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      expect(state().phase, UpdatePhase.downloading);
+      controller().cancelDownload();
+      await done;
+
+      expect(state().phase, UpdatePhase.idle);
+      expect(state().info, isNotNull);
+      expect(installer.installed, isEmpty);
+    });
+
     test('в ready проверка и «Позже» ничего не сбрасывают', () async {
       latest = releaseOnServer(9);
       makeContainer();

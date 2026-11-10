@@ -66,7 +66,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       // Предложение обновления и «загружено, можно устанавливать».
       final offer =
           (next.phase == UpdatePhase.available && previous?.phase != UpdatePhase.available) ||
-          (next.phase == UpdatePhase.ready && previous?.phase != UpdatePhase.ready);
+          (next.phase == UpdatePhase.ready && previous?.phase != UpdatePhase.ready) ||
+          // Фоновая загрузка не удалась — сообщаем, а не молчим.
+          (next.phase == UpdatePhase.error && previous?.phase == UpdatePhase.downloading);
       if (offer) _showUpdate();
     });
 
@@ -115,7 +117,6 @@ class _DownloadStrip extends ConsumerWidget {
     final downloading = state.phase == UpdatePhase.downloading;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final percent = (state.progress * 100).round();
 
     return AnimatedSize(
       duration: const Duration(milliseconds: 220),
@@ -134,16 +135,32 @@ class _DownloadStrip extends ConsumerWidget {
                     minHeight: 2,
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    padding: const EdgeInsets.only(left: 16, right: 4),
                     child: Row(
                       children: [
-                        Icon(Icons.downloading_rounded, size: 16, color: scheme.primary),
+                        Icon(
+                          state.retry > 0 ? Icons.wifi_off_rounded : Icons.downloading_rounded,
+                          size: 16,
+                          color: scheme.primary,
+                        ),
                         const SizedBox(width: 8),
-                        Text(
-                          context.l10n.updateDownloading(percent),
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: scheme.onSurfaceVariant,
+                        Expanded(
+                          child: Text(
+                            _statusText(context, state),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
                           ),
+                        ),
+                        TextButton(
+                          onPressed: ref.read(updateControllerProvider.notifier).cancelDownload,
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            minimumSize: const Size(0, 32),
+                          ),
+                          child: Text(context.l10n.updateCancel),
                         ),
                       ],
                     ),
@@ -153,4 +170,15 @@ class _DownloadStrip extends ConsumerWidget {
             ),
     );
   }
+}
+
+String _megabytes(int bytes) => (bytes / (1024 * 1024)).toStringAsFixed(1);
+
+String _statusText(BuildContext context, UpdateState state) {
+  final l10n = context.l10n;
+  if (state.retry > 0) return l10n.updateReconnecting(state.retry);
+  final percent = (state.progress * 100).round();
+  final total = state.totalBytes;
+  if (total == null || total <= 0) return l10n.updateDownloading(percent);
+  return l10n.updateDownloadingBytes(percent, _megabytes(state.receivedBytes), _megabytes(total));
 }
