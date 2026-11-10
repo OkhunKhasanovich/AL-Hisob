@@ -79,5 +79,8 @@
   "debtBookSection": "Qarızdarlar dápteri",
   "overdueDaysSetting": "Merzim ótiw (kún)",
   "largeDebtSetting": "Úlken qarız (den)",
-  "settingValueError": "Oń san kiritiń"
+  "settingValueError": "Oń san kiritiń",
+  "searchHint": "Atı yamasa telefon boyınsha izlew",
+  "searchNoResults": "Hesh nárse tabılmadı",
+  "searchClear": "Tazalaw"
 }

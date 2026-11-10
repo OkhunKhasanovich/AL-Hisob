@@ -183,4 +183,55 @@ void main() {
 
     await closeApp(tester);
   });
+
+  testWidgets('поиск: кириллица ↔ латиница, опечатки, номер, очистка', (tester) async {
+    await tester.runAsync(() async {
+      final repo = DebtorsRepository(db);
+      await repo.createDebtor(const DebtorInput(name: 'Ahmad Karimov', phones: ['90 123 45 67']));
+      await repo.createDebtor(const DebtorInput(name: 'Шерзод Алиев', phones: ['93 555 11 22']));
+      await repo.createDebtor(const DebtorInput(name: 'Bobur'));
+    });
+    await openDebts(tester);
+    final field = find.byType(SearchBar);
+
+    Future<void> typeQuery(String text) async {
+      await tester.enterText(field, text);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 300)); // debounce 250 мс
+    }
+
+    // До ввода — все трое и итоговая карточка.
+    expect(find.text('Ahmad Karimov'), findsOneWidget);
+    expect(find.text('Шерзод Алиев'), findsOneWidget);
+    expect(find.text('Bobur'), findsOneWidget);
+    expect(find.text('Вам должны'), findsOneWidget);
+
+    // Латиницей находим кириллицу.
+    await typeQuery('Sherzod');
+    expect(find.text('Шерзод Алиев'), findsOneWidget);
+    expect(find.text('Ahmad Karimov'), findsNothing);
+    expect(find.text('Вам должны'), findsNothing, reason: 'в режиме поиска итог скрыт');
+
+    // Кириллицей находим латиницу + опечатка.
+    await typeQuery('Ахмат');
+    expect(find.text('Ahmad Karimov'), findsOneWidget);
+    expect(find.text('Шерзод Алиев'), findsNothing);
+
+    // Номер в любом формате: показывается найденный телефон.
+    await typeQuery('+998 (93) 555');
+    expect(find.text('Шерзод Алиев'), findsOneWidget);
+    expect(find.text('+998 93 555 11 22'), findsOneWidget);
+
+    // Ничего не нашлось.
+    await typeQuery('Zzzzzz');
+    expect(find.text('Ничего не найдено'), findsOneWidget);
+
+    // Крестик очищает поиск и возвращает полный список.
+    await tester.tap(find.byTooltip('Очистить'));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Вам должны'), findsOneWidget);
+    expect(find.text('Bobur'), findsOneWidget);
+
+    await closeApp(tester);
+  });
 }

@@ -4,6 +4,7 @@ import '../../../core/settings/settings_providers.dart';
 import '../data/debtors_repository.dart';
 import '../domain/debt_filter.dart';
 import '../domain/debt_summary.dart';
+import '../domain/search/debtor_search.dart';
 
 final debtorsRepositoryProvider = Provider<DebtorsRepository>(
   (ref) => DebtorsRepository(ref.watch(appDatabaseProvider)),
@@ -29,3 +30,27 @@ class SelectedDebtFilter extends Notifier<DebtFilter> {
 
 final selectedDebtFilterProvider =
     NotifierProvider<SelectedDebtFilter, DebtFilter>(SelectedDebtFilter.new);
+
+/// Текст запроса (уже после debounce). Пусто — поиск выключен.
+class DebtSearchQuery extends Notifier<String> {
+  @override
+  String build() => '';
+
+  void set(String query) => state = query;
+}
+
+final debtSearchQueryProvider =
+    NotifierProvider<DebtSearchQuery, String>(DebtSearchQuery.new);
+
+/// Индекс пересобирается только при изменении данных, а не при каждой букве.
+final debtSearchIndexProvider = Provider<DebtorSearchIndex?>((ref) {
+  final all = ref.watch(debtorSummariesProvider).value;
+  return all == null ? null : DebtorSearchIndex(all);
+});
+
+/// Результаты поиска, отсортированные по релевантности; `null` — запроса нет.
+final debtSearchHitsProvider = Provider<List<SearchHit>?>((ref) {
+  final query = ref.watch(debtSearchQueryProvider);
+  if (query.trim().isEmpty) return null;
+  return ref.watch(debtSearchIndexProvider)?.search(query);
+});

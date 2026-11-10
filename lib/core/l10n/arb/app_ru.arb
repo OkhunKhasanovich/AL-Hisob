@@ -79,5 +79,8 @@
   "debtBookSection": "Книга должников",
   "overdueDaysSetting": "Просрочка через (дней)",
   "largeDebtSetting": "Крупный долг от",
-  "settingValueError": "Введите положительное число"
+  "settingValueError": "Введите положительное число",
+  "searchHint": "Поиск по имени или телефону",
+  "searchNoResults": "Ничего не найдено",
+  "searchClear": "Очистить"
 }

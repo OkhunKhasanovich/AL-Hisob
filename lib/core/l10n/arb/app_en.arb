@@ -86,5 +86,8 @@
   "debtBookSection": "Debt book",
   "overdueDaysSetting": "Overdue after (days)",
   "largeDebtSetting": "Large debt from",
-  "settingValueError": "Enter a positive number"
+  "settingValueError": "Enter a positive number",
+  "searchHint": "Search by name or phone",
+  "searchNoResults": "Nothing found",
+  "searchClear": "Clear"
 }

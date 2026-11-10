@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +13,7 @@ import '../../../core/widgets/fade_slide_in.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../domain/debt_filter.dart';
 import '../domain/debt_summary.dart';
+import '../domain/search/debtor_search.dart';
 import 'balance_style.dart';
 import 'debtor_avatar.dart';
 import 'debts_providers.dart';
@@ -63,46 +66,145 @@ class _DebtorList extends ConsumerWidget {
     final config = ref.watch(debtFilterConfigProvider);
     final visible = applyDebtFilter(all, filter, now: DateTime.now(), config: config);
 
+    final hits = ref.watch(debtSearchHitsProvider);
+
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
-        SliverToBoxAdapter(child: _TotalCard(total: totalOwed(all))),
-        SliverToBoxAdapter(child: _FilterBar(selected: filter)),
-        if (visible.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Text(
-                  l10n.debtsFilteredEmpty,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
+        const SliverToBoxAdapter(child: _SearchField()),
+        if (hits != null) ...[
+          if (hits.isEmpty)
+            _CenteredMessage(text: l10n.searchNoResults)
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+              sliver: SliverList.builder(
+                itemCount: hits.length,
+                itemBuilder: (context, i) {
+                  final hit = hits[i];
+                  return _DebtorTile(
+                    key: ValueKey('hit-${hit.summary.debtor.id}'),
+                    summary: hit.summary,
+                    overdue: isOverdue(hit.summary, DateTime.now(), config),
+                    matchedPhone: formatMatchedPhone(hit),
+                  );
+                },
               ),
             ),
-          )
-        else
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
-            sliver: SliverList.builder(
-              itemCount: visible.length,
-              itemBuilder: (context, i) {
-                final s = visible[i];
-                return FadeSlideIn(
-                  key: ValueKey(s.debtor.id),
-                  delay: Duration(milliseconds: i < 8 ? i * 40 : 0),
-                  child: _DebtorTile(
-                    summary: s,
-                    overdue: isOverdue(s, DateTime.now(), config),
-                  ),
-                );
-              },
+        ] else ...[
+          SliverToBoxAdapter(child: _TotalCard(total: totalOwed(all))),
+          SliverToBoxAdapter(child: _FilterBar(selected: filter)),
+          if (visible.isEmpty)
+            _CenteredMessage(text: l10n.debtsFilteredEmpty)
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+              sliver: SliverList.builder(
+                itemCount: visible.length,
+                itemBuilder: (context, i) {
+                  final s = visible[i];
+                  return FadeSlideIn(
+                    key: ValueKey(s.debtor.id),
+                    delay: Duration(milliseconds: i < 8 ? i * 40 : 0),
+                    child: _DebtorTile(
+                      summary: s,
+                      overdue: isOverdue(s, DateTime.now(), config),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
+        ],
       ],
+    );
+  }
+}
+
+class _CenteredMessage extends StatelessWidget {
+  const _CenteredMessage({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SliverFillRemaining(
+      hasScrollBody: false,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyLarge
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Строка поиска. Запрос уходит в провайдер с задержкой, чтобы не
+/// пересчитывать выдачу на каждую букву.
+class _SearchField extends ConsumerStatefulWidget {
+  const _SearchField();
+
+  static const debounce = Duration(milliseconds: 250);
+
+  @override
+  ConsumerState<_SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends ConsumerState<_SearchField> {
+  late final TextEditingController _controller =
+      TextEditingController(text: ref.read(debtSearchQueryProvider));
+  Timer? _timer;
+
+  void _onChanged(String text) {
+    setState(() {}); // кнопка «очистить» реагирует сразу
+    _timer?.cancel();
+    _timer = Timer(_SearchField.debounce, () {
+      if (mounted) ref.read(debtSearchQueryProvider.notifier).set(text);
+    });
+  }
+
+  void _clear() {
+    _timer?.cancel();
+    _controller.clear();
+    ref.read(debtSearchQueryProvider.notifier).set('');
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: SearchBar(
+        controller: _controller,
+        hintText: l10n.searchHint,
+        elevation: const WidgetStatePropertyAll(0),
+        leading: const Icon(Icons.search_rounded),
+        trailing: [
+          if (_controller.text.isNotEmpty)
+            IconButton(
+              tooltip: l10n.searchClear,
+              icon: const Icon(Icons.close_rounded),
+              onPressed: _clear,
+            ),
+        ],
+        textInputAction: TextInputAction.search,
+        onChanged: _onChanged,
+      ),
     );
   }
 }
@@ -191,10 +293,18 @@ class _FilterBar extends ConsumerWidget {
 }
 
 class _DebtorTile extends StatelessWidget {
-  const _DebtorTile({required this.summary, required this.overdue});
+  const _DebtorTile({
+    super.key,
+    required this.summary,
+    required this.overdue,
+    this.matchedPhone,
+  });
 
   final DebtorSummary summary;
   final bool overdue;
+
+  /// Телефон, по которому нашли должника (в режиме поиска).
+  final String? matchedPhone;
 
   @override
   Widget build(BuildContext context) {
@@ -232,6 +342,15 @@ class _DebtorTile extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall
                               ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                      if (matchedPhone != null)
+                        Row(
+                          children: [
+                            Icon(Icons.phone_rounded,
+                                size: 14, color: theme.colorScheme.primary),
+                            const SizedBox(width: 4),
+                            Text(matchedPhone!, style: theme.textTheme.bodySmall),
+                          ],
                         ),
                     ],
                   ),

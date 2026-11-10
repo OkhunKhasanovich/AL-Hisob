@@ -79,5 +79,8 @@
   "debtBookSection": "Qarzdorlar daftari",
   "overdueDaysSetting": "Muddati o‘tish (kun)",
   "largeDebtSetting": "Yirik qarz (dan)",
-  "settingValueError": "Musbat son kiriting"
+  "settingValueError": "Musbat son kiriting",
+  "searchHint": "Ism yoki telefon bo‘yicha qidirish",
+  "searchNoResults": "Hech narsa topilmadi",
+  "searchClear": "Tozalash"
 }
