@@ -173,8 +173,8 @@ void main() {
       await pump(tester, DebtTrend(points: [for (var i = 0; i < 30; i++) 1000 + i * 4]));
       await tester.pump(const Duration(milliseconds: 1000));
       expect(find.text('+12%'), findsOneWidget);
-      expect(find.text('за 30 дн.'), findsOneWidget);
-      expect(find.byIcon(Icons.trending_up_rounded), findsOneWidget);
+      expect(find.text('за 30 дн.'), findsOneWidget, reason: 'период — отдельным текстом');
+      expect(find.byIcon(Icons.arrow_drop_up_rounded), findsOneWidget);
       expect(find.text('Вам должны'), findsOneWidget);
 
       // Точка мигает: анимация продолжает просить кадры.
@@ -182,11 +182,36 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
+    testWidgets('период — отдельно от процента, вверху на 3/4 ширины карточки', (tester) async {
+      tester.view.physicalSize = const Size(1200, 1600);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await pump(tester, DebtTrend(points: [for (var i = 0; i < 7; i++) 1000 + i * 20]));
+      await tester.pump(const Duration(milliseconds: 1000));
+
+      final card = tester.getRect(find.byType(DebtsOverviewCard));
+      final period = tester.getCenter(find.text('за 7 дн.'));
+      final percent = tester.getCenter(find.text('+12%'));
+      expect(period.dx, closeTo(card.left + card.width * 0.75, card.width * 0.06),
+          reason: 'подпись периода — на 3/4 ширины');
+      expect(period.dy - card.top, lessThan(40), reason: 'вверху карточки');
+      expect(percent.dy, greaterThan(period.dy), reason: 'процент у конца линии, а не в шапке');
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('валюта в конце суммы полупрозрачная, число — нет', (tester) async {
+      await pump(tester, null);
+      final text = tester.widget<Text>(find.textContaining('сум'));
+      final suffix = (text.textSpan! as TextSpan).children!.single as TextSpan;
+      expect(suffix.text, ' сум');
+      expect(suffix.style!.color!.a, lessThan(text.style!.color!.a), reason: 'валюта бледнее числа');
+    });
+
     testWidgets('снижение долга — стрелка вниз и минус', (tester) async {
       await pump(tester, const DebtTrend(points: [1000, 900, 800]));
       await tester.pump(const Duration(milliseconds: 1000));
       expect(find.text('−20%'), findsOneWidget);
-      expect(find.byIcon(Icons.trending_down_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_drop_down_rounded), findsOneWidget);
       await tester.pumpWidget(const SizedBox.shrink());
     });
 

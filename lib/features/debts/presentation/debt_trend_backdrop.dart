@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui' show PathMetric;
 
 import 'package:flutter/material.dart';
 
@@ -9,6 +8,10 @@ import '../domain/debt_trend.dart';
 /// Где на карточке рисуется линия: начинается с 40% ширины и идёт до правого края.
 const trendStartFraction = 0.4;
 
+/// Толщина линии: тонкая в начале, к концу утолщается.
+const trendMinWidth = 0.8;
+const trendMaxWidth = 5.0;
+
 /// Цвет динамики: рост долга — тревожный, снижение — спокойный.
 Color trendColor(ColorScheme scheme, DebtTrendDirection direction) => switch (direction) {
   DebtTrendDirection.up => scheme.error,
@@ -16,25 +19,28 @@ Color trendColor(ColorScheme scheme, DebtTrendDirection direction) => switch (di
   DebtTrendDirection.flat => scheme.primary,
 };
 
-/// Высота места под индекс рядом с концом линии.
-const _chipRoom = 46.0;
+/// Место над концом линии под процент (рядом сверху подписан период).
+const _roomAbove = 50.0;
 
-/// Куда ставить индекс: растущий долг приходит к точке снизу — индекс над ней,
-/// падающий приходит сверху — индекс под ней, чтобы линия не пряталась за плашкой.
-bool trendChipAbove(DebtTrendDirection direction) => direction != DebtTrendDirection.down;
+/// Место под концом линии под процент.
+const _roomBelow = 34.0;
+
+/// Куда ставить процент: растущий долг приходит к точке снизу — процент над ней,
+/// падающий приходит сверху — процент под ней, чтобы линия не пряталась за текстом.
+bool trendLabelAbove(DebtTrendDirection direction) => direction != DebtTrendDirection.down;
 
 /// Точки линии в координатах карточки размером [size]. Старые дни — слева.
-/// Над или под концом линии остаётся место для плашки с индексом ([chipAbove]).
-List<Offset> trendOffsets(List<int> values, Size size, {bool chipAbove = true}) {
+/// Над или под концом линии остаётся место для процента ([labelAbove]).
+List<Offset> trendOffsets(List<int> values, Size size, {bool labelAbove = true}) {
   if (values.length < 2) return const [];
   final left = size.width * trendStartFraction;
   final right = size.width - 22; // справа остаётся место под мигающую точку
   var top = size.height * 0.30;
   var bottom = size.height * 0.88;
-  if (chipAbove) {
-    top = math.max(top, _chipRoom);
+  if (labelAbove) {
+    top = math.max(top, _roomAbove);
   } else {
-    bottom = math.min(bottom, size.height - _chipRoom);
+    bottom = math.min(bottom, size.height - _roomBelow);
   }
   if (bottom - top < 24) {
     // Карточка слишком низкая — лучше сжать линию, чем выйти за края.
@@ -54,7 +60,8 @@ List<Offset> trendOffsets(List<int> values, Size size, {bool chipAbove = true}) 
   ];
 }
 
-/// Фон карточки: линия динамики общего долга, мигающая точка на конце и индекс в процентах.
+/// Фон карточки: линия динамики общего долга, мигающая точка на конце,
+/// процент у точки и полупрозрачная подпись периода сверху (по центру правой половины).
 class DebtTrendBackdrop extends StatefulWidget {
   const DebtTrendBackdrop({super.key, required this.trend});
 
@@ -64,7 +71,8 @@ class DebtTrendBackdrop extends StatefulWidget {
   State<DebtTrendBackdrop> createState() => _DebtTrendBackdropState();
 }
 
-class _DebtTrendBackdropState extends State<DebtTrendBackdrop> with SingleTickerProviderStateMixin {
+class _DebtTrendBackdropState extends State<DebtTrendBackdrop>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _blink = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1400),
@@ -95,16 +103,19 @@ class _DebtTrendBackdropState extends State<DebtTrendBackdrop> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final l10n = context.l10n;
     final trend = widget.trend;
     final color = trendColor(scheme, trend.direction);
-    final text = formatTrendPercent(trend) ?? context.l10n.debtsTrendNew;
+    final percent = formatTrendPercent(trend) ?? l10n.debtsTrendNew;
+    final period = l10n.debtsTrendPeriod(trend.days);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = constraints.biggest;
-        final chipAbove = trendChipAbove(trend.direction);
-        final offsets = trendOffsets(trend.points, size, chipAbove: chipAbove);
+        final labelAbove = trendLabelAbove(trend.direction);
+        final offsets = trendOffsets(trend.points, size, labelAbove: labelAbove);
         if (offsets.isEmpty) return const SizedBox.shrink();
         final end = offsets.last;
 
@@ -128,14 +139,31 @@ class _DebtTrendBackdropState extends State<DebtTrendBackdrop> with SingleTicker
                 ),
               ),
             ),
+            // Период — вверху, по центру правой половины (на 3/4 ширины), едва заметный.
             Positioned(
-              right: 10,
-              top: chipAbove ? null : end.dy + 12,
-              bottom: chipAbove ? size.height - end.dy + 12 : null,
+              top: 17,
+              left: size.width * 0.5,
+              right: 0,
+              child: ExcludeSemantics(
+                child: Center(
+                  child: Text(
+                    period,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: scheme.onPrimaryContainer.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Процент — просто цифра у конца линии, без плашки.
+            Positioned(
+              right: 12,
+              top: labelAbove ? null : end.dy + 9,
+              bottom: labelAbove ? size.height - end.dy + 9 : null,
               child: Semantics(
-                label: '$text, ${context.l10n.debtsTrendPeriod(trend.days)}',
+                label: '$percent, $period',
                 child: ExcludeSemantics(
-                  child: _IndexChip(text: text, color: color, trend: trend),
+                  child: _PercentLabel(text: percent, color: color, direction: trend.direction),
                 ),
               ),
             ),
@@ -146,59 +174,46 @@ class _DebtTrendBackdropState extends State<DebtTrendBackdrop> with SingleTicker
   }
 }
 
-class _IndexChip extends StatelessWidget {
-  const _IndexChip({required this.text, required this.color, required this.trend});
+class _PercentLabel extends StatelessWidget {
+  const _PercentLabel({required this.text, required this.color, required this.direction});
 
   final String text;
   final Color color;
-  final DebtTrend trend;
+  final DebtTrendDirection direction;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final icon = switch (trend.direction) {
-      DebtTrendDirection.up => Icons.trending_up_rounded,
-      DebtTrendDirection.down => Icons.trending_down_rounded,
-      DebtTrendDirection.flat => Icons.trending_flat_rounded,
+    // Чуть темнее цвета линии, чтобы читалось на светлом фоне.
+    final textColor = Color.lerp(color, theme.colorScheme.onSurface, 0.2)!;
+    final arrow = switch (direction) {
+      DebtTrendDirection.up => Icons.arrow_drop_up_rounded,
+      DebtTrendDirection.down => Icons.arrow_drop_down_rounded,
+      DebtTrendDirection.flat => null,
     };
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.78),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 16, color: color),
-                const SizedBox(width: 3),
-                Text(
-                  text,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              context.l10n.debtsTrendPeriod(trend.days),
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontSize: 10,
-                height: 1.1,
-              ),
-            ),
-          ],
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (arrow != null) Icon(arrow, size: 22, color: textColor),
+        Text(
+          text,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: textColor,
+            fontWeight: FontWeight.w800,
+            height: 1.1,
+          ),
         ),
-      ),
+      ],
     );
   }
+}
+
+/// Отсчёт вдоль линии: точка, единичная нормаль и толщина в этой точке.
+class _Sample {
+  const _Sample(this.p, this.n, this.width);
+  final Offset p;
+  final Offset n;
+  final double width;
 }
 
 class _TrendPainter extends CustomPainter {
@@ -219,7 +234,7 @@ class _TrendPainter extends CustomPainter {
   final double startX;
 
   /// Плавная ступенька: горизонтальные касательные не дают «перелёта» за min/max.
-  Path _linePath() {
+  Path _centerLine() {
     final path = Path()..moveTo(offsets.first.dx, offsets.first.dy);
     for (var i = 1; i < offsets.length; i++) {
       final a = offsets[i - 1], b = offsets[i];
@@ -229,44 +244,48 @@ class _TrendPainter extends CustomPainter {
     return path;
   }
 
+  /// Отсчёты вдоль видимой части линии; толщина растёт от начала к концу.
+  /// Считается один раз на экземпляр: мигание перерисовывает тот же painter.
+  late final List<_Sample> _samples = () {
+    final metrics = _centerLine().computeMetrics().toList();
+    if (metrics.isEmpty) return const <_Sample>[];
+    final metric = metrics.first;
+    final total = metric.length;
+    final visible = total * progress.clamp(0.0, 1.0);
+    final result = <_Sample>[];
+    const step = 2.0;
+    for (var d = 0.0;; d += step) {
+      final at = math.min(d, visible);
+      final tangent = metric.getTangentForOffset(at);
+      if (tangent == null) break;
+      final v = tangent.vector;
+      result.add(_Sample(
+        tangent.position,
+        Offset(-v.dy, v.dx),
+        trendMinWidth + (trendMaxWidth - trendMinWidth) * (total == 0 ? 1 : at / total),
+      ));
+      if (at >= visible) break;
+    }
+    return result;
+  }();
+
   @override
   void paint(Canvas canvas, Size size) {
-    if (offsets.length < 2) return;
-    final fullLine = _linePath();
+    final samples = _samples;
+    if (samples.length < 2) return;
     final endX = offsets.last.dx;
-
-    // Линия проявляется из прозрачности: заметна с 40% карточки и набирает силу к концу.
-    final fade = LinearGradient(
-      colors: [color.withValues(alpha: 0), color.withValues(alpha: 0.9)],
-      stops: const [0, 0.35],
-    ).createShader(Rect.fromLTRB(startX, 0, endX, size.height));
-
-    // Частично дорисованный путь.
-    Path visible = fullLine;
-    Offset tip = offsets.last;
-    if (progress < 1) {
-      visible = Path();
-      final metrics = fullLine.computeMetrics().toList();
-      final total = metrics.fold<double>(0, (s, PathMetric m) => s + m.length);
-      var left = total * progress;
-      for (final m in metrics) {
-        if (left <= 0) break;
-        visible.addPath(m.extractPath(0, math.min(left, m.length)), Offset.zero);
-        left -= m.length;
-      }
-      final lastMetric = visible.computeMetrics().toList();
-      tip = lastMetric.isEmpty
-          ? offsets.first
-          : (lastMetric.last.getTangentForOffset(lastMetric.last.length)?.position ??
-                offsets.first);
-    }
+    final tip = samples.last.p;
+    final bounds = Rect.fromLTRB(startX, 0, endX + 24, size.height);
 
     // Заливка под линией: сверху вниз гаснет, а слева растворяется (маска dstIn).
-    final bounds = Rect.fromLTRB(startX, 0, endX + 24, size.height);
     canvas.saveLayer(bounds, Paint());
-    final area = Path.from(visible)
+    final area = Path()..moveTo(samples.first.p.dx, samples.first.p.dy);
+    for (final s in samples.skip(1)) {
+      area.lineTo(s.p.dx, s.p.dy);
+    }
+    area
       ..lineTo(tip.dx, size.height)
-      ..lineTo(offsets.first.dx, size.height)
+      ..lineTo(samples.first.p.dx, size.height)
       ..close();
     canvas.drawPath(
       area,
@@ -288,33 +307,35 @@ class _TrendPainter extends CustomPainter {
     );
     canvas.restore();
 
-    // Сама линия: заметна с 40% карточки, к концу набирает силу.
-    canvas.drawPath(
-      visible,
-      Paint()
-        ..shader = fade
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.6
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
+    // Линия переменной толщины: контур из левых и правых краёв вдоль нормали.
+    final outline = Path()
+      ..moveTo(
+        samples.first.p.dx + samples.first.n.dx * samples.first.width / 2,
+        samples.first.p.dy + samples.first.n.dy * samples.first.width / 2,
+      );
+    for (final s in samples.skip(1)) {
+      outline.lineTo(s.p.dx + s.n.dx * s.width / 2, s.p.dy + s.n.dy * s.width / 2);
+    }
+    for (final s in samples.reversed) {
+      outline.lineTo(s.p.dx - s.n.dx * s.width / 2, s.p.dy - s.n.dy * s.width / 2);
+    }
+    outline.close();
+    final fade = LinearGradient(
+      colors: [color.withValues(alpha: 0), color.withValues(alpha: 0.92)],
+      stops: const [0, 0.35],
+    ).createShader(Rect.fromLTRB(startX, 0, endX, size.height));
+    canvas.drawPath(outline, Paint()..shader = fade);
+    // Круглый конец той же толщины, что и у линии.
+    canvas.drawCircle(tip, trendMaxWidth / 2, Paint()..color = color.withValues(alpha: 0.92));
 
     if (progress < 1) return;
     // Медленно мигающая точка на конце линии.
     final t = Curves.easeInOut.transform(blink.value);
-    final end = offsets.last;
-    canvas.drawCircle(
-      end,
-      6 + 8 * t,
-      Paint()..color = color.withValues(alpha: 0.28 * (1 - t) + 0.06),
-    );
-    canvas.drawCircle(end, 4.5, Paint()..color = color.withValues(alpha: 0.55 + 0.45 * (1 - t)));
+    canvas.drawCircle(tip, 6 + 8 * t, Paint()..color = color.withValues(alpha: 0.28 * (1 - t) + 0.06));
+    canvas.drawCircle(tip, 4.5, Paint()..color = color.withValues(alpha: 0.55 + 0.45 * (1 - t)));
   }
 
   @override
   bool shouldRepaint(_TrendPainter old) =>
-      old.offsets != offsets ||
-      old.color != color ||
-      old.progress != progress ||
-      old.startX != startX;
+      old.offsets != offsets || old.color != color || old.progress != progress || old.startX != startX;
 }

@@ -65,8 +65,17 @@ class DebtsOverviewCard extends StatelessWidget {
             builder: (context, value, _) => FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Text(
-                '${formatAmount(value.round())} ${l10n.currencySum}',
+              child: Text.rich(
+                TextSpan(
+                  text: formatAmount(value.round()),
+                  children: [
+                    // Валюта на конце суммы — полупрозрачная, чтобы число читалось первым.
+                    TextSpan(
+                      text: ' ${l10n.currencySum}',
+                      style: TextStyle(color: scheme.onPrimaryContainer.withValues(alpha: 0.55)),
+                    ),
+                  ],
+                ),
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: scheme.onPrimaryContainer,
