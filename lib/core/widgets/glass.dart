@@ -31,7 +31,7 @@ class GlassCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(14),
     this.margin = EdgeInsets.zero,
     this.onTap,
-    this.shadow = true,
+    this.opacity,
   });
 
   final Widget child;
@@ -41,8 +41,10 @@ class GlassCard extends StatelessWidget {
   final EdgeInsetsGeometry margin;
   final VoidCallback? onTap;
 
-  /// Цветная тень под карточкой; в длинных списках можно выключить.
-  final bool shadow;
+  /// Насколько карточка «заслоняет» фон под собой, 0…1. По умолчанию в тёмной теме около
+  /// половины (тёмное полупрозрачное стекло, узор фона просвечивает, текст читается),
+  /// в светлой — чуть плотнее.
+  final double? opacity;
 
   @override
   Widget build(BuildContext context) {
@@ -50,35 +52,29 @@ class GlassCard extends StatelessWidget {
     final dark = theme.brightness == Brightness.dark;
     final borderRadius = BorderRadius.circular(radius);
 
-    final surface = theme.colorScheme.surfaceContainerHigh;
-    final tintTop = tint.withValues(alpha: dark ? 0.30 : 0.28);
-    final tintMid = tint.withValues(alpha: dark ? 0.14 : 0.07);
+    // Основа полупрозрачная: сквозь неё виден фон приложения. Тёмная — чтобы светлый текст
+    // читался даже на ярком облаке, светлая — для тёмного текста.
+    final base = (dark ? const Color(0xFF05080A) : Colors.white).withValues(
+      alpha: opacity ?? (dark ? 0.50 : 0.62),
+    );
+    final tintTop = tint.withValues(alpha: dark ? 0.24 : 0.26);
+    final tintMid = tint.withValues(alpha: dark ? 0.07 : 0.06);
     final highlight = Colors.white.withValues(alpha: dark ? 0.08 : 0.20);
     final highlightEnd = Colors.white.withValues(alpha: dark ? 0 : 0.03);
-    final border = dark ? Colors.white.withValues(alpha: 0.14) : tint.withValues(alpha: 0.38);
+    final border = dark ? Colors.white.withValues(alpha: 0.16) : tint.withValues(alpha: 0.38);
 
     return Padding(
       padding: margin,
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: borderRadius,
-          boxShadow: [
-            if (shadow)
-              BoxShadow(
-                color: tint.withValues(alpha: dark ? 0.35 : 0.55),
-                blurRadius: 28,
-                offset: const Offset(0, 14),
-                spreadRadius: -20,
-              ),
-          ],
-        ),
+        // Цветной тени снизу нет: под полупрозрачной карточкой она просвечивала бы внутрь.
+        decoration: BoxDecoration(borderRadius: borderRadius),
         child: ClipRRect(
           borderRadius: borderRadius,
           child: Stack(
             children: [
-              // 1. Поверхность. (Цвет и градиент в одном BoxDecoration не накладываются друг на друга,
-              // поэтому поверхность — отдельным слоем: иначе тень просвечивает внутрь карточки.)
-              Positioned.fill(child: ColoredBox(color: surface)),
+              // 1. Полупрозрачная основа. (Цвет и градиент в одном BoxDecoration не накладываются,
+              // поэтому основа — отдельным слоем.)
+              Positioned.fill(child: ColoredBox(color: base)),
               // 2. Оттенок.
               Positioned.fill(
                 child: DecoratedBox(

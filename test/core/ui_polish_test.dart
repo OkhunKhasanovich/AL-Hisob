@@ -33,7 +33,7 @@ void main() {
   });
 
   group('GlassCard', () {
-    testWidgets('есть непрозрачная поверхность под оттенком и работает нажатие', (tester) async {
+    testWidgets('полупрозрачная, без тени внутри, нажатие работает', (tester) async {
       var taps = 0;
       await tester.pumpWidget(MaterialApp(
         theme: AppTheme.dark(),
@@ -46,13 +46,22 @@ void main() {
         ),
       ));
 
-      // Поверхность — отдельный непрозрачный слой: иначе цветная тень просвечивает внутрь.
-      final surface = find
+      // Основа полупрозрачная: фон приложения просвечивает сквозь карточку, как в шашках.
+      final layers = find
           .descendant(of: find.byType(GlassCard), matching: find.byType(ColoredBox))
           .evaluate()
-          .map((e) => (e.widget as ColoredBox).color)
-          .where((c) => c.a == 1);
-      expect(surface, isNotEmpty);
+          .map((e) => (e.widget as ColoredBox).color);
+      expect(layers, isNotEmpty);
+      expect(layers.every((c) => c.a < 1), isTrue, reason: 'ни один слой не глушит фон');
+
+      // Цветной тени нет: под прозрачной карточкой она просвечивала бы внутрь.
+      final shadows = find
+          .descendant(of: find.byType(GlassCard), matching: find.byType(DecoratedBox))
+          .evaluate()
+          .map((e) => (e.widget as DecoratedBox).decoration)
+          .whereType<BoxDecoration>()
+          .expand((d) => d.boxShadow ?? const <BoxShadow>[]);
+      expect(shadows, isEmpty);
 
       await tester.tap(find.text('карточка'));
       expect(taps, 1);
