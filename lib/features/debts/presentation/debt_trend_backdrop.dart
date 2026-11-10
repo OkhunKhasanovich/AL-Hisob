@@ -9,8 +9,8 @@ import '../domain/debt_trend.dart';
 const trendStartFraction = 0.4;
 
 /// Толщина линии: тонкая в начале, к концу утолщается.
-const trendMinWidth = 0.8;
-const trendMaxWidth = 5.0;
+const trendMinWidth = 0.6;
+const trendMaxWidth = 2.6;
 
 /// Цвет динамики: рост долга — тревожный, снижение — спокойный.
 Color trendColor(ColorScheme scheme, DebtTrendDirection direction) => switch (direction) {
@@ -20,7 +20,7 @@ Color trendColor(ColorScheme scheme, DebtTrendDirection direction) => switch (di
 };
 
 /// Место над концом линии под процент (рядом сверху подписан период).
-const _roomAbove = 50.0;
+const _roomAbove = 60.0;
 
 /// Место под концом линии под процент.
 const _roomBelow = 34.0;
@@ -194,12 +194,12 @@ class _PercentLabel extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (arrow != null) Icon(arrow, size: 22, color: textColor),
+        if (arrow != null) Icon(arrow, size: 18, color: textColor),
         Text(
           text,
-          style: theme.textTheme.titleMedium?.copyWith(
+          style: theme.textTheme.labelLarge?.copyWith(
             color: textColor,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             height: 1.1,
           ),
         ),
@@ -331,8 +331,8 @@ class _TrendPainter extends CustomPainter {
     if (progress < 1) return;
     // Медленно мигающая точка на конце линии.
     final t = Curves.easeInOut.transform(blink.value);
-    canvas.drawCircle(tip, 6 + 8 * t, Paint()..color = color.withValues(alpha: 0.28 * (1 - t) + 0.06));
-    canvas.drawCircle(tip, 4.5, Paint()..color = color.withValues(alpha: 0.55 + 0.45 * (1 - t)));
+    canvas.drawCircle(tip, 4.5 + 6 * t, Paint()..color = color.withValues(alpha: 0.28 * (1 - t) + 0.06));
+    canvas.drawCircle(tip, 3.5, Paint()..color = color.withValues(alpha: 0.55 + 0.45 * (1 - t)));
   }
 
   @override
