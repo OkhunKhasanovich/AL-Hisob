@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/l10n/l10n.dart';
 import '../../../core/utils/money.dart';
+import '../../../core/widgets/glass.dart';
 import '../domain/debt_filter.dart';
 import '../domain/debt_trend.dart';
 import 'debt_trend_backdrop.dart';
@@ -28,23 +29,38 @@ class DebtsOverviewCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final radius = BorderRadius.circular(28);
 
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: radius,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [scheme.primaryContainer, scheme.secondaryContainer],
-          ),
-          border: Border.all(color: scheme.onPrimaryContainer.withValues(alpha: 0.08)),
+          border: Border.all(color: scheme.primary.withValues(alpha: dark ? 0.40 : 0.38)),
         ),
         child: ClipRRect(
           borderRadius: radius,
           child: Stack(
             children: [
-              // Мягкий блик в левом верхнем углу — карточка не выглядит плоской.
+              // Чёрное полупрозрачное стекло (как карточки должников), фон приложения просвечивает.
+              Positioned.fill(child: ColoredBox(color: glassBase(Theme.of(context).brightness))),
+              // Зелёный оттенок в левом верхнем углу гаснет к правому нижнему.
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        scheme.primary.withValues(alpha: dark ? 0.26 : 0.30),
+                        scheme.primary.withValues(alpha: dark ? 0.03 : 0.06),
+                      ],
+                      stops: const [0, 0.75],
+                    ),
+                  ),
+                ),
+              ),
+              // Мягкий блик в левом верхнем углу.
               Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -52,8 +68,8 @@ class DebtsOverviewCard extends StatelessWidget {
                       center: const Alignment(-0.9, -1.1),
                       radius: 1.1,
                       colors: [
-                        scheme.onPrimaryContainer.withValues(alpha: 0.10),
-                        scheme.onPrimaryContainer.withValues(alpha: 0),
+                        Colors.white.withValues(alpha: dark ? 0.06 : 0.25),
+                        Colors.white.withValues(alpha: 0),
                       ],
                     ),
                   ),
@@ -181,11 +197,7 @@ class _Amount extends StatelessWidget {
                 final scale = bounds.width <= innerWidth ? 1.0 : innerWidth / bounds.width;
                 final start = (halfX / scale / bounds.width).clamp(0.0, 1.0);
                 return LinearGradient(
-                  colors: [
-                    Colors.white,
-                    Colors.white,
-                    Colors.white.withValues(alpha: 0.22),
-                  ],
+                  colors: [Colors.white, Colors.white, Colors.white.withValues(alpha: 0.22)],
                   stops: [0, start, 1],
                 ).createShader(bounds);
               },
@@ -240,7 +252,10 @@ class _Stat extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             DecoratedBox(
-              decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.16)),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.16),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(6),
                 child: Icon(icon, size: 16, color: color),

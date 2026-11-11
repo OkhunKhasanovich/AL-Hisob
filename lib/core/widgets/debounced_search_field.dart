@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'glass.dart';
+
 /// Строка поиска: изменения уходят в [onChanged] с задержкой, чтобы не
 /// пересчитывать выдачу на каждую букву; кнопка «очистить» реагирует сразу.
 class DebouncedSearchField extends StatefulWidget {
@@ -60,10 +62,18 @@ class _DebouncedSearchFieldState extends State<DebouncedSearchField> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SearchBar(
       controller: _controller,
       hintText: widget.hintText,
       elevation: const WidgetStatePropertyAll(0),
+      // Чёрное полупрозрачное стекло, как карточки: фон приложения просвечивает.
+      backgroundColor: WidgetStatePropertyAll(glassBase(theme.brightness)),
+      surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+      shadowColor: const WidgetStatePropertyAll(Colors.transparent),
+      side: WidgetStatePropertyAll(
+        BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.30)),
+      ),
       constraints: widget.compact ? const BoxConstraints(minHeight: 44, maxHeight: 44) : null,
       padding: widget.compact
           ? const WidgetStatePropertyAll(EdgeInsets.only(left: 14, right: 4))

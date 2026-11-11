@@ -14,6 +14,11 @@ abstract final class GlassTint {
   static const gray = Color(0xFF9696A0);
 }
 
+/// Основа стеклянных поверхностей: в тёмной теме — настоящий чёрный с прозрачностью (как карточки
+/// в шашках), в светлой — белый. Через неё просвечивает фон приложения.
+Color glassBase(Brightness brightness, {double opacity = 0.62}) =>
+    (brightness == Brightness.dark ? Colors.black : Colors.white).withValues(alpha: opacity);
+
 /// Карточка «матовое стекло». Рецепт:
 /// 1. подложка цвета поверхности;
 /// 2. диагональная заливка оттенком (плотнее в углу, к другому краю гаснет);
@@ -54,14 +59,14 @@ class GlassCard extends StatelessWidget {
 
     // Основа полупрозрачная: сквозь неё виден фон приложения. Тёмная — чтобы светлый текст
     // читался даже на ярком облаке, светлая — для тёмного текста.
-    final base = (dark ? const Color(0xFF05080A) : Colors.white).withValues(
-      alpha: opacity ?? (dark ? 0.50 : 0.62),
-    );
-    final tintTop = tint.withValues(alpha: dark ? 0.24 : 0.26);
-    final tintMid = tint.withValues(alpha: dark ? 0.07 : 0.06);
-    final highlight = Colors.white.withValues(alpha: dark ? 0.08 : 0.20);
+    final base = glassBase(theme.brightness, opacity: opacity ?? 0.62);
+    // В тёмной теме оттенок едва заметен: карточка остаётся чёрной, а состояние читается
+    // по цвету рамки и значков.
+    final tintTop = tint.withValues(alpha: dark ? 0.13 : 0.26);
+    final tintMid = tint.withValues(alpha: dark ? 0.02 : 0.06);
+    final highlight = Colors.white.withValues(alpha: dark ? 0.04 : 0.20);
     final highlightEnd = Colors.white.withValues(alpha: dark ? 0 : 0.03);
-    final border = dark ? Colors.white.withValues(alpha: 0.16) : tint.withValues(alpha: 0.38);
+    final border = tint.withValues(alpha: dark ? 0.40 : 0.38);
 
     return Padding(
       padding: margin,
@@ -194,23 +199,14 @@ class GlassPanel extends StatelessWidget {
     final borderRadius = BorderRadius.circular(radius);
 
     return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: borderRadius,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: dark ? 0.45 : 0.18),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-            spreadRadius: -8,
-          ),
-        ],
-      ),
+      // Без тени: под полупрозрачной панелью она просвечивала бы внутрь.
+      decoration: BoxDecoration(borderRadius: borderRadius),
       child: ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
           child: ColoredBox(
-            color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: dark ? 0.62 : 0.72),
+            color: glassBase(theme.brightness, opacity: dark ? 0.66 : 0.72),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: borderRadius,
@@ -218,11 +214,11 @@ class GlassPanel extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withValues(alpha: dark ? 0.10 : 0.35),
-                    Colors.white.withValues(alpha: dark ? 0.02 : 0.05),
+                    Colors.white.withValues(alpha: dark ? 0.05 : 0.35),
+                    Colors.white.withValues(alpha: dark ? 0 : 0.05),
                   ],
                 ),
-                border: Border.all(color: Colors.white.withValues(alpha: dark ? 0.16 : 0.5)),
+                border: Border.all(color: Colors.white.withValues(alpha: dark ? 0.14 : 0.5)),
               ),
               child: child,
             ),
