@@ -86,6 +86,17 @@ class _AppBackdropState extends State<AppBackdrop> {
               ),
             ),
           ),
+          // Цветные «шары» за карточками: сквозь размытое стекло они видны особенно хорошо,
+          // а при прокрутке карточки скользят поверх неподвижных шаров.
+          RepaintBoundary(
+            child: CustomPaint(
+              painter: _OrbsPainter(
+                time: _time,
+                dark: dark,
+                colors: [scheme.primary, GlassTint.blue, GlassTint.amber, GlassTint.purple],
+              ),
+            ),
+          ),
           if (widget.style == AppBackdropStyle.ornament)
             // Узор не меняется: рисуется один раз, плавно гаснет к низу экрана.
             RepaintBoundary(
@@ -98,7 +109,9 @@ class _AppBackdropState extends State<AppBackdrop> {
                 ).createShader(rect),
                 child: CustomPaint(
                   painter: _OrnamentPainter(
-                    color: (dark ? Colors.white : scheme.primary).withValues(alpha: dark ? 0.07 : 0.10),
+                    color: (dark ? Colors.white : scheme.primary).withValues(
+                      alpha: dark ? 0.12 : 0.14,
+                    ),
                   ),
                 ),
               ),
@@ -111,7 +124,7 @@ class _AppBackdropState extends State<AppBackdrop> {
 
 class _AuroraPainter extends CustomPainter {
   _AuroraPainter({required this.time, required this.dark, required this.colors})
-      : super(repaint: time);
+    : super(repaint: time);
 
   final ValueListenable<double> time;
   final bool dark;
@@ -128,7 +141,7 @@ class _AuroraPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final t = time.value;
-    final alphas = dark ? const [0.34, 0.26, 0.14, 0.14] : const [0.26, 0.20, 0.16, 0.12];
+    final alphas = dark ? const [0.50, 0.40, 0.24, 0.26] : const [0.34, 0.28, 0.22, 0.18];
     final reach = math.max(size.width, size.height);
 
     for (var i = 0; i < _blobs.length; i++) {
@@ -144,7 +157,10 @@ class _AuroraPainter extends CustomPainter {
         Offset.zero & size,
         Paint()
           ..shader = RadialGradient(
-            colors: [color.withValues(alpha: alphas[i]), color.withValues(alpha: 0)],
+            colors: [
+              color.withValues(alpha: alphas[i]),
+              color.withValues(alpha: 0),
+            ],
           ).createShader(Rect.fromCircle(center: center, radius: radius)),
       );
     }
@@ -152,6 +168,82 @@ class _AuroraPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_AuroraPainter old) => old.dark != dark || old.colors != colors;
+}
+
+/// Крупные цветные стеклянные шары: градиентная заливка, светлый ободок и блик.
+/// Дрейфуют медленно, чтобы фон казался живым.
+class _OrbsPainter extends CustomPainter {
+  _OrbsPainter({required this.time, required this.dark, required this.colors})
+    : super(repaint: time);
+
+  final ValueListenable<double> time;
+  final bool dark;
+  final List<Color> colors;
+
+  // Положение (доли экрана), радиус в логических пикселях, номер цвета, фаза и период дрейфа.
+  static const _orbs = [
+    (x: 0.84, y: 0.15, r: 70.0, c: 0, phase: 0.4, period: 41.0),
+    (x: 0.10, y: 0.34, r: 54.0, c: 1, phase: 2.2, period: 37.0),
+    (x: 0.90, y: 0.50, r: 92.0, c: 2, phase: 4.1, period: 53.0),
+    (x: 0.16, y: 0.68, r: 80.0, c: 3, phase: 1.3, period: 47.0),
+    (x: 0.80, y: 0.86, r: 62.0, c: 0, phase: 5.6, period: 43.0),
+    (x: 0.42, y: 0.97, r: 48.0, c: 1, phase: 3.3, period: 39.0),
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final t = time.value;
+    final strength = dark ? 1.0 : 0.75;
+    for (final o in _orbs) {
+      final angle = 2 * math.pi * (t / o.period) + o.phase;
+      final center = Offset(
+        size.width * o.x + math.sin(angle) * 22,
+        size.height * o.y + math.cos(angle * 0.9) * 18,
+      );
+      final color = colors[o.c % colors.length];
+
+      // Мягкое свечение вокруг шара.
+      canvas.drawCircle(
+        center,
+        o.r * 1.9,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              color.withValues(alpha: 0.30 * strength),
+              color.withValues(alpha: 0),
+            ],
+          ).createShader(Rect.fromCircle(center: center, radius: o.r * 1.9)),
+      );
+      // Тело шара: светлое пятно слева сверху, к краю темнее.
+      canvas.drawCircle(
+        center,
+        o.r,
+        Paint()
+          ..shader = RadialGradient(
+            center: const Alignment(-0.4, -0.5),
+            radius: 1.0,
+            colors: [
+              Color.lerp(color, Colors.white, 0.45)!.withValues(alpha: 0.95 * strength),
+              color.withValues(alpha: 0.78 * strength),
+              Color.lerp(color, Colors.black, 0.45)!.withValues(alpha: 0.65 * strength),
+            ],
+            stops: const [0, 0.55, 1],
+          ).createShader(Rect.fromCircle(center: center, radius: o.r)),
+      );
+      // Ободок.
+      canvas.drawCircle(
+        center,
+        o.r,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..color = Colors.white.withValues(alpha: 0.25 * strength),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_OrbsPainter old) => old.dark != dark || old.colors != colors;
 }
 
 /// Сетка восьмиконечных звёзд («хатам»): два наложенных квадрата, повёрнутых на 45°,

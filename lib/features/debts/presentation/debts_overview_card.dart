@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/l10n/l10n.dart';
@@ -40,51 +42,56 @@ class DebtsOverviewCard extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: radius,
-          child: Stack(
-            children: [
-              // Чёрное полупрозрачное стекло (как карточки должников), фон приложения просвечивает.
-              Positioned.fill(child: ColoredBox(color: glassBase(Theme.of(context).brightness))),
-              // Зелёный оттенок в левом верхнем углу гаснет к правому нижнему.
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        scheme.primary.withValues(alpha: dark ? 0.26 : 0.30),
-                        scheme.primary.withValues(alpha: dark ? 0.03 : 0.06),
-                      ],
-                      stops: const [0, 0.75],
-                    ),
-                  ),
-                ),
-              ),
-              // Мягкий блик в левом верхнем углу.
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(-0.9, -1.1),
-                      radius: 1.1,
-                      colors: [
-                        Colors.white.withValues(alpha: dark ? 0.06 : 0.25),
-                        Colors.white.withValues(alpha: 0),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              if (trend != null)
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Stack(
+              children: [
+                // Чёрное полупрозрачное стекло (как карточки должников), фон приложения просвечивает.
                 Positioned.fill(
-                  child: DebtTrendBackdrop(
-                    trend: trend!,
-                    bandHeight: _bandHeight,
-                    bottomInset: _cardPadding.bottom,
+                  child: ColoredBox(color: glassBase(Theme.of(context).brightness, opacity: 0.5)),
+                ),
+                // Зелёный оттенок в левом верхнем углу гаснет к правому нижнему.
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          scheme.primary.withValues(alpha: dark ? 0.26 : 0.30),
+                          scheme.primary.withValues(alpha: dark ? 0.03 : 0.06),
+                        ],
+                        stops: const [0, 0.75],
+                      ),
+                    ),
                   ),
                 ),
-              _Content(overview: overview, hasChart: trend != null),
-            ],
+                // Мягкий блик в левом верхнем углу.
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: const Alignment(-0.9, -1.1),
+                        radius: 1.1,
+                        colors: [
+                          Colors.white.withValues(alpha: dark ? 0.06 : 0.25),
+                          Colors.white.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (trend != null)
+                  Positioned.fill(
+                    child: DebtTrendBackdrop(
+                      trend: trend!,
+                      bandHeight: _bandHeight,
+                      bottomInset: _cardPadding.bottom,
+                    ),
+                  ),
+                _Content(overview: overview, hasChart: trend != null),
+              ],
+            ),
           ),
         ),
       ),

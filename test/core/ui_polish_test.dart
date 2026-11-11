@@ -63,6 +63,9 @@ void main() {
           .expand((d) => d.boxShadow ?? const <BoxShadow>[]);
       expect(shadows, isEmpty);
 
+      // Размытие фона под карточкой — настоящее матовое стекло.
+      expect(find.descendant(of: find.byType(GlassCard), matching: find.byType(BackdropFilter)), findsOneWidget);
+
       await tester.tap(find.text('карточка'));
       expect(taps, 1);
     });

@@ -37,6 +37,7 @@ class GlassCard extends StatelessWidget {
     this.margin = EdgeInsets.zero,
     this.onTap,
     this.opacity,
+    this.blur = 10,
   });
 
   final Widget child;
@@ -51,6 +52,9 @@ class GlassCard extends StatelessWidget {
   /// в светлой — чуть плотнее.
   final double? opacity;
 
+  /// Сила размытия фона под карточкой.
+  final double blur;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -59,7 +63,7 @@ class GlassCard extends StatelessWidget {
 
     // Основа полупрозрачная: сквозь неё виден фон приложения. Тёмная — чтобы светлый текст
     // читался даже на ярком облаке, светлая — для тёмного текста.
-    final base = glassBase(theme.brightness, opacity: opacity ?? 0.62);
+    final base = glassBase(theme.brightness, opacity: opacity ?? 0.50);
     // В тёмной теме оттенок едва заметен: карточка остаётся чёрной, а состояние читается
     // по цвету рамки и значков.
     final tintTop = tint.withValues(alpha: dark ? 0.13 : 0.26);
@@ -75,59 +79,63 @@ class GlassCard extends StatelessWidget {
         decoration: BoxDecoration(borderRadius: borderRadius),
         child: ClipRRect(
           borderRadius: borderRadius,
-          child: Stack(
-            children: [
-              // 1. Полупрозрачная основа. (Цвет и градиент в одном BoxDecoration не накладываются,
-              // поэтому основа — отдельным слоем.)
-              Positioned.fill(child: ColoredBox(color: base)),
-              // 2. Оттенок.
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [tintTop, tintMid],
-                      stops: const [0, 0.7],
+          // Размытие всего, что лежит под карточкой, — это и есть «матовое стекло».
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: Stack(
+              children: [
+                // 1. Полупрозрачная основа. (Цвет и градиент в одном BoxDecoration не накладываются,
+                // поэтому основа — отдельным слоем.)
+                Positioned.fill(child: ColoredBox(color: base)),
+                // 2. Оттенок.
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [tintTop, tintMid],
+                        stops: const [0, 0.7],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              // 3. Блик.
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [highlight, highlightEnd, Colors.white.withValues(alpha: 0)],
-                      stops: const [0, 0.52, 1],
+                // 3. Блик.
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [highlight, highlightEnd, Colors.white.withValues(alpha: 0)],
+                        stops: const [0, 0.52, 1],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              // 5. Наклонная полоса-отсвет справа.
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: LayoutBuilder(
-                    builder: (context, c) => OverflowBox(
-                      maxWidth: double.infinity,
-                      maxHeight: double.infinity,
-                      alignment: Alignment.topRight,
-                      child: Transform.translate(
-                        offset: Offset(c.maxWidth * 0.2, -c.maxHeight * 0.4),
-                        child: Transform.rotate(
-                          angle: 20 * math.pi / 180,
-                          child: Container(
-                            width: c.maxWidth * 0.55,
-                            height: c.maxHeight * 1.4,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withValues(alpha: 0),
-                                  Colors.white.withValues(alpha: dark ? 0.05 : 0.10),
-                                  Colors.white.withValues(alpha: 0),
-                                ],
+                // 5. Наклонная полоса-отсвет справа.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: LayoutBuilder(
+                      builder: (context, c) => OverflowBox(
+                        maxWidth: double.infinity,
+                        maxHeight: double.infinity,
+                        alignment: Alignment.topRight,
+                        child: Transform.translate(
+                          offset: Offset(c.maxWidth * 0.2, -c.maxHeight * 0.4),
+                          child: Transform.rotate(
+                            angle: 20 * math.pi / 180,
+                            child: Container(
+                              width: c.maxWidth * 0.55,
+                              height: c.maxHeight * 1.4,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0),
+                                    Colors.white.withValues(alpha: dark ? 0.05 : 0.10),
+                                    Colors.white.withValues(alpha: 0),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -136,47 +144,47 @@ class GlassCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-              // Содержимое и нажатие.
-              Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  borderRadius: borderRadius,
-                  onTap: onTap,
-                  child: Padding(padding: padding, child: child),
-                ),
-              ),
-              // 4. Рамка и светлая кромка сверху.
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: borderRadius,
-                      border: Border.all(color: border),
-                    ),
+                // Содержимое и нажатие.
+                Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
+                    borderRadius: borderRadius,
+                    onTap: onTap,
+                    child: Padding(padding: padding, child: child),
                   ),
                 ),
-              ),
-              Positioned(
-                top: 0,
-                left: radius * 0.6,
-                right: radius * 0.6,
-                height: 1,
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: 0),
-                          Colors.white.withValues(alpha: dark ? 0.28 : 0.55),
-                          Colors.white.withValues(alpha: 0),
-                        ],
+                // 4. Рамка и светлая кромка сверху.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: borderRadius,
+                        border: Border.all(color: border),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+                Positioned(
+                  top: 0,
+                  left: radius * 0.6,
+                  right: radius * 0.6,
+                  height: 1,
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0),
+                            Colors.white.withValues(alpha: dark ? 0.28 : 0.55),
+                            Colors.white.withValues(alpha: 0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

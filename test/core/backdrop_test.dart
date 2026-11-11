@@ -22,15 +22,15 @@ void main() {
           findsNothing);
     });
 
-    testWidgets('«сияние» — одно полотно, «узор» — два (облака и сетка звёзд)', (tester) async {
+    testWidgets('«сияние» — облака и шары (2 слоя), «узор» — ещё и сетка звёзд (3)', (tester) async {
       Finder paints() =>
           find.descendant(of: find.byType(AppBackdrop), matching: find.byType(CustomPaint));
 
       await tester.pumpWidget(host(AppBackdropStyle.aurora));
-      expect(paints(), findsNWidgets(1));
+      expect(paints(), findsNWidgets(2));
 
       await tester.pumpWidget(host(AppBackdropStyle.ornament));
-      expect(paints(), findsNWidgets(2));
+      expect(paints(), findsNWidgets(3));
 
       await tester.pumpWidget(const SizedBox.shrink()); // таймер дрейфа остановлен
     });
