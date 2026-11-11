@@ -382,9 +382,5 @@
   },
   "updateOpenInBrowser": "Brauzer arqalı",
   "unitKbPerSec": "KB/s",
-  "unitMbPerSec": "MB/s",
-  "backdropTitle": "Fon",
-  "backdropOrnament": "Naqıs",
-  "backdropAurora": "Jarıqlıq",
-  "backdropPlain": "Fonsız"
+  "unitMbPerSec": "MB/s"
 }

@@ -15,8 +15,6 @@ Future<void> showTransactionSheet(
   required DebtKind kind,
 }) {
   return showModalBottomSheet<void>(
-    // Поверх стеклянной панели вкладок, а не под ней.
-    useRootNavigator: true,
     context: context,
     isScrollControlled: true,
     showDragHandle: true,

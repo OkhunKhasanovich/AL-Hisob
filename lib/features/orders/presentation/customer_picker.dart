@@ -15,8 +15,6 @@ typedef PickedCustomer = ({String id, String name});
 /// Шторка выбора покупателя из книги должников; можно сразу завести нового.
 Future<PickedCustomer?> showCustomerPicker(BuildContext context) {
   return showModalBottomSheet<PickedCustomer>(
-    // Поверх стеклянной панели вкладок, а не под ней.
-    useRootNavigator: true,
     context: context,
     isScrollControlled: true,
     showDragHandle: true,

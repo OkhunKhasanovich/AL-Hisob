@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../features/debts/domain/debt_filter.dart';
 import '../database/app_database.dart';
-import '../widgets/app_backdrop.dart';
 
 /// Настройки, которые нужны до первого кадра.
 class AppSettingsSnapshot {
@@ -11,7 +10,6 @@ class AppSettingsSnapshot {
     this.themeMode = ThemeMode.system,
     this.debtFilter = const DebtFilterConfig(),
     this.smsPauseSeconds = defaultSmsPauseSeconds,
-    this.backdrop = AppBackdropStyle.ornament,
   });
 
   static const defaultSmsPauseSeconds = 3;
@@ -25,9 +23,6 @@ class AppSettingsSnapshot {
 
   /// Пауза между SMS при массовой рассылке, секунды (1–30).
   final int smsPauseSeconds;
-
-  /// Фон под стеклянными карточками.
-  final AppBackdropStyle backdrop;
 }
 
 class SettingsRepository {
@@ -40,7 +35,6 @@ class SettingsRepository {
   static const _overdueDaysKey = 'debt_overdue_days';
   static const _largeDebtKey = 'debt_large_threshold';
   static const _smsPauseKey = 'sms_pause_seconds';
-  static const _backdropKey = 'backdrop_style';
 
   Future<AppSettingsSnapshot> load() async {
     final rows = await _db.select(_db.appSettings).get();
@@ -61,18 +55,12 @@ class SettingsRepository {
       smsPauseSeconds: (int.tryParse(map[_smsPauseKey] ?? '') ??
               AppSettingsSnapshot.defaultSmsPauseSeconds)
           .clamp(1, 30),
-      backdrop: AppBackdropStyle.values.firstWhere(
-        (s) => s.name == map[_backdropKey],
-        orElse: () => AppBackdropStyle.ornament,
-      ),
     );
   }
 
   Future<void> saveLocale(Locale? locale) => _put(_localeKey, locale?.languageCode);
 
   Future<void> saveThemeMode(ThemeMode mode) => _put(_themeKey, mode.name);
-
-  Future<void> saveBackdrop(AppBackdropStyle style) => _put(_backdropKey, style.name);
 
   /// Произвольные числовые настройки (служебные метки вроде «когда проверяли обновление»).
   Future<int?> readInt(String key) async {

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/debts/domain/debt_filter.dart';
 import '../database/app_database.dart';
-import '../widgets/app_backdrop.dart';
 import 'settings_repository.dart';
 
 /// Переопределяется в `main()` открытой БД.
@@ -46,20 +45,6 @@ class ThemeModeController extends Notifier<ThemeMode> {
 
 final themeModeProvider =
     NotifierProvider<ThemeModeController, ThemeMode>(ThemeModeController.new);
-
-class BackdropController extends Notifier<AppBackdropStyle> {
-  @override
-  AppBackdropStyle build() => ref.watch(initialSettingsProvider).backdrop;
-
-  Future<void> select(AppBackdropStyle style) async {
-    state = style;
-    await ref.read(settingsRepositoryProvider).saveBackdrop(style);
-  }
-}
-
-/// Фон под стеклянными карточками (узор / сияние / без фона).
-final backdropStyleProvider =
-    NotifierProvider<BackdropController, AppBackdropStyle>(BackdropController.new);
 
 class DebtFilterConfigController extends Notifier<DebtFilterConfig> {
   @override

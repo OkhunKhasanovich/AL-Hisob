@@ -5,9 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/l10n.dart';
 import '../update/presentation/update_controller.dart';
-import '../../core/settings/settings_providers.dart';
-import '../../core/widgets/app_backdrop.dart';
-import 'glass_nav_bar.dart';
 import '../update/presentation/update_dialog.dart';
 
 /// Каркас с нижней навигацией. Вкладки сохраняют своё состояние
@@ -75,61 +72,39 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       if (offer) _showUpdate();
     });
 
-    // Вкладки лежат на общем фоне: их Scaffold прозрачны, а стекло карточек его просвечивает.
-    // Страницы, открытые поверх вкладок, и шторки остаются с обычным непрозрачным фоном.
-    final theme = Theme.of(context);
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(child: AppBackdrop(style: ref.watch(backdropStyleProvider))),
-          Theme(
-            data: theme.copyWith(scaffoldBackgroundColor: Colors.transparent),
-            child: navigationShell,
-          ),
-        ],
-      ),
-      // Страницы заходят под стеклянную панель вкладок и просвечивают сквозь неё.
-      extendBody: true,
+      body: navigationShell,
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const _DownloadStrip(),
-          GlassNavBar(
+          NavigationBar(
             selectedIndex: navigationShell.currentIndex,
-            onSelected: (index) {
+            onDestinationSelected: (index) {
               HapticFeedback.selectionClick();
               navigationShell.goBranch(
                 index,
                 initialLocation: index == navigationShell.currentIndex,
               );
             },
-            items: [
-              GlassNavItem(
-                icon: Icons.menu_book_outlined,
-                selectedIcon: Icons.menu_book_rounded,
-                label: l10n.tabDebts,
+            destinations: [
+              _destination(Icons.menu_book_outlined, Icons.menu_book_rounded, l10n.tabDebts),
+              _destination(
+                Icons.local_shipping_outlined,
+                Icons.local_shipping_rounded,
+                l10n.tabOrders,
               ),
-              GlassNavItem(
-                icon: Icons.local_shipping_outlined,
-                selectedIcon: Icons.local_shipping_rounded,
-                label: l10n.tabOrders,
-              ),
-              GlassNavItem(
-                icon: Icons.inventory_2_outlined,
-                selectedIcon: Icons.inventory_2_rounded,
-                label: l10n.tabCatalog,
-              ),
-              GlassNavItem(
-                icon: Icons.settings_outlined,
-                selectedIcon: Icons.settings_rounded,
-                label: l10n.tabMore,
-              ),
+              _destination(Icons.inventory_2_outlined, Icons.inventory_2_rounded, l10n.tabCatalog),
+              _destination(Icons.settings_outlined, Icons.settings_rounded, l10n.tabMore),
             ],
           ),
         ],
       ),
     );
   }
+
+  NavigationDestination _destination(IconData icon, IconData selected, String label) =>
+      NavigationDestination(icon: Icon(icon), selectedIcon: Icon(selected), label: label);
 }
 
 /// Тонкая полоса над вкладками: обновление скачивается в фоне, пользоваться приложением можно.

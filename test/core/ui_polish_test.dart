@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:al_savdogar/core/l10n/l10n.dart';
 import 'package:al_savdogar/core/theme/app_theme.dart';
 import 'package:al_savdogar/core/widgets/fade_slide_in.dart';
-import 'package:al_savdogar/core/widgets/glass.dart';
 import 'package:al_savdogar/core/widgets/section_app_bar.dart';
 
 void main() {
@@ -32,60 +31,6 @@ void main() {
     });
   });
 
-  group('GlassCard', () {
-    testWidgets('полупрозрачная, без тени внутри, нажатие работает', (tester) async {
-      var taps = 0;
-      await tester.pumpWidget(MaterialApp(
-        theme: AppTheme.dark(),
-        home: Scaffold(
-          body: GlassCard(
-            tint: GlassTint.red,
-            onTap: () => taps++,
-            child: const Text('карточка'),
-          ),
-        ),
-      ));
-
-      // Основа полупрозрачная: фон приложения просвечивает сквозь карточку, как в шашках.
-      final layers = find
-          .descendant(of: find.byType(GlassCard), matching: find.byType(ColoredBox))
-          .evaluate()
-          .map((e) => (e.widget as ColoredBox).color);
-      expect(layers, isNotEmpty);
-      expect(layers.every((c) => c.a < 1), isTrue, reason: 'ни один слой не глушит фон');
-
-      // Цветной тени нет: под прозрачной карточкой она просвечивала бы внутрь.
-      final shadows = find
-          .descendant(of: find.byType(GlassCard), matching: find.byType(DecoratedBox))
-          .evaluate()
-          .map((e) => (e.widget as DecoratedBox).decoration)
-          .whereType<BoxDecoration>()
-          .expand((d) => d.boxShadow ?? const <BoxShadow>[]);
-      expect(shadows, isEmpty);
-
-      // Размытие фона под карточкой — настоящее матовое стекло.
-      expect(find.descendant(of: find.byType(GlassCard), matching: find.byType(BackdropFilter)), findsOneWidget);
-
-      await tester.tap(find.text('карточка'));
-      expect(taps, 1);
-    });
-
-    testWidgets('светлая и тёмная темы рисуются без ошибок', (tester) async {
-      for (final theme in [AppTheme.light(), AppTheme.dark()]) {
-        await tester.pumpWidget(MaterialApp(
-          theme: theme,
-          home: const Scaffold(
-            body: Column(children: [
-              GlassCard(tint: GlassTint.green, child: Text('a')),
-              GlassPanel(child: SizedBox(height: 40, width: 200)),
-            ]),
-          ),
-        ));
-        expect(tester.takeException(), isNull);
-      }
-    });
-  });
-
   group('SectionAppBar', () {
     testWidgets('название приложения мелко, название раздела крупно; цвет не зависит от прокрутки',
         (tester) async {
@@ -108,4 +53,11 @@ void main() {
     });
   });
 
+  group('тема', () {
+    test('нижняя панель: только значки и невысокая', () {
+      final theme = AppTheme.light().navigationBarTheme;
+      expect(theme.labelBehavior, NavigationDestinationLabelBehavior.alwaysHide);
+      expect(theme.height, lessThanOrEqualTo(60));
+    });
+  });
 }

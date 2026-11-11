@@ -651,9 +651,5 @@
   },
   "updateOpenInBrowser": "Via browser",
   "unitKbPerSec": "KB/s",
-  "unitMbPerSec": "MB/s",
-  "backdropTitle": "Background",
-  "backdropOrnament": "Pattern",
-  "backdropAurora": "Glow",
-  "backdropPlain": "None"
+  "unitMbPerSec": "MB/s"
 }

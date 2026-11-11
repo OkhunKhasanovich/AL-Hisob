@@ -67,8 +67,6 @@ class ProfileCard extends ConsumerWidget {
 
   void _edit(BuildContext context, ShopProfile profile) {
     showModalBottomSheet<void>(
-      // Поверх стеклянной панели вкладок, а не под ней.
-      useRootNavigator: true,
       context: context,
       isScrollControlled: true,
       showDragHandle: true,

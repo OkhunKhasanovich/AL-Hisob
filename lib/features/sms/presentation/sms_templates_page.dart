@@ -34,8 +34,6 @@ class SmsTemplatesPage extends ConsumerWidget {
                 child: InkWell(
                   onTap: () async {
                     await showModalBottomSheet<void>(
-                      // Поверх стеклянной панели вкладок, а не под ней.
-                      useRootNavigator: true,
                       context: context,
                       isScrollControlled: true,
                       showDragHandle: true,

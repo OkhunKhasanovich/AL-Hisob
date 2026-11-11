@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:al_savdogar/app.dart';
-import 'package:al_savdogar/features/shell/glass_nav_bar.dart';
 import 'package:al_savdogar/core/database/app_database.dart';
 import 'package:al_savdogar/core/domain/debt_kind.dart';
 import 'package:al_savdogar/core/domain/order_status.dart';
@@ -47,7 +46,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1900));
     await tester.pump(const Duration(milliseconds: 800));
     await settle(tester);
-    await tester.tap(find.descendant(of: find.byType(GlassNavBar), matching: find.byTooltip('Заказы')));
+    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.byTooltip('Заказы')));
     await settle(tester);
   }
 
