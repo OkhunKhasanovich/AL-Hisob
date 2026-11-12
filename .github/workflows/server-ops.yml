@@ -1,0 +1,79 @@
+name: Server ops
+
+# Ручные безопасные операции на VPS по SSH (ключ — в секретах GitHub, ни в чате, ни в коде).
+# Выбирается ТОЛЬКО одно из заранее заданных действий: произвольные команды запустить нельзя.
+# Результат смотрится в журнале запуска (Actions → Server ops → запуск → шаг «Run»).
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Что сделать на сервере
+        type: choice
+        required: true
+        default: resources
+        options:
+          - resources     # память, диск, занятые порты (проверка перед установкой)
+          - status        # контейнеры, nginx, версия кода
+          - health        # ответ /health изнутри и снаружи
+          - logs          # последние 200 строк журнала API
+          - restart       # перезапуск API
+          - set-webhook   # заново зарегистрировать вебхук Telegram-бота
+
+permissions:
+  contents: read
+
+concurrency:
+  group: server-ops
+  cancel-in-progress: false
+
+jobs:
+  ops:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check secrets
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          for v in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS; do
+            [ -n "${!v}" ] || { echo "::error::Secret $v is not set (see docs/server-setup.md, section 5)"; exit 1; }
+          done
+
+      - name: Run
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          ACTION: ${{ inputs.action }}
+          API_DOMAIN: ${{ vars.API_DOMAIN }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          remote() {
+            ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT:-22}" -o StrictHostKeyChecking=yes -o BatchMode=yes \
+              "$DEPLOY_USER@$DEPLOY_HOST" "$@"
+          }
+          case "$ACTION" in
+            resources)
+              remote 'echo "== memory"; free -h; echo "== disk"; df -h /; echo "== listening ports"; ss -ltn; echo "== os"; . /etc/os-release; echo "$PRETTY_NAME"; echo "== nginx sites"; ls /etc/nginx/sites-enabled 2>/dev/null || true' ;;
+            status)
+              remote 'cd /opt/al-hisob && git log -1 --oneline && cd deploy && docker compose ps && systemctl is-active nginx' ;;
+            health)
+              remote 'curl -fsS http://127.0.0.1:8000/health || true'; echo
+              if [ -n "${API_DOMAIN:-}" ]; then curl -fsS "https://${API_DOMAIN}/health" || echo "public health check failed"; fi ;;
+            logs)
+              remote 'cd /opt/al-hisob/deploy && docker compose logs --tail 200 api' ;;
+            restart)
+              remote 'cd /opt/al-hisob/deploy && docker compose restart api && sleep 3 && docker compose ps' ;;
+            set-webhook)
+              remote 'cd /opt/al-hisob/deploy && docker compose exec -T api python -m app.cli set-webhook' ;;
+            *) echo "::error::unknown action"; exit 1 ;;
+          esac
