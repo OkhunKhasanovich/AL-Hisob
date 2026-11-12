@@ -12,6 +12,7 @@ on:
         required: true
         default: resources
         options:
+          - diagnose      # почему не пускает: отпечаток ключа и какие пользователи его принимают
           - resources     # память, диск, занятые порты (проверка перед установкой)
           - status        # контейнеры, nginx, версия кода
           - health        # ответ /health изнутри и снаружи
@@ -61,6 +62,24 @@ jobs:
             ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT:-22}" -o StrictHostKeyChecking=yes -o BatchMode=yes \
               "$DEPLOY_USER@$DEPLOY_HOST" "$@"
           }
+          if [ "$ACTION" = diagnose ]; then
+            # Диагностика входа: ничего на сервере не меняет, секреты не печатает.
+            if ! ssh-keygen -y -P "" -f ~/.ssh/deploy_key > ~/.ssh/deploy_key.pub 2>/dev/null; then
+              echo "KEY PROBLEM: the private key is unreadable (it has a passphrase, or the text was damaged while pasting)"
+              exit 1
+            fi
+            echo "key type and fingerprint (compare with the panel / authorized_keys):"
+            ssh-keygen -lf ~/.ssh/deploy_key.pub
+            for u in root ubuntu deploy "$DEPLOY_USER"; do
+              if ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT:-22}" -o StrictHostKeyChecking=yes -o BatchMode=yes \
+                   -o ConnectTimeout=10 -o IdentitiesOnly=yes "$u@$DEPLOY_HOST" true 2>/dev/null; then
+                echo "login as '$u': ACCEPTED"
+              else
+                echo "login as '$u': denied"
+              fi
+            done
+            exit 0
+          fi
           case "$ACTION" in
             resources)
               remote 'echo "== memory"; free -h; echo "== disk"; df -h /; echo "== listening ports"; ss -ltn; echo "== os"; . /etc/os-release; echo "$PRETTY_NAME"; echo "== nginx sites"; ls /etc/nginx/sites-enabled 2>/dev/null || true' ;;
