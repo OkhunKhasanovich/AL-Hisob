@@ -24,7 +24,7 @@ drift_schemas/  дампы схемы БД по версиям (для тест�
 
 ## Локальный запуск
 
-Нужен Flutter stable (`flutter --version`).
+Нужен Flutter 3.47.9 (`flutter --version`): та же версия закреплена в CI. Новую версию Flutter берём осознанно — вместе с обновлением Android-проекта (Gradle, AGP).
 
 ```bash
 flutter pub get
