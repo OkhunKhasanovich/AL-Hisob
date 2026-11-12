@@ -76,3 +76,17 @@ class SmsPauseController extends Notifier<int> {
 /// Пауза между SMS в массовой рассылке, секунды.
 final smsPauseSecondsProvider =
     NotifierProvider<SmsPauseController, int>(SmsPauseController.new);
+
+/// Верхняя карточка «Долги»: `true` — тонкий вид без графика (переключается двойным нажатием).
+class DebtsOverviewCompactController extends Notifier<bool> {
+  @override
+  bool build() => ref.watch(initialSettingsProvider).debtsOverviewCompact;
+
+  Future<void> set(bool compact) async {
+    state = compact;
+    await ref.read(settingsRepositoryProvider).saveDebtsOverviewCompact(compact);
+  }
+}
+
+final debtsOverviewCompactProvider =
+    NotifierProvider<DebtsOverviewCompactController, bool>(DebtsOverviewCompactController.new);

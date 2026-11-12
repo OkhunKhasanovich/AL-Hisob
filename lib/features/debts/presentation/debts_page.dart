@@ -106,7 +106,12 @@ class _DebtorListState extends ConsumerState<_DebtorList> {
       slivers: [
         // 1. Общий долг — самый верх.
         SliverToBoxAdapter(
-          child: DebtsOverviewCard(overview: overview, trend: ref.watch(debtTrendProvider)),
+          child: DebtsOverviewCard(
+            overview: overview,
+            trend: ref.watch(debtTrendProvider),
+            initialCompact: ref.read(debtsOverviewCompactProvider),
+            onCompactChanged: ref.read(debtsOverviewCompactProvider.notifier).set,
+          ),
         ),
 
         // 2. Поиск с воронкой фильтров в конце поля; не уезжает при прокрутке.

@@ -129,19 +129,7 @@ class DebtorTile extends StatelessWidget {
                       if (overdue && days != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: scheme.errorContainer,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                              child: Text(
-                                l10n.debtOverdueDays(days),
-                                style: theme.textTheme.labelSmall?.copyWith(color: scheme.onErrorContainer),
-                              ),
-                            ),
-                          ),
+                          child: _OverdueBadge(days: days),
                         ),
                     ],
                   ),
@@ -203,6 +191,48 @@ class _Info extends StatelessWidget {
           style: Theme.of(context).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
         ),
       ],
+    );
+  }
+}
+
+/// Просрочка: значок и число дней, без текста. Полная фраза («Просрочен · 45 дн.») — для дикторов.
+class _OverdueBadge extends StatelessWidget {
+  const _OverdueBadge({required this.days});
+
+  final int days;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = scheme.onErrorContainer;
+    return Semantics(
+      label: context.l10n.debtOverdueDays(days),
+      child: ExcludeSemantics(
+        child: DecoratedBox(
+          key: const ValueKey('overdue-badge'),
+          decoration: BoxDecoration(
+            color: scheme.errorContainer,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.event_busy_rounded, size: 13, color: color),
+                const SizedBox(width: 3),
+                Text(
+                  '$days',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

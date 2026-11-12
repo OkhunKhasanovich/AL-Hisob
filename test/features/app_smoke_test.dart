@@ -47,6 +47,9 @@ void main() {
     // Вкладка «Ещё» → меняем язык на английский.
     await tester.tap(find.byTooltip('Ещё'));
     await tester.pump(const Duration(milliseconds: 600));
+    await tester.tap(find.widgetWithText(ListTile, 'Язык')); // строка открывает шторку языков
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.tap(find.text('English'));
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.text('Debts'), findsWidgets);

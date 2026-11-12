@@ -36,7 +36,6 @@ class AccountTile extends ConsumerWidget {
     final user = auth.value?.user;
 
     return ListTile(
-      contentPadding: EdgeInsets.zero,
       leading: Icon(user == null ? Icons.account_circle_outlined : Icons.account_circle_rounded),
       title: Text(l10n.accountTitle),
       subtitle: Text(

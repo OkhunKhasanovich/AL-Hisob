@@ -30,10 +30,12 @@ class FloatingNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final bottom = MediaQuery.viewPaddingOf(context).bottom;
+    // Панель стоит почти у нижнего края: пустого поля до системных кнопок почти нет.
+    // Жестовая полоса Android занимает место сама, поэтому от неё берём только половину.
+    final inset = MediaQuery.viewPaddingOf(context).bottom * 0.5;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 6, 20, 12 + bottom),
+      padding: EdgeInsets.fromLTRB(20, 4, 20, 5 + inset),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: scheme.surfaceContainerHigh,

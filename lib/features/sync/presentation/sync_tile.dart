@@ -33,7 +33,6 @@ class SyncTile extends ConsumerWidget {
     };
 
     return ListTile(
-      contentPadding: EdgeInsets.zero,
       leading: s.phase == SyncPhase.syncing
           ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5))
           : Icon(icon, color: color),

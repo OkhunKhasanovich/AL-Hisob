@@ -9,6 +9,7 @@ import 'package:al_hisob/core/domain/shop_role.dart';
 import 'package:al_hisob/core/settings/settings_providers.dart';
 import 'package:al_hisob/core/settings/settings_repository.dart';
 import 'package:al_hisob/features/debts/data/debtors_repository.dart';
+import 'package:al_hisob/features/debts/presentation/debts_overview_card.dart';
 import 'package:al_hisob/features/profile/shop_profile_repository.dart';
 import 'package:al_hisob/features/shell/floating_nav_bar.dart';
 
@@ -61,6 +62,7 @@ void main() {
     expect(pill.left, greaterThan(10), reason: 'не прилипает к левому краю');
     expect(pill.right, lessThan(size.width - 10), reason: 'не прилипает к правому краю');
     expect(pill.bottom, lessThan(size.height - 4), reason: 'плавает над нижним краем');
+    expect(size.height - pill.bottom, lessThanOrEqualTo(8), reason: 'почти у самого края: лишней пустоты нет');
 
     for (final label in ['Долги', 'Заказы', 'Каталог', 'Ещё']) {
       expect(find.descendant(of: bar, matching: find.byTooltip(label)), findsOneWidget);
@@ -164,6 +166,66 @@ void main() {
     final snack = tester.getRect(find.byType(SnackBar));
     expect(snack.bottom, lessThanOrEqualTo(pill.top), reason: 'выше панели вкладок');
 
+    await closeApp(tester);
+  });
+
+  testWidgets('вид главной карточки «Долги» запоминается между запусками', (tester) async {
+    await openApp(tester);
+    final card = find.byKey(const ValueKey('overview-card'));
+    final detailed = tester.getSize(card).height;
+
+    await tester.tap(card);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(card);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+
+    expect(tester.getSize(card).height, lessThan(detailed - 50));
+    final saved = await tester.runAsync(() => SettingsRepository(db).load());
+    expect(saved!.debtsOverviewCompact, isTrue);
+    await closeApp(tester);
+
+    // Новый запуск с сохранённым значением: сразу тонкая.
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        initialSettingsProvider.overrideWithValue(saved),
+      ],
+      child: const AlHisobApp(),
+    ));
+    await tester.pump(const Duration(milliseconds: 1900));
+    await tester.pump(const Duration(milliseconds: 800));
+    await settle(tester);
+    expect(tester.widget<DebtsOverviewCard>(find.byType(DebtsOverviewCard)).initialCompact, isTrue);
+    expect(tester.getSize(find.byKey(const ValueKey('overview-card'))).height, lessThan(detailed - 50));
+    await closeApp(tester);
+  });
+
+  testWidgets('«Ещё»: компактные блоки; язык выбирается из меню, тема — значками', (tester) async {
+    await openApp(tester);
+    await tester.tap(find.byTooltip('Ещё'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    // Тема — три значка с подсказками, без длинных подписей.
+    for (final tip in ['Как в системе', 'Светлая', 'Тёмная']) {
+      expect(find.byTooltip(tip), findsOneWidget, reason: tip);
+    }
+    expect(find.text('Как в системе'), findsNothing);
+    expect(find.byType(ChoiceChip), findsNothing, reason: 'языки не раскрыты россыпью фишек');
+
+    // Строки плотные: заметно ниже обычных (56).
+    final rowHeight = tester.getSize(find.widgetWithText(ListTile, 'Язык')).height;
+    expect(rowHeight, lessThanOrEqualTo(48));
+
+    // Язык: открыть шторку и выбрать English — подписи меняются.
+    await tester.tap(find.widgetWithText(ListTile, 'Язык'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.text('English'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Language'), findsOneWidget);
     await closeApp(tester);
   });
 }

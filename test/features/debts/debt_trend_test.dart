@@ -200,6 +200,83 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
+    testWidgets('двойное нажатие: плавно переключает подробный и тонкий вид', (tester) async {
+      final changes = <bool>[];
+      await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: Scaffold(
+          body: DebtsOverviewCard(
+            overview: const DebtsOverview(totalOwed: 1120, debtorCount: 2, overdueCount: 1, overdueAmount: 5),
+            trend: DebtTrend(points: [for (var i = 0; i < 7; i++) 1000 + i * 20]),
+            onCompactChanged: changes.add,
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 1000));
+      final card = find.byKey(const ValueKey('overview-card'));
+      final detailedHeight = tester.getSize(card).height;
+      expect(find.byKey(const ValueKey('trend-period')), findsOneWidget, reason: 'подробный вид с графиком');
+
+      Future<void> doubleTap() async {
+        await tester.tap(card);
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.tap(card);
+      }
+
+      // Одно нажатие вид не меняет.
+      await tester.tap(card);
+      await tester.pump(const Duration(seconds: 1));
+      expect(tester.getSize(card).height, detailedHeight);
+
+      // Двойное: в середине перехода высота между двумя значениями, затем тонкий вид.
+      await doubleTap();
+      await tester.pump(); // кадр, с которого стартует анимация
+      await tester.pump(const Duration(milliseconds: 120));
+      final mid = tester.getSize(card).height;
+      await tester.pump(const Duration(milliseconds: 800));
+      final compactHeight = tester.getSize(card).height;
+      expect(changes, [true]);
+      expect(compactHeight, lessThan(detailedHeight - 50), reason: 'тонкий вид заметно ниже');
+      expect(compactHeight, lessThan(90), reason: 'тонкий');
+      expect(mid, lessThan(detailedHeight));
+      expect(mid, greaterThan(compactHeight), reason: 'высота меняется плавно, а не прыжком');
+      expect(find.byKey(const ValueKey('trend-period')), findsNothing, reason: 'без динамики');
+      expect(find.text('Вам должны'), findsOneWidget);
+      expect(find.textContaining('1 120'), findsOneWidget, reason: 'сумма на месте');
+      expect(find.byKey(const ValueKey('stat-debtors')), findsOneWidget);
+      expect(find.byKey(const ValueKey('stat-overdue')), findsOneWidget);
+
+      // Обратно.
+      await doubleTap();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 800));
+      expect(changes, [true, false]);
+      expect(tester.getSize(card).height, closeTo(detailedHeight, 1));
+      expect(find.byKey(const ValueKey('trend-period')), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('сохранённый тонкий вид: карточка сразу тонкая', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: Scaffold(
+          body: DebtsOverviewCard(
+            overview: const DebtsOverview(totalOwed: 500, debtorCount: 1, overdueCount: 0, overdueAmount: 0),
+            trend: DebtTrend(points: [for (var i = 0; i < 7; i++) 1000 + i * 20]),
+            initialCompact: true,
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(tester.getSize(find.byKey(const ValueKey('overview-card'))).height, lessThan(90));
+      expect(find.byKey(const ValueKey('trend-period')), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
     testWidgets('элементы карточки не накладываются друг на друга', (tester) async {
       tester.view.physicalSize = const Size(1233, 1600);
       tester.view.devicePixelRatio = 3;

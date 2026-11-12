@@ -6,10 +6,14 @@ import '../../../core/l10n/l10n.dart';
 import '../../../core/settings/settings_providers.dart';
 import '../../../core/utils/money.dart';
 import '../../../core/widgets/amount_input_formatter.dart';
+import '../../../core/widgets/settings_group.dart';
 
 /// Блок настроек «Книга должников» на вкладке «Ещё».
 class DebtSettingsSection extends ConsumerWidget {
-  const DebtSettingsSection({super.key});
+  const DebtSettingsSection({super.key, this.extra = const []});
+
+  /// Дополнительные строки в конце блока (например, шаблоны SMS).
+  final List<Widget> extra;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -17,16 +21,13 @@ class DebtSettingsSection extends ConsumerWidget {
     final config = ref.watch(debtFilterConfigProvider);
     final controller = ref.read(debtFilterConfigProvider.notifier);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return SettingsGroup(
+      title: l10n.debtBookSection,
       children: [
-        Text(l10n.debtBookSection, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 4),
         ListTile(
-          contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.schedule_rounded),
           title: Text(l10n.overdueDaysSetting),
-          trailing: Text('${config.overdueDays}', style: Theme.of(context).textTheme.titleMedium),
+          trailing: Text('${config.overdueDays}', style: Theme.of(context).textTheme.titleSmall),
           onTap: () async {
             final value = await _askNumber(context, l10n.overdueDaysSetting, config.overdueDays,
                 grouped: false);
@@ -34,12 +35,11 @@ class DebtSettingsSection extends ConsumerWidget {
           },
         ),
         ListTile(
-          contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.trending_up_rounded),
           title: Text(l10n.largeDebtSetting),
           trailing: Text(
             '${formatAmount(config.largeDebtThreshold)} ${l10n.currencySum}',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(context).textTheme.titleSmall,
           ),
           onTap: () async {
             final value = await _askNumber(
@@ -48,6 +48,7 @@ class DebtSettingsSection extends ConsumerWidget {
             if (value != null) controller.update(largeDebtThreshold: value);
           },
         ),
+        ...extra,
       ],
     );
   }

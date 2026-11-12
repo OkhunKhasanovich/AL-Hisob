@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/l10n.dart';
+import '../../../core/widgets/settings_group.dart';
 import 'debts_providers.dart';
 
 /// Количество тестовых должников, которое добавляет кнопка.
@@ -68,13 +69,10 @@ class _DemoDataSectionState extends ConsumerState<DemoDataSection> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return SettingsGroup(
+      title: l10n.demoDataSection,
       children: [
-        Text(l10n.demoDataSection, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 4),
         ListTile(
-          contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.science_rounded),
           title: Text(l10n.demoDataAdd(demoDebtorCount)),
           subtitle: Text(l10n.demoDataAddHint),
@@ -82,7 +80,6 @@ class _DemoDataSectionState extends ConsumerState<DemoDataSection> {
           onTap: _add,
         ),
         ListTile(
-          contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.delete_sweep_rounded),
           title: Text(l10n.demoDataRemove),
           enabled: !_busy,

@@ -153,7 +153,12 @@ void main() {
     });
     await openDebts(tester);
 
-    expect(find.text('Просрочен · 45 дн.'), findsOneWidget);
+    // Значок и число дней вместо текста.
+    final badge = find.byKey(const ValueKey('overdue-badge'));
+    expect(badge, findsOneWidget);
+    expect(find.descendant(of: badge, matching: find.text('45')), findsOneWidget);
+    expect(find.descendant(of: badge, matching: find.byIcon(Icons.event_busy_rounded)), findsOneWidget);
+    expect(find.text('Просрочен · 45 дн.'), findsNothing, reason: 'текста о просрочке нет');
     await chooseFilter(tester, 'Просроченные');
     expect(find.text('Bobur'), findsOneWidget);
 

@@ -31,7 +31,6 @@ class UpdateTile extends ConsumerWidget {
           };
 
     return ListTile(
-      contentPadding: EdgeInsets.zero,
       leading: const Icon(Icons.system_update_rounded),
       title: Text(l10n.updateTitle),
       subtitle: Text([version, ?status].join('\n')),

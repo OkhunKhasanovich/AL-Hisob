@@ -21,45 +21,53 @@ class ProfileCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final roles = profile.roles.map((r) => r.label(l10n)).join(', ');
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Icon(
-                profile.roles.first.icon,
-                color: theme.colorScheme.onPrimaryContainer,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: theme.colorScheme.primaryContainer,
+                child: Icon(
+                  profile.roles.first.icon,
+                  size: 20,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.profileSectionTitle, style: theme.textTheme.labelMedium),
-                  Text(
-                    profile.name,
-                    style: theme.textTheme.titleMedium,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    roles,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                  ),
-                ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      profile.name,
+                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      roles,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            IconButton(
-              tooltip: l10n.editButton,
-              icon: const Icon(Icons.edit_rounded),
-              onPressed: () => _edit(context, profile),
-            ),
-          ],
+              IconButton(
+                tooltip: l10n.editButton,
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.edit_rounded, size: 20),
+                onPressed: () => _edit(context, profile),
+              ),
+            ],
+          ),
         ),
       ),
     );
