@@ -13,9 +13,18 @@ set -euo pipefail
 REPO_URL="${REPO_URL:-https://github.com/OkhunKhasanovich/Al-Hisob.git}"
 APP_DIR="${APP_DIR:-/opt/al-hisob}"
 DEPLOY_USER="${DEPLOY_USER:-deploy}"
+# Порт API на 127.0.0.1 (наружу не виден). Если на сервере он уже занят другим проектом — задайте другой.
+API_PORT="${API_PORT:-8000}"
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "Запустите от root (sudo -i)." >&2
+  exit 1
+fi
+
+# На сервере могут жить другие проекты (например, шашки на 8081/8082): не занимаем чужой порт.
+if command -v ss >/dev/null 2>&1 && ss -ltn "sport = :$API_PORT" | grep -q LISTEN \
+   && ! (command -v docker >/dev/null 2>&1 && docker ps --format '{{.Names}}' | grep -q '^deploy-api'); then
+  echo "Порт $API_PORT на этом сервере уже занят. Запустите так: API_PORT=8100 DOMAIN=... EMAIL=... bash bootstrap.sh" >&2
   exit 1
 fi
 
@@ -55,6 +64,7 @@ if [ ! -f "$ENV_FILE" ]; then
   cat > "$ENV_FILE" <<ENVEOF
 POSTGRES_PASSWORD=$(openssl rand -hex 24)
 PUBLIC_BASE_URL=https://$DOMAIN
+API_PORT=$API_PORT
 JWT_SECRET=$(openssl rand -hex 32)
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_BOT_USERNAME=
@@ -65,7 +75,7 @@ fi
 
 echo "==> nginx"
 SITE="/etc/nginx/sites-available/al-hisob"
-sed "s/__DOMAIN__/$DOMAIN/g" "$APP_DIR/deploy/nginx/al-hisob.conf.template" > "$SITE"
+sed -e "s/__DOMAIN__/$DOMAIN/g" -e "s/__PORT__/$API_PORT/g" "$APP_DIR/deploy/nginx/al-hisob.conf.template" > "$SITE"
 ln -sf "$SITE" /etc/nginx/sites-enabled/al-hisob
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
