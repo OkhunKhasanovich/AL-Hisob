@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from app.auth.router import build_router
 from app.config import Settings, get_settings
 from app.db import create_pool, run_migrations
+from app.sync.router import build_router as build_sync_router
 from app.telegram.client import HttpTelegramClient, NullTelegramClient, TelegramClient
 from app.telegram.webhook import build_webhook_router
 
@@ -47,5 +48,6 @@ def create_app(settings: Settings | None = None, telegram: TelegramClient | None
         return {"status": "ok" if db_ok else "degraded", "db": db_ok}
 
     app.include_router(build_router(settings))
+    app.include_router(build_sync_router(settings))
     app.include_router(build_webhook_router(settings))
     return app

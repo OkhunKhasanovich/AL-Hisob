@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     rate_limit_start_per_minute: int = Field(default=10, ge=1)
     rate_limit_poll_per_minute: int = Field(default=90, ge=1)
     rate_limit_refresh_per_minute: int = Field(default=30, ge=1)
+    rate_limit_sync_per_minute: int = Field(default=120, ge=1)
 
     @property
     def is_production(self) -> bool:
