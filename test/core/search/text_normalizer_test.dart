@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/search/text_normalizer.dart';
+import 'package:al_hisob/core/search/text_normalizer.dart';
 
 void main() {
   /// Все написания должны давать один ключ.

@@ -5,16 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/app.dart';
-import 'package:al_savdogar/features/shell/floating_nav_bar.dart';
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/domain/product_unit.dart';
-import 'package:al_savdogar/core/domain/shop_role.dart';
-import 'package:al_savdogar/core/settings/settings_providers.dart';
-import 'package:al_savdogar/core/settings/settings_repository.dart';
-import 'package:al_savdogar/features/catalog/data/catalog_providers.dart';
-import 'package:al_savdogar/features/catalog/data/products_repository.dart';
-import 'package:al_savdogar/features/profile/shop_profile_repository.dart';
+import 'package:al_hisob/app.dart';
+import 'package:al_hisob/features/shell/floating_nav_bar.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/domain/product_unit.dart';
+import 'package:al_hisob/core/domain/shop_role.dart';
+import 'package:al_hisob/core/settings/settings_providers.dart';
+import 'package:al_hisob/core/settings/settings_repository.dart';
+import 'package:al_hisob/features/catalog/data/catalog_providers.dart';
+import 'package:al_hisob/features/catalog/data/products_repository.dart';
+import 'package:al_hisob/features/profile/shop_profile_repository.dart';
 
 import '../../helpers/fake_photo_picker.dart';
 
@@ -75,7 +75,7 @@ void main() {
         photoDirectoryProvider.overrideWith((ref) async => photoDir),
         photoPickerProvider.overrideWithValue(picker),
       ],
-      child: const AlSavdogarApp(),
+      child: const AlHisobApp(),
     ));
     await tester.pump(const Duration(milliseconds: 1900));
     await tester.pump(const Duration(milliseconds: 800));

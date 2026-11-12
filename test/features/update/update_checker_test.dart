@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/features/update/data/update_checker.dart';
+import 'package:al_hisob/features/update/data/update_checker.dart';
 
 import 'update_info_test.dart' show release;
 

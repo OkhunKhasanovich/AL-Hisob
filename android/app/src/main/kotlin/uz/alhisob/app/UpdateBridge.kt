@@ -1,4 +1,4 @@
-package uz.alsavdogar.app
+package uz.alhisob.app
 
 import android.app.Activity
 import android.content.Intent
@@ -17,7 +17,7 @@ import java.io.File
 class UpdateBridge(private val activity: Activity) {
 
     companion object {
-        const val CHANNEL = "uz.alsavdogar.app/update"
+        const val CHANNEL = "uz.alhisob.app/update"
     }
 
     fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {

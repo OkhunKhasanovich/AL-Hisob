@@ -27,7 +27,7 @@ def create_app(settings: Settings | None = None, telegram: TelegramClient | None
             await app.state.pool.close()
 
     app = FastAPI(
-        title="Al-Savdogar API",
+        title="Al-Hisob API",
         version="0.1.0",
         lifespan=lifespan,
         docs_url=None if settings.is_production else "/docs",

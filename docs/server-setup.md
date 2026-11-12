@@ -24,7 +24,7 @@ ping api.ваш-домен
 Нужен **новый** бот, отдельный от того, что присылает APK.
 
 1. В Telegram откройте `@BotFather` → `/newbot`.
-2. Название: `Al-Savdogar Login`. Имя пользователя: что-то вроде `AlSavdogarLoginBot`
+2. Название: `Al-Hisob Login`. Имя пользователя: что-то вроде `AlHisobLoginBot`
    (должно заканчиваться на `bot`).
 3. BotFather пришлёт токен вида `123456:ABC...`. **Не пересылайте его никому**, он понадобится на шаге 4.
    Запомните имя пользователя бота без `@`.
@@ -40,24 +40,24 @@ ssh root@IP-вашего-VPS
 Скачайте и запустите скрипт настройки (подставьте свой домен и почту):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/OkhunKhasanovich/Al-Savdogar/main/deploy/bootstrap.sh -o bootstrap.sh
+curl -fsSL https://raw.githubusercontent.com/OkhunKhasanovich/Al-Hisob/main/deploy/bootstrap.sh -o bootstrap.sh
 DOMAIN=api.ваш-домен EMAIL=ваша@почта bash bootstrap.sh
 ```
 
 Скрипт установит Docker, nginx и сертификат HTTPS, создаст пользователя `deploy`, скачает код и
-сгенерирует случайные пароли в файле `/opt/al-savdogar/deploy/.env`.
+сгенерирует случайные пароли в файле `/opt/al-hisob/deploy/.env`.
 
 ## 4. Токен бота на сервере
 
 ```bash
-nano /opt/al-savdogar/deploy/.env
+nano /opt/al-hisob/deploy/.env
 ```
 
 Впишите после `=` значения строк `TELEGRAM_BOT_TOKEN` (токен из BotFather) и `TELEGRAM_BOT_USERNAME`
 (имя бота без `@`). Сохранить: `Ctrl+O`, `Enter`, выйти: `Ctrl+X`. Затем:
 
 ```bash
-cd /opt/al-savdogar/deploy
+cd /opt/al-hisob/deploy
 docker compose up -d --build
 docker compose exec -T api python -m app.cli set-webhook
 ```
@@ -113,7 +113,7 @@ ssh-keyscan -H IP-вашего-VPS
 
 ## Обслуживание
 
-* Логи: `cd /opt/al-savdogar/deploy && docker compose logs -f api`
+* Логи: `cd /opt/al-hisob/deploy && docker compose logs -f api`
 * Резервная копия базы (по желанию, раз в сутки через `cron`):
-  `docker compose exec -T db pg_dump -U alsavdogar alsavdogar | gzip > /root/backup-$(date +%F).sql.gz`
+  `docker compose exec -T db pg_dump -U alhisob alhisob | gzip > /root/backup-$(date +%F).sql.gz`
 * Файл `.env` никому не показывайте и не добавляйте в git.

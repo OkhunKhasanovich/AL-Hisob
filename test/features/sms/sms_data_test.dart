@@ -2,18 +2,18 @@ import 'package:drift/native.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/database/sync_columns.dart';
-import 'package:al_savdogar/core/domain/sms_status.dart';
-import 'package:al_savdogar/features/debts/data/debtors_repository.dart';
-import 'package:al_savdogar/features/sms/data/android_sms_sender.dart';
-import 'package:al_savdogar/features/sms/data/composer_sms_sender.dart';
-import 'package:al_savdogar/features/sms/data/sms_log_repository.dart';
-import 'package:al_savdogar/features/sms/data/sms_service.dart';
-import 'package:al_savdogar/features/sms/data/sms_templates_repository.dart';
-import 'package:al_savdogar/features/sms/domain/reminder_text.dart';
-import 'package:al_savdogar/features/sms/domain/sms_sender.dart';
-import 'package:al_savdogar/features/sms/domain/sms_template.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/database/sync_columns.dart';
+import 'package:al_hisob/core/domain/sms_status.dart';
+import 'package:al_hisob/features/debts/data/debtors_repository.dart';
+import 'package:al_hisob/features/sms/data/android_sms_sender.dart';
+import 'package:al_hisob/features/sms/data/composer_sms_sender.dart';
+import 'package:al_hisob/features/sms/data/sms_log_repository.dart';
+import 'package:al_hisob/features/sms/data/sms_service.dart';
+import 'package:al_hisob/features/sms/data/sms_templates_repository.dart';
+import 'package:al_hisob/features/sms/domain/reminder_text.dart';
+import 'package:al_hisob/features/sms/domain/sms_sender.dart';
+import 'package:al_hisob/features/sms/domain/sms_template.dart';
 
 import '../../helpers/fake_sms_sender.dart';
 
@@ -220,7 +220,7 @@ void main() {
     });
 
     TestWidgetsFlutterBinding.ensureInitialized();
-    const channel = MethodChannel('uz.alsavdogar.app/sms');
+    const channel = MethodChannel('uz.alhisob.app/sms');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     tearDown(() => messenger.setMockMethodCallHandler(channel, null));
 

@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     env: str = "development"  # production отключает /docs и включает проверки секретов
-    database_url: str = "postgresql://postgres@localhost/alsavdogar"
+    database_url: str = "postgresql://postgres@localhost/alhisob"
     public_base_url: str = "http://localhost:8000"
 
     jwt_secret: str = "dev-secret-change-me-please-0123456789abcdef"

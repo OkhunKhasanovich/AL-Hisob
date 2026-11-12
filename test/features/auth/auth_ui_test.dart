@@ -3,18 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/app.dart';
-import 'package:al_savdogar/features/shell/floating_nav_bar.dart';
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/domain/shop_role.dart';
-import 'package:al_savdogar/core/settings/settings_providers.dart';
-import 'package:al_savdogar/core/settings/settings_repository.dart';
-import 'package:al_savdogar/features/auth/data/auth_providers.dart';
-import 'package:al_savdogar/features/auth/domain/auth_api.dart';
-import 'package:al_savdogar/features/auth/domain/login_prompt_logic.dart';
-import 'package:al_savdogar/features/auth/presentation/login_prompt.dart';
-import 'package:al_savdogar/features/debts/data/debtors_repository.dart';
-import 'package:al_savdogar/features/profile/shop_profile_repository.dart';
+import 'package:al_hisob/app.dart';
+import 'package:al_hisob/features/shell/floating_nav_bar.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/domain/shop_role.dart';
+import 'package:al_hisob/core/settings/settings_providers.dart';
+import 'package:al_hisob/core/settings/settings_repository.dart';
+import 'package:al_hisob/features/auth/data/auth_providers.dart';
+import 'package:al_hisob/features/auth/domain/auth_api.dart';
+import 'package:al_hisob/features/auth/domain/login_prompt_logic.dart';
+import 'package:al_hisob/features/auth/presentation/login_prompt.dart';
+import 'package:al_hisob/features/debts/data/debtors_repository.dart';
+import 'package:al_hisob/features/profile/shop_profile_repository.dart';
 
 import '../../helpers/fake_auth.dart';
 
@@ -72,7 +72,7 @@ void main() {
             (ref) async => LoginPromptConfig(afterDays: promptAfterDays, afterRecords: 1000),
           ),
       ],
-      child: const AlSavdogarApp(),
+      child: const AlHisobApp(),
     ));
     await tester.pump(const Duration(milliseconds: 1900));
     await tester.pump(const Duration(milliseconds: 800));

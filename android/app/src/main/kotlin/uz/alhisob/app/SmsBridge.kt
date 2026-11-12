@@ -1,4 +1,4 @@
-package uz.alsavdogar.app
+package uz.alhisob.app
 
 import android.Manifest
 import android.app.Activity
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class SmsBridge(private val activity: Activity) {
 
     companion object {
-        const val CHANNEL = "uz.alsavdogar.app/sms"
+        const val CHANNEL = "uz.alhisob.app/sms"
         private const val PERMISSIONS_REQUEST_CODE = 4101
         private const val SEND_TIMEOUT_MS = 60_000L
         private val requestCodes = AtomicInteger(1000)

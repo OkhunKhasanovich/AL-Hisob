@@ -29,7 +29,7 @@ class AppSettings extends Table {
 @DriftDatabase(tables: [AppSettings, ShopProfiles, Debtors, DebtorPhones, DebtTransactions, SmsTemplates, SmsLogs, Products, ProductPhotos, Orders, OrderItems, OrderStatusHistory])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
-      : super(executor ?? driftDatabase(name: 'al_savdogar'));
+      : super(executor ?? driftDatabase(name: 'al_hisob'));
 
   /// Увеличивать при каждом изменении схемы и выполнять
   /// `dart run drift_dev schema dump ...` (см. README).

@@ -1,4 +1,4 @@
-package uz.alsavdogar.app
+package uz.alhisob.app
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine

@@ -1,14 +1,14 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/database/sync_columns.dart';
-import 'package:al_savdogar/core/domain/debt_kind.dart';
-import 'package:al_savdogar/core/domain/order_status.dart';
-import 'package:al_savdogar/core/domain/product_unit.dart';
-import 'package:al_savdogar/features/debts/data/debtors_repository.dart';
-import 'package:al_savdogar/features/orders/data/orders_repository.dart';
-import 'package:al_savdogar/features/orders/domain/order_models.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/database/sync_columns.dart';
+import 'package:al_hisob/core/domain/debt_kind.dart';
+import 'package:al_hisob/core/domain/order_status.dart';
+import 'package:al_hisob/core/domain/product_unit.dart';
+import 'package:al_hisob/features/debts/data/debtors_repository.dart';
+import 'package:al_hisob/features/orders/data/orders_repository.dart';
+import 'package:al_hisob/features/orders/domain/order_models.dart';
 
 const _cola = OrderItemInput(
   productId: 'p-cola',

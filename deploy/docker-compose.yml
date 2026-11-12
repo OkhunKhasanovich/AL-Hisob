@@ -5,13 +5,13 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: alsavdogar
+      POSTGRES_USER: alhisob
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: alsavdogar
+      POSTGRES_DB: alhisob
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U alsavdogar -d alsavdogar"]
+      test: ["CMD-SHELL", "pg_isready -U alhisob -d alhisob"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://alsavdogar:${POSTGRES_PASSWORD}@db:5432/alsavdogar
+      DATABASE_URL: postgresql://alhisob:${POSTGRES_PASSWORD}@db:5432/alhisob
       ENV: production
       TRUST_PROXY: "true"
     depends_on:

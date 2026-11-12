@@ -2,11 +2,11 @@ import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/database/sync_columns.dart';
-import 'package:al_savdogar/core/domain/shop_role.dart';
-import 'package:al_savdogar/features/profile/shop_name_validator.dart';
-import 'package:al_savdogar/features/profile/shop_profile_repository.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/database/sync_columns.dart';
+import 'package:al_hisob/core/domain/shop_role.dart';
+import 'package:al_hisob/features/profile/shop_name_validator.dart';
+import 'package:al_hisob/features/profile/shop_profile_repository.dart';
 
 void main() {
   group('валидация названия', () {

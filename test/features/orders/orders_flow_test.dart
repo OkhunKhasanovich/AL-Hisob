@@ -3,20 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/app.dart';
-import 'package:al_savdogar/features/shell/floating_nav_bar.dart';
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/domain/debt_kind.dart';
-import 'package:al_savdogar/core/domain/order_status.dart';
-import 'package:al_savdogar/core/domain/product_unit.dart';
-import 'package:al_savdogar/core/domain/shop_role.dart';
-import 'package:al_savdogar/core/settings/settings_providers.dart';
-import 'package:al_savdogar/core/settings/settings_repository.dart';
-import 'package:al_savdogar/features/catalog/data/products_repository.dart';
-import 'package:al_savdogar/features/debts/data/debtors_repository.dart';
-import 'package:al_savdogar/features/orders/data/orders_repository.dart';
-import 'package:al_savdogar/features/orders/domain/order_models.dart';
-import 'package:al_savdogar/features/profile/shop_profile_repository.dart';
+import 'package:al_hisob/app.dart';
+import 'package:al_hisob/features/shell/floating_nav_bar.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/domain/debt_kind.dart';
+import 'package:al_hisob/core/domain/order_status.dart';
+import 'package:al_hisob/core/domain/product_unit.dart';
+import 'package:al_hisob/core/domain/shop_role.dart';
+import 'package:al_hisob/core/settings/settings_providers.dart';
+import 'package:al_hisob/core/settings/settings_repository.dart';
+import 'package:al_hisob/features/catalog/data/products_repository.dart';
+import 'package:al_hisob/features/debts/data/debtors_repository.dart';
+import 'package:al_hisob/features/orders/data/orders_repository.dart';
+import 'package:al_hisob/features/orders/domain/order_models.dart';
+import 'package:al_hisob/features/profile/shop_profile_repository.dart';
 
 void main() {
   late AppDatabase db;
@@ -42,7 +42,7 @@ void main() {
         appDatabaseProvider.overrideWithValue(db),
         initialSettingsProvider.overrideWithValue(const AppSettingsSnapshot(locale: Locale('ru'))),
       ],
-      child: const AlSavdogarApp(),
+      child: const AlHisobApp(),
     ));
     await tester.pump(const Duration(milliseconds: 1900));
     await tester.pump(const Duration(milliseconds: 800));

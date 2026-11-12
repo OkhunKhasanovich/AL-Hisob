@@ -6,13 +6,13 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/settings/settings_providers.dart';
-import 'package:al_savdogar/features/update/data/update_checker.dart';
-import 'package:al_savdogar/features/update/data/update_downloader.dart';
-import 'package:al_savdogar/features/update/domain/apk_installer.dart';
-import 'package:al_savdogar/features/update/domain/update_info.dart';
-import 'package:al_savdogar/features/update/presentation/update_controller.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/settings/settings_providers.dart';
+import 'package:al_hisob/features/update/data/update_checker.dart';
+import 'package:al_hisob/features/update/data/update_downloader.dart';
+import 'package:al_hisob/features/update/domain/apk_installer.dart';
+import 'package:al_hisob/features/update/domain/update_info.dart';
+import 'package:al_hisob/features/update/presentation/update_controller.dart';
 
 import '../../helpers/fake_apk_installer.dart';
 import '../../helpers/local_http_server.dart';
@@ -77,13 +77,13 @@ void main() {
   /// Релиз build-[build] со ссылкой на локальный сервер.
   Map<String, Object?> releaseOnServer(int build, {String? sha, int? size}) => release(
         tag: 'build-$build',
-        name: 'Al-Savdogar 0.2.0 ($build)',
+        name: 'Al-Hisob 0.2.0 ($build)',
         assets: [
           asset(
-            'al-savdogar-arm64-v8a.apk',
+            'al-hisob-arm64-v8a.apk',
             size: size ?? apk.length,
             digest: 'sha256:${sha ?? sha256.convert(apk)}',
-            url: 'https://github.com/o/r/releases/download/build-$build/al-savdogar-arm64-v8a.apk',
+            url: 'https://github.com/o/r/releases/download/build-$build/al-hisob-arm64-v8a.apk',
           ),
         ],
       );
@@ -388,7 +388,7 @@ void main() {
       await controller().install();
 
       expect(installer.installed, hasLength(1));
-      expect(installer.installed.single, endsWith('al-savdogar-9.apk'));
+      expect(installer.installed.single, endsWith('al-hisob-9.apk'));
       expect(await File(installer.installed.single).readAsBytes(), apk);
       expect(state().phase, UpdatePhase.idle);
     });

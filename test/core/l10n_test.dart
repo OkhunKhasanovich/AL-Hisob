@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/l10n/l10n.dart';
+import 'package:al_hisob/core/l10n/l10n.dart';
 
 void main() {
   test('поддерживаются uz, ru, en, kaa', () {

@@ -1,4 +1,4 @@
-import 'package:al_savdogar/features/update/domain/apk_installer.dart';
+import 'package:al_hisob/features/update/domain/apk_installer.dart';
 
 class FakeApkInstaller implements ApkInstaller {
   FakeApkInstaller({this.status = InstallStatus.started, this.abis = const ['arm64-v8a']});

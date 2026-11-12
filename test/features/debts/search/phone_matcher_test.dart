@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/features/debts/domain/search/phone_matcher.dart';
+import 'package:al_hisob/features/debts/domain/search/phone_matcher.dart';
 
 void main() {
   group('queryDigits', () {

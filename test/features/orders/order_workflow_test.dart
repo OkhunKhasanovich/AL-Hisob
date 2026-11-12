@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/domain/order_status.dart';
-import 'package:al_savdogar/core/domain/product_unit.dart';
-import 'package:al_savdogar/features/catalog/domain/product_pricing.dart';
-import 'package:al_savdogar/features/orders/domain/order_models.dart';
-import 'package:al_savdogar/features/orders/domain/order_workflow.dart';
+import 'package:al_hisob/core/domain/order_status.dart';
+import 'package:al_hisob/core/domain/product_unit.dart';
+import 'package:al_hisob/features/catalog/domain/product_pricing.dart';
+import 'package:al_hisob/features/orders/domain/order_models.dart';
+import 'package:al_hisob/features/orders/domain/order_workflow.dart';
 
 void main() {
   group('переходы статусов', () {

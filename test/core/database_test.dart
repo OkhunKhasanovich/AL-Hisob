@@ -2,9 +2,9 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/settings/settings_repository.dart';
-import 'package:al_savdogar/features/debts/domain/debt_filter.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/settings/settings_repository.dart';
+import 'package:al_hisob/features/debts/domain/debt_filter.dart';
 
 void main() {
   late AppDatabase db;

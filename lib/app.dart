@@ -7,17 +7,17 @@ import 'core/router/app_router.dart';
 import 'core/settings/settings_providers.dart';
 import 'core/theme/app_theme.dart';
 
-class AlSavdogarApp extends ConsumerStatefulWidget {
-  const AlSavdogarApp({super.key, this.router});
+class AlHisobApp extends ConsumerStatefulWidget {
+  const AlHisobApp({super.key, this.router});
 
   /// Для тестов можно подставить свой роутер.
   final GoRouter? router;
 
   @override
-  ConsumerState<AlSavdogarApp> createState() => _AlSavdogarAppState();
+  ConsumerState<AlHisobApp> createState() => _AlHisobAppState();
 }
 
-class _AlSavdogarAppState extends ConsumerState<AlSavdogarApp> {
+class _AlHisobAppState extends ConsumerState<AlHisobApp> {
   late final GoRouter _router = widget.router ?? createRouter();
 
   @override

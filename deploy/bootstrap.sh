@@ -4,14 +4,14 @@
 #   DOMAIN=api.example.com EMAIL=you@example.com bash bootstrap.sh
 #
 # Что делает: ставит Docker, nginx, certbot; создаёт пользователя deploy; клонирует репозиторий в
-# /opt/al-savdogar; создаёт deploy/.env со случайными секретами; настраивает nginx и HTTPS;
+# /opt/al-hisob; создаёт deploy/.env со случайными секретами; настраивает nginx и HTTPS;
 # запускает сервер. Повторный запуск безопасен: существующий .env не перезаписывается.
 set -euo pipefail
 
 : "${DOMAIN:?Укажите DOMAIN, например DOMAIN=api.example.com}"
 : "${EMAIL:?Укажите EMAIL для уведомлений от центра сертификации}"
-REPO_URL="${REPO_URL:-https://github.com/OkhunKhasanovich/Al-Savdogar.git}"
-APP_DIR="${APP_DIR:-/opt/al-savdogar}"
+REPO_URL="${REPO_URL:-https://github.com/OkhunKhasanovich/Al-Hisob.git}"
+APP_DIR="${APP_DIR:-/opt/al-hisob}"
 DEPLOY_USER="${DEPLOY_USER:-deploy}"
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -64,9 +64,9 @@ ENVEOF
 fi
 
 echo "==> nginx"
-SITE="/etc/nginx/sites-available/al-savdogar"
-sed "s/__DOMAIN__/$DOMAIN/g" "$APP_DIR/deploy/nginx/al-savdogar.conf.template" > "$SITE"
-ln -sf "$SITE" /etc/nginx/sites-enabled/al-savdogar
+SITE="/etc/nginx/sites-available/al-hisob"
+sed "s/__DOMAIN__/$DOMAIN/g" "$APP_DIR/deploy/nginx/al-hisob.conf.template" > "$SITE"
+ln -sf "$SITE" /etc/nginx/sites-enabled/al-hisob
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl reload nginx

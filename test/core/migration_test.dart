@@ -1,7 +1,7 @@
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/database/app_database.dart';
+import 'package:al_hisob/core/database/app_database.dart';
 
 import '../generated_migrations/schema.dart';
 

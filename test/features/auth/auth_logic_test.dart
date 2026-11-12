@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/features/auth/data/auth_providers.dart';
-import 'package:al_savdogar/features/auth/domain/auth_api.dart';
-import 'package:al_savdogar/features/auth/domain/auth_models.dart';
-import 'package:al_savdogar/features/auth/domain/login_prompt_logic.dart';
-import 'package:al_savdogar/features/auth/presentation/auth_controller.dart';
-import 'package:al_savdogar/features/auth/presentation/telegram_login_controller.dart';
+import 'package:al_hisob/features/auth/data/auth_providers.dart';
+import 'package:al_hisob/features/auth/domain/auth_api.dart';
+import 'package:al_hisob/features/auth/domain/auth_models.dart';
+import 'package:al_hisob/features/auth/domain/login_prompt_logic.dart';
+import 'package:al_hisob/features/auth/presentation/auth_controller.dart';
+import 'package:al_hisob/features/auth/presentation/telegram_login_controller.dart';
 
 import '../../helpers/fake_auth.dart';
 

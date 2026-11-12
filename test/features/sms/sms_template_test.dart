@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/features/sms/domain/sms_template.dart';
-import 'package:al_savdogar/features/sms/domain/sms_text.dart';
+import 'package:al_hisob/features/sms/domain/sms_template.dart';
+import 'package:al_hisob/features/sms/domain/sms_text.dart';
 
 void main() {
   final values = SmsTemplateValues(

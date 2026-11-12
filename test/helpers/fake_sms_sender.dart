@@ -1,4 +1,4 @@
-import 'package:al_savdogar/features/sms/domain/sms_sender.dart';
+import 'package:al_hisob/features/sms/domain/sms_sender.dart';
 
 /// Отправитель для тестов: запоминает сообщения, разрешения и SIM настраиваются.
 class FakeSmsSender implements SmsSender {

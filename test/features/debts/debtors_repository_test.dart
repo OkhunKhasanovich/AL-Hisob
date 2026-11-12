@@ -2,10 +2,10 @@ import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/database/sync_columns.dart';
-import 'package:al_savdogar/core/domain/debt_kind.dart';
-import 'package:al_savdogar/features/debts/data/debtors_repository.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/database/sync_columns.dart';
+import 'package:al_hisob/core/domain/debt_kind.dart';
+import 'package:al_hisob/features/debts/data/debtors_repository.dart';
 
 void main() {
   late AppDatabase db;

@@ -135,7 +135,7 @@ jobs:
           set -euo pipefail
           SHORT_SHA=$(git rev-parse --short HEAD)
           COMMIT_MSG=$(git log -1 --pretty=%s | cut -c1-300)
-          CAPTION=$(printf 'Al-Savdogar %s (сборка %s)\nCommit: %s\n%s\narm64-v8a, %s MB' \
+          CAPTION=$(printf 'Al-Hisob %s (сборка %s)\nCommit: %s\n%s\narm64-v8a, %s MB' \
             "$VERSION" "${{ github.run_number }}" "$SHORT_SHA" "$COMMIT_MSG" "$APK_SIZE_MB")
           RESPONSE=$(curl -sS --fail-with-body \
             "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
@@ -155,11 +155,11 @@ jobs:
           set -euo pipefail
           mkdir -p release
           for abi in arm64-v8a armeabi-v7a x86_64; do
-            cp "build/app/outputs/flutter-apk/app-${abi}-release.apk" "release/al-savdogar-${abi}.apk"
+            cp "build/app/outputs/flutter-apk/app-${abi}-release.apk" "release/al-hisob-${abi}.apk"
           done
           NOTES=$(git log -1 --pretty=%s)
           gh release create "build-${RUN}" release/*.apk \
-            --title "Al-Savdogar ${VERSION} (${RUN})" \
+            --title "Al-Hisob ${VERSION} (${RUN})" \
             --notes "$NOTES" \
             --target "$GITHUB_SHA" \
             --latest
@@ -176,7 +176,7 @@ jobs:
         run: |
           [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ] || exit 0
           SHORT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "?")
-          TEXT=$(printf '❌ Сборка Al-Savdogar #%s упала (%s)\n%s/%s/actions/runs/%s' \
+          TEXT=$(printf '❌ Сборка Al-Hisob #%s упала (%s)\n%s/%s/actions/runs/%s' \
             "${{ github.run_number }}" "$SHORT_SHA" \
             "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
           curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \

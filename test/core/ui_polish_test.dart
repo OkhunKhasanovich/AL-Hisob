@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/l10n/l10n.dart';
-import 'package:al_savdogar/core/theme/app_theme.dart';
-import 'package:al_savdogar/core/widgets/fade_slide_in.dart';
-import 'package:al_savdogar/core/widgets/section_app_bar.dart';
+import 'package:al_hisob/core/l10n/l10n.dart';
+import 'package:al_hisob/core/theme/app_theme.dart';
+import 'package:al_hisob/core/widgets/fade_slide_in.dart';
+import 'package:al_hisob/core/widgets/section_app_bar.dart';
 
 void main() {
   group('FadeSlideIn', () {
@@ -42,7 +42,7 @@ void main() {
         home: const Scaffold(appBar: SectionAppBar(title: 'Долги')),
       ));
 
-      final app = tester.widget<Text>(find.text('AL-SAVDOGAR'));
+      final app = tester.widget<Text>(find.text('AL-HISOB'));
       final section = tester.widget<Text>(find.text('Долги'));
       expect(section.style!.fontSize!, greaterThan(app.style!.fontSize!));
 

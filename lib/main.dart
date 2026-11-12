@@ -18,7 +18,7 @@ Future<void> main() async {
         appDatabaseProvider.overrideWithValue(db),
         initialSettingsProvider.overrideWithValue(settings),
       ],
-      child: const AlSavdogarApp(),
+      child: const AlHisobApp(),
     ),
   );
 }

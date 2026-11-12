@@ -85,7 +85,7 @@ class UpdateDownloader {
       throw UpdateDownloadException('untrusted url: ${info.apkUrl.host}');
     }
     await directory.create(recursive: true);
-    final target = File('${directory.path}/al-savdogar-${info.build}.apk');
+    final target = File('${directory.path}/al-hisob-${info.build}.apk');
     final part = File('${target.path}.part');
 
     // Чистим старые загрузки, кроме нужной (и её недокачанной части).
@@ -329,7 +329,7 @@ class UpdateDownloader {
     try {
       final request = await client.getUrl(url).timeout(stallTimeout);
       request.headers
-        ..set(HttpHeaders.userAgentHeader, 'al-savdogar-updater')
+        ..set(HttpHeaders.userAgentHeader, 'al-hisob-updater')
         ..set(HttpHeaders.acceptEncodingHeader, 'identity')
         ..set(HttpHeaders.rangeHeader, 'bytes=$start-${start + length - 1}');
       final response = await request.close().timeout(stallTimeout);
@@ -387,7 +387,7 @@ class UpdateDownloader {
         final request = await client.getUrl(current).timeout(stallTimeout);
         request.followRedirects = false;
         request.headers
-          ..set(HttpHeaders.userAgentHeader, 'al-savdogar-updater')
+          ..set(HttpHeaders.userAgentHeader, 'al-hisob-updater')
           ..set(HttpHeaders.acceptEncodingHeader, 'identity')
           ..set(HttpHeaders.rangeHeader, 'bytes=0-0');
         final response = await request.close().timeout(stallTimeout);
@@ -443,7 +443,7 @@ class UpdateDownloader {
     try {
       final request = await client.getUrl(info.apkUrl).timeout(stallTimeout);
       request.headers
-        ..set(HttpHeaders.userAgentHeader, 'al-savdogar-updater')
+        ..set(HttpHeaders.userAgentHeader, 'al-hisob-updater')
         ..set(HttpHeaders.acceptEncodingHeader, 'identity');
       if (offset > 0) request.headers.set(HttpHeaders.rangeHeader, 'bytes=$offset-');
       final response = await request.close().timeout(stallTimeout);

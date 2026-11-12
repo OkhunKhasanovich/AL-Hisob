@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/app.dart';
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/domain/debt_kind.dart';
-import 'package:al_savdogar/core/domain/shop_role.dart';
-import 'package:al_savdogar/core/settings/settings_providers.dart';
-import 'package:al_savdogar/core/settings/settings_repository.dart';
-import 'package:al_savdogar/features/debts/data/debtors_repository.dart';
-import 'package:al_savdogar/features/profile/shop_profile_repository.dart';
-import 'package:al_savdogar/features/sms/data/sms_providers.dart';
-import 'package:al_savdogar/features/sms/data/sms_templates_repository.dart';
-import 'package:al_savdogar/features/sms/domain/sms_sender.dart';
+import 'package:al_hisob/app.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/domain/debt_kind.dart';
+import 'package:al_hisob/core/domain/shop_role.dart';
+import 'package:al_hisob/core/settings/settings_providers.dart';
+import 'package:al_hisob/core/settings/settings_repository.dart';
+import 'package:al_hisob/features/debts/data/debtors_repository.dart';
+import 'package:al_hisob/features/profile/shop_profile_repository.dart';
+import 'package:al_hisob/features/sms/data/sms_providers.dart';
+import 'package:al_hisob/features/sms/data/sms_templates_repository.dart';
+import 'package:al_hisob/features/sms/domain/sms_sender.dart';
 
 import '../../helpers/fake_sms_sender.dart';
 
@@ -66,7 +66,7 @@ void main() {
         smsSenderProvider.overrideWithValue(sender),
         initialSettingsProvider.overrideWithValue(AppSettingsSnapshot(locale: locale)),
       ],
-      child: const AlSavdogarApp(),
+      child: const AlHisobApp(),
     ));
     await tester.pump(const Duration(milliseconds: 1900));
     await tester.pump(const Duration(milliseconds: 800));
@@ -326,7 +326,7 @@ void main() {
 
       await tapText(tester, 'Все');
       await tester.runAsync(() => ProviderScope.containerOf(
-              tester.element(find.byType(AlSavdogarApp)))
+              tester.element(find.byType(AlHisobApp)))
           .read(smsPauseSecondsProvider.notifier)
           .set(1));
       await tapText(tester, 'Отправить 2 SMS');
@@ -361,7 +361,7 @@ void main() {
       await openBulk(tester);
 
       await tester.runAsync(() => ProviderScope.containerOf(
-              tester.element(find.byType(AlSavdogarApp)))
+              tester.element(find.byType(AlHisobApp)))
           .read(smsPauseSecondsProvider.notifier)
           .set(30));
       await tapText(tester, 'Отправить 3 SMS');

@@ -1,4 +1,4 @@
-# Al-Savdogar
+# Al-Hisob
 
 Мобильное приложение для оптовой торговли (B2B) с книгой должников. Рынок — Узбекистан.
 Языки: O‘zbekcha (латиница), Русский, English, Qaraqalpaqsha. Сначала Android, затем iOS.
@@ -78,8 +78,8 @@ Workflow `.github/workflows/build-apk.yml` запускается на push в `
 
 ```bash
 keytool -genkeypair -v \
-  -keystore al-savdogar-release.jks \
-  -alias al-savdogar \
+  -keystore al-hisob-release.jks \
+  -alias al-hisob \
   -keyalg RSA -keysize 2048 -validity 10000
 ```
 
@@ -90,8 +90,8 @@ keytool -genkeypair -v \
 ### 2. Закодировать в base64
 
 ```bash
-base64 -w0 al-savdogar-release.jks > keystore.b64      # Linux
-base64 -i al-savdogar-release.jks -o keystore.b64      # macOS
+base64 -w0 al-hisob-release.jks > keystore.b64      # Linux
+base64 -i al-hisob-release.jks -o keystore.b64      # macOS
 ```
 
 ### 3. Telegram-бот
@@ -113,7 +113,7 @@ curl -s "https://api.telegram.org/bot<TOKEN>/getUpdates"
 ```bash
 gh secret set KEYSTORE_BASE64 < keystore.b64
 gh secret set KEYSTORE_PASSWORD
-gh secret set KEY_ALIAS --body "al-savdogar"
+gh secret set KEY_ALIAS --body "al-hisob"
 gh secret set KEY_PASSWORD
 gh secret set TELEGRAM_BOT_TOKEN
 gh secret set TELEGRAM_CHAT_ID
@@ -136,7 +136,7 @@ shred -u keystore.b64 2>/dev/null || rm -P keystore.b64
 ```properties
 storeFile=app/release.jks
 storePassword=...
-keyAlias=al-savdogar
+keyAlias=al-hisob
 keyPassword=...
 ```
 
@@ -167,12 +167,12 @@ flutter build apk --release --split-per-abi
 Репозиторий публичный, APK раздаётся через GitHub Releases.
 
 * `build-apk.yml` после каждой сборки на `main` публикует релиз `build-<run_number>` с тремя APK
-  (`al-savdogar-arm64-v8a.apk`, `...-armeabi-v7a.apk`, `...-x86_64.apk`) и оставляет 10 последних.
+  (`al-hisob-arm64-v8a.apk`, `...-armeabi-v7a.apk`, `...-x86_64.apk`) и оставляет 10 последних.
   Номер сборки и версия зашиваются в приложение через `--dart-define=BUILD_NUMBER/APP_VERSION`.
 * Приложение при запуске (не чаще раза в 6 часов) запрашивает `releases/latest`, сравнивает номер сборки,
   показывает диалог, скачивает APK подходящей архитектуры, проверяет размер и SHA-256 и открывает
   системную установку. Android сам отклонит APK, подписанный другим ключом.
-* Первый раз нужно разрешить «Установка неизвестных приложений» для Al-Savdogar. Тихая установка
+* Первый раз нужно разрешить «Установка неизвестных приложений» для Al-Hisob. Тихая установка
   без подтверждения на обычном телефоне невозможна.
 * В локальных сборках (`BUILD_NUMBER` не задан) обновление отключено.
 * Код: `lib/features/update/`, нативная часть — `android/.../UpdateBridge.kt`.
@@ -194,6 +194,13 @@ flutter build apk --release --split-per-abi
 * Апострофы узбекской латиницы заменяются на обычные: иначе SMS уходит в Unicode (70 вместо 160 символов).
 * Проверка нативной части без Telegram: workflow `android-check.yml` собирает release-APK
   на любой ветке, кроме `main`.
+
+## Название
+
+Проект называется **Al-Hisob** (раньше — Al-Savdogar). Внутренние идентификаторы тоже переименованы:
+пакет Android `uz.alhisob.app`, Dart-пакет `al_hisob`, APK `al-hisob-<abi>.apk`, папка на сервере `/opt/al-hisob`.
+Так как у Android новый пакет, это **новое приложение**: старое (Al-Savdogar) ставится рядом и не обновляется —
+новую сборку ставим один раз вручную, дальше обновления идут из приложения.
 
 ## Тестовые данные
 

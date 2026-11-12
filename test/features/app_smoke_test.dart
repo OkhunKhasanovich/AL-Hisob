@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/app.dart';
-import 'package:al_savdogar/features/shell/floating_nav_bar.dart';
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/domain/shop_role.dart';
-import 'package:al_savdogar/features/profile/shop_profile_repository.dart';
-import 'package:al_savdogar/core/settings/settings_providers.dart';
-import 'package:al_savdogar/core/settings/settings_repository.dart';
+import 'package:al_hisob/app.dart';
+import 'package:al_hisob/features/shell/floating_nav_bar.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/domain/shop_role.dart';
+import 'package:al_hisob/features/profile/shop_profile_repository.dart';
+import 'package:al_hisob/core/settings/settings_providers.dart';
+import 'package:al_hisob/core/settings/settings_repository.dart';
 
 void main() {
   late AppDatabase db;
@@ -23,7 +23,7 @@ void main() {
         appDatabaseProvider.overrideWithValue(db),
         initialSettingsProvider.overrideWithValue(AppSettingsSnapshot(locale: locale)),
       ],
-      child: const AlSavdogarApp(),
+      child: const AlHisobApp(),
     ));
   }
 
@@ -35,7 +35,7 @@ void main() {
     await pumpApp(tester, locale: const Locale('ru'));
 
     // Splash.
-    expect(find.text('Al-Savdogar'), findsOneWidget);
+    expect(find.text('Al-Hisob'), findsOneWidget);
     expect(find.text('Оптовая торговля и книга должников'), findsOneWidget);
 
     // Через 1.8 с переходим на главный экран.

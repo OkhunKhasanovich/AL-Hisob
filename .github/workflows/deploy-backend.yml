@@ -60,7 +60,7 @@ jobs:
           ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT:-22}" -o StrictHostKeyChecking=yes -o BatchMode=yes \
             "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set -euo pipefail
-          cd /opt/al-savdogar
+          cd /opt/al-hisob
           git fetch --quiet origin main
           git reset --hard origin/main
           cd deploy
@@ -88,7 +88,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ] || exit 0
-          TEXT=$(printf '❌ Деплой сервера Al-Savdogar упал\n%s/%s/actions/runs/%s' \
+          TEXT=$(printf '❌ Деплой сервера Al-Hisob упал\n%s/%s/actions/runs/%s' \
             "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
           curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             --data-urlencode chat_id="$TELEGRAM_CHAT_ID" --data-urlencode text="$TEXT" || true

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/utils/money.dart';
-import 'package:al_savdogar/core/utils/phone.dart';
+import 'package:al_hisob/core/utils/money.dart';
+import 'package:al_hisob/core/utils/phone.dart';
 
 void main() {
   group('normalizePhone', () {

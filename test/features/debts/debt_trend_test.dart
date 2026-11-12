@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/database/sync_columns.dart';
-import 'package:al_savdogar/core/domain/debt_kind.dart';
-import 'package:al_savdogar/core/l10n/l10n.dart';
-import 'package:al_savdogar/features/debts/domain/debt_filter.dart';
-import 'package:al_savdogar/features/debts/domain/debt_trend.dart';
-import 'package:al_savdogar/features/debts/presentation/debt_trend_backdrop.dart';
-import 'package:al_savdogar/features/debts/presentation/debts_overview_card.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/database/sync_columns.dart';
+import 'package:al_hisob/core/domain/debt_kind.dart';
+import 'package:al_hisob/core/l10n/l10n.dart';
+import 'package:al_hisob/features/debts/domain/debt_filter.dart';
+import 'package:al_hisob/features/debts/domain/debt_trend.dart';
+import 'package:al_hisob/features/debts/presentation/debt_trend_backdrop.dart';
+import 'package:al_hisob/features/debts/presentation/debts_overview_card.dart';
 
 DebtTransaction _tx(String debtor, DebtKind kind, int amount, DateTime at, {DateTime? deletedAt}) =>
     DebtTransaction(

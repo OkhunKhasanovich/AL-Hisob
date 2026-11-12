@@ -5,8 +5,8 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/features/update/data/update_downloader.dart';
-import 'package:al_savdogar/features/update/domain/update_info.dart';
+import 'package:al_hisob/features/update/data/update_downloader.dart';
+import 'package:al_hisob/features/update/domain/update_info.dart';
 
 import '../../helpers/local_http_server.dart';
 
@@ -31,7 +31,7 @@ void main() {
         build: build,
         versionName: '0.1.0',
         apkUrl: server.url(path),
-        assetName: 'al-savdogar-arm64-v8a.apk',
+        assetName: 'al-hisob-arm64-v8a.apk',
         size: size ?? bytes.length,
         sha256: sha ?? sha256.convert(bytes).toString(),
       );
@@ -50,7 +50,7 @@ void main() {
     final file = await downloader().download(info(), onProgress: progress.add);
 
     expect(await file.readAsBytes(), bytes);
-    expect(file.path, endsWith('al-savdogar-7.apk'));
+    expect(file.path, endsWith('al-hisob-7.apk'));
     expect(progress.last, 1);
     expect(progress, orderedEquals([...progress]..sort()), reason: 'прогресс не убывает');
     expect(progress.every((p) => p >= 0 && p <= 1), isTrue);
@@ -114,13 +114,13 @@ void main() {
   });
 
   test('старые загрузки удаляются', () async {
-    await File('${dir.path}/al-savdogar-3.apk').writeAsBytes([1]);
+    await File('${dir.path}/al-hisob-3.apk').writeAsBytes([1]);
     await File('${dir.path}/garbage.part').writeAsBytes([1]);
 
     await downloader().download(info(build: 7));
 
     final names = (await dir.list().toList()).map((e) => e.uri.pathSegments.last).toList();
-    expect(names, ['al-savdogar-7.apk']);
+    expect(names, ['al-hisob-7.apk']);
   });
 
   test('недоверенный адрес отклоняется ещё до запроса', () async {
@@ -205,7 +205,7 @@ void main() {
 
     test('остаток от прошлого запуска (.part) продолжается с его размера', () async {
       serveFlaky('/resume.apk');
-      await File('${dir.path}/al-savdogar-7.apk.part').writeAsBytes(bytes.sublist(0, 1000));
+      await File('${dir.path}/al-hisob-7.apk.part').writeAsBytes(bytes.sublist(0, 1000));
 
       final file = await downloader().download(info(path: '/resume.apk'));
 
@@ -215,7 +215,7 @@ void main() {
 
     test('сервер не умеет Range (200 вместо 206): качаем сначала, файл целый', () async {
       serveFlaky('/norange.apk', supportRange: false);
-      await File('${dir.path}/al-savdogar-7.apk.part').writeAsBytes(bytes.sublist(0, 1000));
+      await File('${dir.path}/al-hisob-7.apk.part').writeAsBytes(bytes.sublist(0, 1000));
 
       final file = await downloader().download(info(path: '/norange.apk'));
 
@@ -224,7 +224,7 @@ void main() {
 
     test('мусорный .part больше файла отбрасывается', () async {
       serveFlaky('/big.apk');
-      await File('${dir.path}/al-savdogar-7.apk.part').writeAsBytes(List.filled(bytes.length + 10, 1));
+      await File('${dir.path}/al-hisob-7.apk.part').writeAsBytes(List.filled(bytes.length + 10, 1));
 
       final file = await downloader().download(info(path: '/big.apk'));
 
@@ -261,7 +261,7 @@ void main() {
         throwsA(isA<UpdateDownloadException>()),
       );
       expect(retries, lessThanOrEqualTo(3));
-      expect(File('${dir.path}/al-savdogar-7.apk.part').existsSync(), isTrue);
+      expect(File('${dir.path}/al-hisob-7.apk.part').existsSync(), isTrue);
     });
 
     test('Отмена: UpdateCancelledException, недокачанное сохраняется', () async {
@@ -368,7 +368,7 @@ void main() {
       expect(progress, orderedEquals([...progress]..sort()));
       expect(
         (await dir.list().toList()).map((e) => e.uri.pathSegments.last).toList(),
-        ['al-savdogar-7.apk'],
+        ['al-hisob-7.apk'],
         reason: 'служебные файлы убраны',
       );
     });
@@ -445,7 +445,7 @@ void main() {
         throwsA(isA<UpdateCancelledException>()),
       );
       final firstRun = server.rangeHeaders.length;
-      expect(File('${dir.path}/al-savdogar-7.apk.part.blocks').existsSync(), isTrue);
+      expect(File('${dir.path}/al-hisob-7.apk.part.blocks').existsSync(), isTrue);
 
       final file = await parallel(connections: 2).download(info(path: '/p5.apk'));
       expect(await file.readAsBytes(), bytes);

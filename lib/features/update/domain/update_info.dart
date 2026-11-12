@@ -8,7 +8,7 @@ const appVersionName = String.fromEnvironment('APP_VERSION', defaultValue: 'dev'
 /// Репозиторий, из релизов которого берутся обновления.
 const updateRepository = String.fromEnvironment(
   'UPDATE_REPO',
-  defaultValue: 'OkhunKhasanovich/Al-Savdogar',
+  defaultValue: 'OkhunKhasanovich/Al-Hisob',
 );
 
 /// Новая версия приложения, найденная в релизах GitHub.
@@ -71,7 +71,7 @@ UpdateInfo? parseLatestRelease(Map<String, Object?> json, {required List<String>
   };
 
   for (final abi in abis) {
-    final name = 'al-savdogar-$abi.apk';
+    final name = 'al-hisob-$abi.apk';
     final asset = byName[name];
     if (asset == null) continue;
 

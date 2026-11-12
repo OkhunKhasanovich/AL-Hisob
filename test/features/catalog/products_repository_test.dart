@@ -1,10 +1,10 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/database/sync_columns.dart';
-import 'package:al_savdogar/core/domain/product_unit.dart';
-import 'package:al_savdogar/features/catalog/data/products_repository.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/database/sync_columns.dart';
+import 'package:al_hisob/core/domain/product_unit.dart';
+import 'package:al_hisob/features/catalog/data/products_repository.dart';
 
 void main() {
   late AppDatabase db;

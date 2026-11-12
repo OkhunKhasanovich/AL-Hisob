@@ -1,8 +1,8 @@
 import 'dart:collection';
 
-import 'package:al_savdogar/features/auth/data/token_store.dart';
-import 'package:al_savdogar/features/auth/domain/auth_api.dart';
-import 'package:al_savdogar/features/auth/domain/auth_models.dart';
+import 'package:al_hisob/features/auth/data/token_store.dart';
+import 'package:al_hisob/features/auth/domain/auth_api.dart';
+import 'package:al_hisob/features/auth/domain/auth_models.dart';
 
 class InMemoryTokenStore implements TokenStore {
   InMemoryTokenStore([this.session]);

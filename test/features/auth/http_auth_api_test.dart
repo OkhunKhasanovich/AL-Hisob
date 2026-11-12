@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/features/auth/data/http_auth_api.dart';
-import 'package:al_savdogar/features/auth/domain/auth_api.dart';
+import 'package:al_hisob/features/auth/data/http_auth_api.dart';
+import 'package:al_hisob/features/auth/domain/auth_api.dart';
 
 import '../../helpers/local_http_server.dart';
 

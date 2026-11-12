@@ -51,7 +51,7 @@ Future<Map<String, Object?>?> fetchJson(Uri uri) async {
     final request = await client.getUrl(uri).timeout(const Duration(seconds: 10));
     request.headers
       ..set(HttpHeaders.acceptHeader, 'application/vnd.github+json')
-      ..set(HttpHeaders.userAgentHeader, 'al-savdogar-updater');
+      ..set(HttpHeaders.userAgentHeader, 'al-hisob-updater');
     final response = await request.close().timeout(const Duration(seconds: 15));
 
     if (response.statusCode == HttpStatus.notFound) {

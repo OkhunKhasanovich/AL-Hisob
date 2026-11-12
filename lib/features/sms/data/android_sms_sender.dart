@@ -7,7 +7,7 @@ import '../domain/sms_sender.dart';
 /// Нативная часть — `android/.../SmsBridge.kt`.
 class AndroidSmsSender implements SmsSender {
   AndroidSmsSender({MethodChannel? channel})
-      : _channel = channel ?? const MethodChannel('uz.alsavdogar.app/sms');
+      : _channel = channel ?? const MethodChannel('uz.alhisob.app/sms');
 
   final MethodChannel _channel;
 

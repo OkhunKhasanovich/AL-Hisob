@@ -7,16 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/app.dart';
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/domain/shop_role.dart';
-import 'package:al_savdogar/core/settings/settings_providers.dart';
-import 'package:al_savdogar/core/settings/settings_repository.dart';
-import 'package:al_savdogar/features/profile/shop_profile_repository.dart';
-import 'package:al_savdogar/features/update/data/update_checker.dart';
-import 'package:al_savdogar/features/update/data/update_downloader.dart';
-import 'package:al_savdogar/features/update/domain/apk_installer.dart';
-import 'package:al_savdogar/features/update/presentation/update_controller.dart';
+import 'package:al_hisob/app.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/domain/shop_role.dart';
+import 'package:al_hisob/core/settings/settings_providers.dart';
+import 'package:al_hisob/core/settings/settings_repository.dart';
+import 'package:al_hisob/features/profile/shop_profile_repository.dart';
+import 'package:al_hisob/features/update/data/update_checker.dart';
+import 'package:al_hisob/features/update/data/update_downloader.dart';
+import 'package:al_hisob/features/update/domain/apk_installer.dart';
+import 'package:al_hisob/features/update/presentation/update_controller.dart';
 
 import '../../helpers/fake_apk_installer.dart';
 import 'update_info_test.dart' show release, asset;
@@ -35,14 +35,14 @@ void main() {
     apk = Uint8List.fromList(List.generate(2000, (i) => i % 200));
     latest = release(
       tag: 'build-9',
-      name: 'Al-Savdogar 0.2.0 (9)',
+      name: 'Al-Hisob 0.2.0 (9)',
       body: 'feat: catalog',
       assets: [
-        asset('al-savdogar-arm64-v8a.apk', size: apk.length, digest: 'sha256:${sha256.convert(apk)}'),
+        asset('al-hisob-arm64-v8a.apk', size: apk.length, digest: 'sha256:${sha256.convert(apk)}'),
       ],
     );
     // APK уже «скачан»: сети в тесте нет, загрузчик возьмёт файл из кэша.
-    await File('${dir.path}/al-savdogar-9.apk').writeAsBytes(apk);
+    await File('${dir.path}/al-hisob-9.apk').writeAsBytes(apk);
   });
 
   tearDown(() async {
@@ -80,7 +80,7 @@ void main() {
           () async => UpdateDownloader(directory: dir),
         ),
       ],
-      child: const AlSavdogarApp(),
+      child: const AlHisobApp(),
     ));
     await tester.pump(const Duration(milliseconds: 1900));
     await tester.pump(const Duration(milliseconds: 800));
@@ -135,7 +135,7 @@ void main() {
     await tap(tester, 'Установить', async: true);
 
     expect(installer.installed, hasLength(1));
-    expect(installer.installed.single, endsWith('al-savdogar-9.apk'));
+    expect(installer.installed.single, endsWith('al-hisob-9.apk'));
     expect(find.text('Обновление загружено'), findsNothing, reason: 'диалог закрылся');
 
     await closeApp(tester);
@@ -242,8 +242,8 @@ void main() {
 
     latest = release(
       tag: 'build-9',
-      name: 'Al-Savdogar 0.2.0 (9)',
-      assets: [asset('al-savdogar-arm64-v8a.apk', size: apk.length, digest: 'sha256:${sha256.convert(apk)}')],
+      name: 'Al-Hisob 0.2.0 (9)',
+      assets: [asset('al-hisob-arm64-v8a.apk', size: apk.length, digest: 'sha256:${sha256.convert(apk)}')],
     );
     await tap(tester, 'Проверить обновления', async: true);
 

@@ -9,7 +9,7 @@ from app.config import Settings
 from app.main import create_app
 
 TEST_DSN = os.environ.get(
-    "TEST_DATABASE_URL", "postgresql://postgres@/alsavdogar_test?host=/tmp&port=5433"
+    "TEST_DATABASE_URL", "postgresql://postgres@/alhisob_test?host=/tmp&port=5433"
 )
 WEBHOOK_SECRET = "webhook-secret-0123456789"
 

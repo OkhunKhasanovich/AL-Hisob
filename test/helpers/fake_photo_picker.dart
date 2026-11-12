@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:al_savdogar/features/catalog/domain/photo_services.dart';
+import 'package:al_hisob/features/catalog/domain/photo_services.dart';
 
 /// Прозрачный PNG 1×1: настоящая картинка, которую умеет декодировать Flutter.
 final _png = base64Decode(

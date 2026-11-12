@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/features/sms/domain/bulk_sms_runner.dart';
-import 'package:al_savdogar/features/sms/domain/sms_sender.dart';
+import 'package:al_hisob/features/sms/domain/bulk_sms_runner.dart';
+import 'package:al_hisob/features/sms/domain/sms_sender.dart';
 
 BulkSmsItem item(int i) => BulkSmsItem(
       debtorId: 'd$i',

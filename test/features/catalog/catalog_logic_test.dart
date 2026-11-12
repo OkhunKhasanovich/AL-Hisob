@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/database/sync_columns.dart';
-import 'package:al_savdogar/core/domain/product_unit.dart';
-import 'package:al_savdogar/features/catalog/domain/product_pricing.dart';
-import 'package:al_savdogar/features/catalog/domain/product_search.dart';
-import 'package:al_savdogar/features/catalog/domain/product_summary.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/database/sync_columns.dart';
+import 'package:al_hisob/core/domain/product_unit.dart';
+import 'package:al_hisob/features/catalog/domain/product_pricing.dart';
+import 'package:al_hisob/features/catalog/domain/product_search.dart';
+import 'package:al_hisob/features/catalog/domain/product_summary.dart';
 
 final _t = DateTime(2026, 1, 1);
 

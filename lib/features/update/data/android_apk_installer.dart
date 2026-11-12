@@ -5,7 +5,7 @@ import '../domain/apk_installer.dart';
 /// Установка APK через системный установщик Android (код — `UpdateBridge.kt`).
 class AndroidApkInstaller implements ApkInstaller {
   AndroidApkInstaller({MethodChannel? channel})
-      : _channel = channel ?? const MethodChannel('uz.alsavdogar.app/update');
+      : _channel = channel ?? const MethodChannel('uz.alhisob.app/update');
 
   final MethodChannel _channel;
 

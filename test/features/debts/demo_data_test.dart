@@ -5,16 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:al_savdogar/core/database/app_database.dart';
-import 'package:al_savdogar/core/domain/debt_kind.dart';
-import 'package:al_savdogar/core/l10n/l10n.dart';
-import 'package:al_savdogar/core/settings/settings_providers.dart';
-import 'package:al_savdogar/core/utils/phone.dart';
-import 'package:al_savdogar/features/debts/data/debtors_repository.dart';
-import 'package:al_savdogar/features/debts/domain/debt_filter.dart';
-import 'package:al_savdogar/features/debts/domain/debt_trend.dart';
-import 'package:al_savdogar/features/debts/domain/demo_data.dart';
-import 'package:al_savdogar/features/debts/presentation/demo_data_section.dart';
+import 'package:al_hisob/core/database/app_database.dart';
+import 'package:al_hisob/core/domain/debt_kind.dart';
+import 'package:al_hisob/core/l10n/l10n.dart';
+import 'package:al_hisob/core/settings/settings_providers.dart';
+import 'package:al_hisob/core/utils/phone.dart';
+import 'package:al_hisob/features/debts/data/debtors_repository.dart';
+import 'package:al_hisob/features/debts/domain/debt_filter.dart';
+import 'package:al_hisob/features/debts/domain/debt_trend.dart';
+import 'package:al_hisob/features/debts/domain/demo_data.dart';
+import 'package:al_hisob/features/debts/presentation/demo_data_section.dart';
 
 void main() {
   group('generateDemoDebtors', () {
