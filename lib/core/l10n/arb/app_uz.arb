@@ -382,5 +382,8 @@
   },
   "updateOpenInBrowser": "Brauzer orqali",
   "unitKbPerSec": "KB/s",
-  "unitMbPerSec": "MB/s"
+  "unitMbPerSec": "MB/s",
+  "debtorCurrentDebtLabel": "Joriy qarz (ixtiyoriy)",
+  "debtorCurrentDebtHint": "Hozir qancha qarzdor: daftaringizdan ko‘chiring",
+  "initialDebtComment": "Boshlang‘ich qarz (daftardan)"
 }

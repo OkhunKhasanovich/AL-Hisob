@@ -19,6 +19,8 @@ class DebtorInput {
     this.address,
     this.note,
     this.phones = const [],
+    this.initialDebt = 0,
+    this.initialDebtComment,
   });
 
   final String name;
@@ -28,6 +30,11 @@ class DebtorInput {
 
   /// Телефоны в любом формате; будут нормализованы. Дубликаты схлопываются.
   final List<String> phones;
+
+  /// Текущий долг, который торговец переносит из тетради при заведении должника.
+  /// Только при создании: превращается в обычную операцию «долг» на сегодня.
+  final int initialDebt;
+  final String? initialDebtComment;
 }
 
 /// Карточка должника: сводка + операции (новые сверху).
@@ -111,6 +118,16 @@ class DebtorsRepository {
           );
       for (final phone in cleaned.phones) {
         await _insertPhone(debtor.id, phone);
+      }
+      if (input.initialDebt > 0) {
+        // Перенос из тетради — обычная операция, она попадает в историю и в баланс.
+        await addTransaction(
+          debtorId: debtor.id,
+          kind: DebtKind.debt,
+          amount: input.initialDebt,
+          occurredAt: DateTime.now(),
+          comment: input.initialDebtComment,
+        );
       }
       return debtor.id;
     });
@@ -284,6 +301,9 @@ class DebtorsRepository {
           );
 
   _Cleaned _validate(DebtorInput input) {
+    if (input.initialDebt < 0 || input.initialDebt > maxAmount) {
+      throw ArgumentError.value(input.initialDebt, 'initialDebt', 'Amount must be in 0..$maxAmount');
+    }
     final name = input.name.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (name.isEmpty || name.length > 120) {
       throw ArgumentError.value(input.name, 'name', 'Name must be 1..120 characters');

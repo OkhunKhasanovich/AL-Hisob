@@ -382,5 +382,8 @@
   },
   "updateOpenInBrowser": "Brauzer arqalı",
   "unitKbPerSec": "KB/s",
-  "unitMbPerSec": "MB/s"
+  "unitMbPerSec": "MB/s",
+  "debtorCurrentDebtLabel": "Házirgi qarız (ixtiyarıy)",
+  "debtorCurrentDebtHint": "Házir qansha qarızdar: dápterińizden kóshiriń",
+  "initialDebtComment": "Baslanǵısh qarız (dápterden)"
 }

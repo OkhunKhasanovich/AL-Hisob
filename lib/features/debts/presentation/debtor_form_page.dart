@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/l10n.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/utils/money.dart';
 import '../../../core/utils/phone.dart';
+import '../../../core/widgets/amount_input_formatter.dart';
 import '../data/debtors_repository.dart';
 import 'debts_providers.dart';
 
@@ -78,6 +80,7 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
   late final TextEditingController _shop;
   late final TextEditingController _address;
   late final TextEditingController _note;
+  final _currentDebt = TextEditingController();
   late final List<TextEditingController> _phones;
   bool _saving = false;
 
@@ -99,7 +102,7 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
 
   @override
   void dispose() {
-    for (final c in [_name, _shop, _address, _note, ..._phones]) {
+    for (final c in [_name, _shop, _address, _note, _currentDebt, ..._phones]) {
       c.dispose();
     }
     super.dispose();
@@ -118,6 +121,9 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
       address: _address.text,
       note: _note.text,
       phones: [for (final c in _phones) c.text],
+      // Текущий долг задаётся только у нового должника; дальше — через операции.
+      initialDebt: widget.debtorId == null ? (parseAmount(_currentDebt.text) ?? 0) : 0,
+      initialDebtComment: context.l10n.initialDebtComment,
     );
     try {
       final id = widget.debtorId;
@@ -226,6 +232,21 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
                 ),
               ),
             const SizedBox(height: 8),
+            // Новый должник: сразу указываем, сколько он должен сейчас (из тетради).
+            if (widget.debtorId == null) ...[
+              TextFormField(
+                key: const ValueKey('current-debt'),
+                controller: _currentDebt,
+                keyboardType: TextInputType.number,
+                inputFormatters: const [AmountInputFormatter()],
+                textInputAction: TextInputAction.next,
+                decoration: _decoration(
+                  l10n.debtorCurrentDebtLabel,
+                  icon: Icons.payments_rounded,
+                ).copyWith(suffixText: l10n.currencySum, helperText: l10n.debtorCurrentDebtHint),
+              ),
+              const SizedBox(height: 16),
+            ],
             TextFormField(
               controller: _address,
               textInputAction: TextInputAction.next,

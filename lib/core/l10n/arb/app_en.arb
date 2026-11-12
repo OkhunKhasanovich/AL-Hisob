@@ -651,5 +651,8 @@
   },
   "updateOpenInBrowser": "Via browser",
   "unitKbPerSec": "KB/s",
-  "unitMbPerSec": "MB/s"
+  "unitMbPerSec": "MB/s",
+  "debtorCurrentDebtLabel": "Current debt (optional)",
+  "debtorCurrentDebtHint": "How much they owe now: copy it from your notebook",
+  "initialDebtComment": "Opening debt (from the notebook)"
 }

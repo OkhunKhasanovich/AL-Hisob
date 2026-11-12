@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:al_hisob/core/database/app_database.dart';
 import 'package:al_hisob/core/database/sync_columns.dart';
 import 'package:al_hisob/core/domain/debt_kind.dart';
+import 'package:al_hisob/core/utils/money.dart';
 import 'package:al_hisob/features/debts/data/debtors_repository.dart';
 
 void main() {
@@ -210,6 +211,41 @@ void main() {
 
       expect(events.first, isNotNull);
       expect(events.last, isNull);
+    });
+  });
+
+  group('текущий долг при создании должника', () {
+    test('становится операцией «долг» и попадает в баланс', () async {
+      final id = await repo.createDebtor(const DebtorInput(
+        name: 'Alisher',
+        initialDebt: 2500000,
+        initialDebtComment: 'Из тетради',
+      ));
+      final details = (await repo.loadDetails(id))!;
+      expect(details.summary.balance, 2500000);
+      expect(details.transactions, hasLength(1));
+      final t = details.transactions.single;
+      expect([t.kind, t.amount, t.comment], [DebtKind.debt, 2500000, 'Из тетради']);
+      expect(details.summary.lastOperationAt, isNotNull);
+    });
+
+    test('без долга операций нет', () async {
+      final id = await repo.createDebtor(const DebtorInput(name: 'Bobur'));
+      expect((await repo.loadDetails(id))!.transactions, isEmpty);
+    });
+
+    test('недопустимая сумма отклоняется, должник не создаётся', () async {
+      expect(() => repo.createDebtor(const DebtorInput(name: 'X', initialDebt: -5)),
+          throwsArgumentError);
+      expect(() => repo.createDebtor(DebtorInput(name: 'X', initialDebt: maxAmount + 1)),
+          throwsArgumentError);
+      expect(await repo.loadSummaries(), isEmpty);
+    });
+
+    test('при редактировании долг не добавляется заново', () async {
+      final id = await repo.createDebtor(const DebtorInput(name: 'A', initialDebt: 1000));
+      await repo.updateDebtor(id, const DebtorInput(name: 'A2', initialDebt: 9999));
+      expect((await repo.loadDetails(id))!.summary.balance, 1000);
     });
   });
 }

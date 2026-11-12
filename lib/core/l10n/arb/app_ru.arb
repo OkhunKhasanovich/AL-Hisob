@@ -382,5 +382,8 @@
   },
   "updateOpenInBrowser": "Через браузер",
   "unitKbPerSec": "КБ/с",
-  "unitMbPerSec": "МБ/с"
+  "unitMbPerSec": "МБ/с",
+  "debtorCurrentDebtLabel": "Текущий долг (необязательно)",
+  "debtorCurrentDebtHint": "Сколько должен сейчас: перенесите из тетради",
+  "initialDebtComment": "Начальный долг (из тетради)"
 }

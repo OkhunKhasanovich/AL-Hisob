@@ -321,6 +321,48 @@ void main() {
     await closeApp(tester);
   });
 
+  testWidgets('новый должник: поле «Текущий долг» переносит сумму из тетради', (tester) async {
+    await openDebts(tester);
+
+    await tester.tap(find.byTooltip('Добавить должника'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('Текущий долг (необязательно)'), findsOneWidget);
+    expect(find.text('Сколько должен сейчас: перенесите из тетради'), findsOneWidget);
+
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), 'Alisher');
+    await tester.enterText(find.byKey(const ValueKey('current-debt')), '2500000');
+    await tester.pump();
+    expect(find.text('2 500 000'), findsOneWidget, reason: 'сумма группируется при вводе');
+    await tapAsync(tester, find.text('Сохранить'));
+
+    // Открылась карточка: баланс и операция «из тетради».
+    expect(find.text('2 500 000 сум'), findsWidgets);
+    expect(find.textContaining('Начальный долг (из тетради)'), findsOneWidget, reason: 'комментарий операции');
+    expect(find.text('+2 500 000'), findsOneWidget);
+
+    await closeApp(tester);
+  });
+
+  testWidgets('при редактировании поля «Текущий долг» нет', (tester) async {
+    late String id;
+    await tester.runAsync(() async {
+      id = await DebtorsRepository(db).createDebtor(const DebtorInput(name: 'Bobur', initialDebt: 1000));
+    });
+    await openDebts(tester);
+    await tester.tap(find.text('Bobur'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.tap(find.byTooltip('Изменить'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    expect(find.byKey(const ValueKey('current-debt')), findsNothing);
+    expect(id, isNotEmpty);
+    await closeApp(tester);
+  });
+
   testWidgets('раскладка: обзор сверху, под ним поиск с воронкой в конце поля, чипов фильтров нет', (tester) async {
     await tester.runAsync(() => DebtorsRepository(db).createDebtor(const DebtorInput(name: 'Alisher')));
     await openDebts(tester);
