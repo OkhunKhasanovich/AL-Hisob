@@ -1,0 +1,36 @@
+name: Server host key
+
+# Одноразовая диагностика: показывает ПУБЛИЧНЫЙ отпечаток сервера и какие секреты заданы (без значений).
+# Отпечаток нужно один раз положить в секрет DEPLOY_KNOWN_HOSTS (строка «IP ssh-ed25519 AAAA…»).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Show the host key and the state of the secrets
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          for v in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS DEPLOY_PORT; do
+            if [ -n "${!v}" ]; then echo "$v: set"; else echo "$v: NOT SET"; fi
+          done
+          if printf '%s\n' "$DEPLOY_KNOWN_HOSTS" | grep -Eq '^[^#[:space:]]+ (ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/=]+'; then
+            echo "DEPLOY_KNOWN_HOSTS format: OK"
+          else
+            echo "DEPLOY_KNOWN_HOSTS format: WRONG (must be one line: IP ssh-ed25519 AAAA...)"
+          fi
+          [ -n "$DEPLOY_HOST" ] || { echo "DEPLOY_HOST is not set, cannot scan"; exit 1; }
+          ssh-keyscan -T 15 -t ed25519 -p "${DEPLOY_PORT:-22}" "$DEPLOY_HOST" 2>/dev/null | awk '{print $2, $3}' > hostkey.pub
+          [ -s hostkey.pub ] || { echo "the server did not answer on the SSH port"; exit 1; }
+          echo "HOST KEY (public): $(cat hostkey.pub)"
+          ssh-keygen -lf hostkey.pub
