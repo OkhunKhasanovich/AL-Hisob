@@ -70,6 +70,8 @@ jobs:
             fi
             echo "key type and fingerprint (compare with the panel / authorized_keys):"
             ssh-keygen -lf ~/.ssh/deploy_key.pub
+            echo "public key (safe to copy; add it to authorized_keys on the server):"
+            cat ~/.ssh/deploy_key.pub
             for u in root ubuntu deploy "$DEPLOY_USER"; do
               if ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT:-22}" -o StrictHostKeyChecking=yes -o BatchMode=yes \
                    -o ConnectTimeout=10 -o IdentitiesOnly=yes "$u@$DEPLOY_HOST" true 2>/dev/null; then
