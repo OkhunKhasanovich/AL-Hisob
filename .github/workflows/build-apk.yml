@@ -168,6 +168,28 @@ jobs:
             gh release delete "$tag" --cleanup-tag --yes || true
           done
 
+      # Сообщение «сборка готова» приходит боту из секретов TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID
+      # (если их нет, шаг молча пропускается). Файл APK не отправляется: приложение обновляется само.
+      - name: Notify Telegram about success
+        if: success()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          VERSION: ${{ steps.ver.outputs.name }}
+          RUN: ${{ github.run_number }}
+          APK_SIZE_MB: ${{ steps.apk.outputs.size_mb }}
+          REPO: ${{ github.repository }}
+          SERVER: ${{ github.server_url }}
+        run: |
+          [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ] || exit 0
+          SUBJECT=$(git log -1 --pretty=%s | cut -c1-200)
+          TEXT=$(printf '✅ Al-Hisob %s (сборка %s) готова\n%s\nAPK: %s MB\nОбновление появится в приложении: «Ещё» → «Проверить обновление».\n%s/%s/releases/tag/build-%s' \
+            "$VERSION" "$RUN" "$SUBJECT" "$APK_SIZE_MB" "$SERVER" "$REPO" "$RUN")
+          curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode chat_id="$TELEGRAM_CHAT_ID" \
+            --data-urlencode text="$TEXT" \
+            --data-urlencode disable_web_page_preview=true || true
+
       - name: Notify Telegram about failure
         if: failure()
         env:
