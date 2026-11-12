@@ -258,6 +258,154 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
+    testWidgets('переход — непрерывное перетекание: ничего не накладывается и не прыгает', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2000);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: Scaffold(
+          body: DebtsOverviewCard(
+            overview: const DebtsOverview(totalOwed: 234221000, debtorCount: 51, overdueCount: 17, overdueAmount: 1),
+            trend: DebtTrend(points: [for (var i = 0; i < 7; i++) 200 + i * 5]),
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 1200));
+      final card = find.byKey(const ValueKey('overview-card'));
+
+      final heights = <double>[];
+      final statsLeft = <double>[];
+      final statsTop = <double>[];
+      final amountLeft = <double>[];
+
+      void sample() {
+        heights.add(tester.getSize(card).height);
+        final debtors = tester.getRect(find.byKey(const ValueKey('stat-debtors')));
+        final overdue = tester.getRect(find.byKey(const ValueKey('stat-overdue')));
+        final stats = debtors.expandToInclude(overdue);
+        final amount = tester.getRect(find.textContaining('сум'));
+        final label = tester.getRect(find.text('Вам должны'));
+        statsLeft.add(stats.left);
+        statsTop.add(stats.top);
+        amountLeft.add(amount.left);
+        // Видимые прямоугольники (без запаса на касание) не пересекаются в любой момент.
+        final tapPad = 6.0;
+        final visibleStats = Rect.fromLTRB(stats.left, stats.top + tapPad, stats.right, stats.bottom - tapPad);
+        expect(visibleStats.overlaps(amount.deflate(1)), isFalse, reason: 'сводка и сумма: $visibleStats vs $amount');
+        expect(label.overlaps(amount.deflate(1)), isFalse, reason: 'подпись и сумма');
+        expect(visibleStats.overlaps(label.deflate(1)), isFalse, reason: 'сводка и подпись');
+        // Всё внутри карточки.
+        final box = tester.getRect(card);
+        expect(box.inflate(1).contains(visibleStats.topLeft) && box.inflate(1).contains(visibleStats.bottomRight), isTrue,
+            reason: 'сводка внутри карточки');
+      }
+
+      Future<void> run() async {
+        await tester.tap(card);
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.tap(card);
+        await tester.pump();
+        for (var i = 0; i < 16; i++) {
+          sample();
+          await tester.pump(const Duration(milliseconds: 32));
+        }
+        await tester.pump(const Duration(milliseconds: 400));
+        sample();
+      }
+
+      await run(); // подробный → тонкий
+      for (var i = 1; i < heights.length; i++) {
+        expect(heights[i], lessThanOrEqualTo(heights[i - 1] + 0.01), reason: 'высота убывает без скачков вверх');
+        expect(statsLeft[i], greaterThanOrEqualTo(statsLeft[i - 1] - 0.01), reason: 'сводка едет только вправо');
+        expect(statsTop[i] - statsTop[i - 1], lessThan(40), reason: 'нет скачков по вертикали');
+        expect(amountLeft[i], closeTo(amountLeft[0], 0.5), reason: 'сумма остаётся у левого края');
+      }
+      expect(heights.last, lessThan(90));
+
+      heights.clear(); statsLeft.clear(); statsTop.clear(); amountLeft.clear();
+      await run(); // тонкий → подробный
+      for (var i = 1; i < heights.length; i++) {
+        expect(heights[i], greaterThanOrEqualTo(heights[i - 1] - 0.01), reason: 'высота растёт без скачков вниз');
+        expect(statsLeft[i], lessThanOrEqualTo(statsLeft[i - 1] + 0.01), reason: 'сводка едет только влево');
+      }
+      expect(heights.last, greaterThan(150));
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('повторное двойное нажатие посреди перехода плавно разворачивает карточку', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: appLocalizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: Scaffold(
+          body: DebtsOverviewCard(
+            overview: const DebtsOverview(totalOwed: 1000, debtorCount: 3, overdueCount: 1, overdueAmount: 1),
+            trend: DebtTrend(points: [for (var i = 0; i < 7; i++) 1000 + i * 20]),
+          ),
+        ),
+      ));
+      await tester.pump(const Duration(milliseconds: 1000));
+      final card = find.byKey(const ValueKey('overview-card'));
+      final full = tester.getSize(card).height;
+
+      Future<void> doubleTap() async {
+        await tester.tap(card);
+        await tester.pump(const Duration(milliseconds: 40));
+        await tester.tap(card);
+        await tester.pump();
+      }
+
+      await doubleTap();
+      await tester.pump(const Duration(milliseconds: 150));
+      final mid = tester.getSize(card).height;
+      expect(mid, lessThan(full));
+      await doubleTap(); // передумали, пока карточка ещё сжимается
+      await tester.pump(const Duration(milliseconds: 40));
+      final soon = tester.getSize(card).height;
+      expect(soon, greaterThan(mid - 1), reason: 'повернула обратно, а не доехала до тонкого вида');
+      await tester.pump(const Duration(milliseconds: 900));
+      expect(tester.getSize(card).height, closeTo(full, 1));
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('счётчик просрочки нажимается; выбран — подсвечен', (tester) async {
+      var taps = 0;
+      Future<void> pump({required bool selected}) => tester.pumpWidget(MaterialApp(
+            localizationsDelegates: appLocalizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('ru'),
+            home: Scaffold(
+              body: DebtsOverviewCard(
+                overview: const DebtsOverview(totalOwed: 1000, debtorCount: 3, overdueCount: 2, overdueAmount: 1),
+                overdueSelected: selected,
+                onOverdueTap: () => taps++,
+              ),
+            ),
+          ));
+      await pump(selected: false);
+      await tester.tap(find.byKey(const ValueKey('stat-overdue')));
+      await tester.pump(const Duration(milliseconds: 350)); // двойное нажатие карточки не засчитано
+      expect(taps, 1);
+      expect(
+        tester.getSemantics(find.byKey(const ValueKey('stat-overdue'))),
+        isSemantics(isButton: true, isSelected: false),
+      );
+      await pump(selected: true);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        tester.getSemantics(find.byKey(const ValueKey('stat-overdue'))),
+        isSemantics(isButton: true, isSelected: true),
+      );
+      // Счётчик должников не нажимается.
+      await tester.tap(find.byKey(const ValueKey('stat-debtors')));
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(taps, 1);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
     testWidgets('сохранённый тонкий вид: карточка сразу тонкая', (tester) async {
       await tester.pumpWidget(MaterialApp(
         localizationsDelegates: appLocalizationsDelegates,

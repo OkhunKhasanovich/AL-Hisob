@@ -10,11 +10,12 @@ class FloatingNavItem {
   final String label;
 }
 
-/// Высота самой «таблетки» вкладок.
+/// Высота ряда значков (без системного отступа снизу).
 const floatingNavHeight = 56.0;
 
-/// Плавающая панель вкладок в форме «таблетки»: скруглённая, с отступами от краёв экрана,
-/// только значки; активная вкладка отмечена скользящим пятном. Цвета обычные, сплошные.
+/// Панель вкладок во всю ширину экрана, прижатая к низу: скруглена только сверху, значки без подписей,
+/// активная вкладка отмечена скользящим пятном. Фон продолжается под системными кнопками
+/// навигации, а значки стоят выше них, поэтому ни пустой полосы, ни наложения нет.
 class FloatingNavBar extends StatelessWidget {
   const FloatingNavBar({
     super.key,
@@ -30,23 +31,26 @@ class FloatingNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    // Панель стоит почти у нижнего края: пустого поля до системных кнопок почти нет.
-    // Жестовая полоса Android занимает место сама, поэтому от неё берём только половину.
-    final inset = MediaQuery.viewPaddingOf(context).bottom * 0.5;
+    // Место под системные кнопки или жестовую полосу Android.
+    final inset = MediaQuery.viewPaddingOf(context).bottom;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20, 4, 20, 5 + inset),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.6)),
-        ),
+    return Material(
+      color: scheme.surfaceContainerHigh,
+      elevation: 3,
+      shadowColor: Colors.black,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: inset),
         child: SizedBox(
           height: floatingNavHeight,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final itemWidth = constraints.maxWidth / items.length;
+              const indicatorWidth = 68.0;
+              const indicatorHeight = 36.0;
               return Stack(
                 children: [
                   // Скользящее пятно под активной вкладкой.
@@ -54,14 +58,14 @@ class FloatingNavBar extends StatelessWidget {
                     key: const ValueKey('nav-indicator'),
                     duration: const Duration(milliseconds: 260),
                     curve: Curves.easeOutCubic,
-                    left: selectedIndex * itemWidth + 6,
-                    top: 6,
-                    width: itemWidth - 12,
-                    height: floatingNavHeight - 12,
+                    left: selectedIndex * itemWidth + (itemWidth - indicatorWidth) / 2,
+                    top: (floatingNavHeight - indicatorHeight) / 2,
+                    width: indicatorWidth,
+                    height: indicatorHeight,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         color: scheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                     ),
                   ),

@@ -165,6 +165,58 @@ void main() {
     await closeApp(tester);
   });
 
+  testWidgets('счётчик просрочки: нажатие показывает только просроченных, повторное сбрасывает фильтр', (tester) async {
+    await tester.runAsync(() async {
+      final repo = DebtorsRepository(db);
+      final late = await repo.createDebtor(const DebtorInput(name: 'Late Bobur'));
+      await repo.addTransaction(
+        debtorId: late,
+        kind: DebtKind.debt,
+        amount: 300000,
+        occurredAt: DateTime.now().subtract(const Duration(days: 45)),
+      );
+      final fresh = await repo.createDebtor(const DebtorInput(name: 'Fresh Davron'));
+      await repo.addTransaction(
+        debtorId: fresh,
+        kind: DebtKind.debt,
+        amount: 100000,
+        occurredAt: DateTime.now(),
+      );
+    });
+    await openDebts(tester);
+    final counter = find.byKey(const ValueKey('stat-overdue'));
+    expect(find.text('Late Bobur'), findsOneWidget);
+    expect(find.text('Fresh Davron'), findsOneWidget);
+
+    // Нажали на счётчик: только просроченные, плашка фильтра видна.
+    await tester.tap(counter);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Late Bobur'), findsOneWidget);
+    expect(find.text('Fresh Davron'), findsNothing);
+    expect(find.text('Просроченные · 1'), findsOneWidget);
+    expect(
+      tester.getSemantics(counter),
+      isSemantics(isButton: true, isSelected: true),
+      reason: 'счётчик подсвечен как выбранный',
+    );
+
+    // Ещё раз — фильтр сброшен, видны все.
+    await tester.tap(counter);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Fresh Davron'), findsOneWidget);
+    expect(find.text('Late Bobur'), findsOneWidget);
+    expect(find.textContaining('Просроченные ·'), findsNothing);
+
+    // Фильтр можно снять и плашкой; счётчик при этом перестаёт быть выбранным.
+    await tester.tap(counter);
+    await tester.pump(const Duration(milliseconds: 400));
+    await chooseFilter(tester, 'Все');
+    expect(find.text('Fresh Davron'), findsOneWidget);
+    expect(tester.getSemantics(counter), isSemantics(isButton: true, isSelected: false));
+
+    await closeApp(tester);
+  });
+
   testWidgets('удаление должника из карточки возвращает в пустую книгу', (tester) async {
     await tester.runAsync(() async {
       final repo = DebtorsRepository(db);

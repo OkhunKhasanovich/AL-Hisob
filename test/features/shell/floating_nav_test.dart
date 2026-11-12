@@ -52,17 +52,18 @@ void main() {
     await tester.pump(Duration.zero);
   }
 
-  testWidgets('панель вкладок — плавающая «таблетка» только со значками', (tester) async {
+  testWidgets('панель вкладок — во всю ширину, у самого низа, только значки', (tester) async {
     await openApp(tester);
 
     final size = tester.view.physicalSize / tester.view.devicePixelRatio;
     final bar = find.byType(FloatingNavBar);
-    final pill = tester.getRect(find.descendant(of: bar, matching: find.byType(SizedBox)).first);
-    expect(pill.height, floatingNavHeight, reason: 'невысокая');
-    expect(pill.left, greaterThan(10), reason: 'не прилипает к левому краю');
-    expect(pill.right, lessThan(size.width - 10), reason: 'не прилипает к правому краю');
-    expect(pill.bottom, lessThan(size.height - 4), reason: 'плавает над нижним краем');
-    expect(size.height - pill.bottom, lessThanOrEqualTo(8), reason: 'почти у самого края: лишней пустоты нет');
+    final whole = tester.getRect(bar);
+    expect(whole.left, 0, reason: 'от левого края экрана');
+    expect(whole.right, size.width, reason: 'до правого края экрана');
+    expect(whole.bottom, size.height, reason: 'прижата к низу, пустой полосы под ней нет');
+    final row = tester.getRect(find.descendant(of: bar, matching: find.byType(SizedBox)).first);
+    expect(row.height, floatingNavHeight, reason: 'невысокая');
+    expect(row.width, size.width);
 
     for (final label in ['Долги', 'Заказы', 'Каталог', 'Ещё']) {
       expect(find.descendant(of: bar, matching: find.byTooltip(label)), findsOneWidget);
@@ -78,12 +79,10 @@ void main() {
     final bar = find.byType(FloatingNavBar);
     expect(find.descendant(of: bar, matching: find.byType(BackdropFilter)), findsNothing);
 
-    final container = tester
-        .widgetList<DecoratedBox>(find.descendant(of: bar, matching: find.byType(DecoratedBox)))
-        .map((d) => d.decoration)
-        .whereType<BoxDecoration>()
-        .firstWhere((d) => d.color != null && d.border != null);
-    expect(container.color!.a, 1, reason: 'сплошной цвет');
+    final material = tester.widget<Material>(
+      find.descendant(of: bar, matching: find.byType(Material)).first,
+    );
+    expect(material.color!.a, 1, reason: 'сплошной цвет');
 
     await closeApp(tester);
   });
@@ -226,6 +225,23 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Language'), findsOneWidget);
+    await closeApp(tester);
+  });
+
+  testWidgets('системные кнопки: значки стоят выше них, а фон панели идёт до самого низа', (tester) async {
+    tester.view.padding = const FakeViewPadding(bottom: 144); // 48 dp при плотности 3
+    tester.view.viewPadding = const FakeViewPadding(bottom: 144);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewPadding);
+    await openApp(tester);
+
+    final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+    final bar = find.byType(FloatingNavBar);
+    final whole = tester.getRect(bar);
+    final row = tester.getRect(find.descendant(of: bar, matching: find.byType(SizedBox)).first);
+    expect(whole.bottom, size.height, reason: 'фон до самого низа экрана');
+    expect(row.bottom, closeTo(size.height - 48, 0.5), reason: 'значки над системными кнопками');
+    expect(whole.height, closeTo(floatingNavHeight + 48, 0.5));
     await closeApp(tester);
   });
 }

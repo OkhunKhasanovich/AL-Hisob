@@ -111,6 +111,11 @@ class _DebtorListState extends ConsumerState<_DebtorList> {
             trend: ref.watch(debtTrendProvider),
             initialCompact: ref.read(debtsOverviewCompactProvider),
             onCompactChanged: ref.read(debtsOverviewCompactProvider.notifier).set,
+            // Счётчик просрочки: нажатие показывает только просроченных, повторное снимает фильтр.
+            overdueSelected: filter == DebtFilter.overdue,
+            onOverdueTap: () => ref
+                .read(selectedDebtFilterProvider.notifier)
+                .select(filter == DebtFilter.overdue ? DebtFilter.all : DebtFilter.overdue),
           ),
         ),
 
