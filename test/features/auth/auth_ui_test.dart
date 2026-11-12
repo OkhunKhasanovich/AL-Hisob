@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:al_savdogar/app.dart';
+import 'package:al_savdogar/features/shell/floating_nav_bar.dart';
 import 'package:al_savdogar/core/database/app_database.dart';
 import 'package:al_savdogar/core/domain/shop_role.dart';
 import 'package:al_savdogar/core/settings/settings_providers.dart';
@@ -98,7 +99,7 @@ void main() {
   }
 
   Future<void> openMore(WidgetTester tester) async {
-    await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.byTooltip('Ещё')));
+    await tester.tap(find.descendant(of: find.byType(FloatingNavBar), matching: find.byTooltip('Ещё')));
     await settle(tester);
   }
 

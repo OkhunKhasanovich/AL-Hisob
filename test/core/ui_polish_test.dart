@@ -53,11 +53,4 @@ void main() {
     });
   });
 
-  group('тема', () {
-    test('нижняя панель: только значки и невысокая', () {
-      final theme = AppTheme.light().navigationBarTheme;
-      expect(theme.labelBehavior, NavigationDestinationLabelBehavior.alwaysHide);
-      expect(theme.height, lessThanOrEqualTo(60));
-    });
-  });
 }

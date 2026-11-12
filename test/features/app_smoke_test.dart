@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:al_savdogar/app.dart';
+import 'package:al_savdogar/features/shell/floating_nav_bar.dart';
 import 'package:al_savdogar/core/database/app_database.dart';
 import 'package:al_savdogar/core/domain/shop_role.dart';
 import 'package:al_savdogar/features/profile/shop_profile_repository.dart';
@@ -40,7 +41,7 @@ void main() {
     // Через 1.8 с переходим на главный экран.
     await tester.pump(const Duration(milliseconds: 1900));
     await tester.pump(const Duration(milliseconds: 600));
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(FloatingNavBar), findsOneWidget);
     expect(find.text('Долги'), findsWidgets);
 
     // Вкладка «Ещё» → меняем язык на английский.

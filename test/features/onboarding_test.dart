@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:al_savdogar/app.dart';
+import 'package:al_savdogar/features/shell/floating_nav_bar.dart';
 import 'package:al_savdogar/core/database/app_database.dart';
 import 'package:al_savdogar/core/domain/shop_role.dart';
 import 'package:al_savdogar/core/settings/settings_providers.dart';
@@ -39,7 +40,7 @@ void main() {
     await pastSplash(tester);
 
     expect(find.text('Добро пожаловать!'), findsOneWidget);
-    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(FloatingNavBar), findsNothing);
     expect(continueButton(tester).onPressed, isNull);
 
     // Только название — роль не выбрана.
@@ -73,7 +74,7 @@ void main() {
     });
     await tester.pump(const Duration(milliseconds: 600));
 
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(FloatingNavBar), findsOneWidget);
 
     final profile = await tester.runAsync(() => ShopProfileRepository(db).current());
     expect(profile!.name, 'Baraka Trade');
@@ -88,7 +89,7 @@ void main() {
     await pastSplash(tester);
 
     expect(find.text('Добро пожаловать!'), findsNothing);
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(FloatingNavBar), findsOneWidget);
   });
 
   testWidgets('профиль можно изменить на вкладке «Ещё»', (tester) async {

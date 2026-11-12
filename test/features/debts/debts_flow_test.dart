@@ -461,6 +461,9 @@ void main() {
   });
 
   testWidgets('поиск сочетается с фильтром: фильтр сужает результаты, порядок — по релевантности', (tester) async {
+    // Панель вкладок-«таблетка» ниже обычной: даём экран повыше, чтобы все карточки поместились.
+    tester.view.physicalSize = const Size(1080, 2400);
+    addTearDown(tester.view.reset);
     await tester.runAsync(() async {
       final repo = DebtorsRepository(db);
       Future<void> debtor(String name, int amount) async {
