@@ -6,6 +6,7 @@ import 'core/l10n/l10n.dart';
 import 'core/router/app_router.dart';
 import 'core/settings/settings_providers.dart';
 import 'core/theme/app_theme.dart';
+import 'features/sync/presentation/sync_controller.dart';
 
 class AlHisobApp extends ConsumerStatefulWidget {
   const AlHisobApp({super.key, this.router});
@@ -22,6 +23,8 @@ class _AlHisobAppState extends ConsumerState<AlHisobApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Фоновая синхронизация живёт всё время работы приложения; на перерисовку она не влияет.
+    ref.listen(syncControllerProvider, (_, _) {});
     return MaterialApp.router(
       onGenerateTitle: (context) => context.l10n.appName,
       debugShowCheckedModeBanner: false,

@@ -275,6 +275,29 @@
   "accountSignOut": "Chiqish",
   "accountSignOutTitle": "Hisobdan chiqilsinmi?",
   "accountSignOutBody": "Ma’lumotlar shu telefonda qoladi. Istalgan vaqt qayta kirishingiz mumkin.",
+  "syncTitle": "Sinxronlash",
+  "syncRunning": "Sinxronlanmoqda…",
+  "syncNever": "Hali sinxronlanmagan",
+  "syncLastAt": "Hammasi saqlandi · {time} da sinxronlandi",
+  "@syncLastAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncPending": "Yuborilishi kutilmoqda: {count}",
+  "@syncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncOffline": "Aloqa yo‘q — ma’lumotlar telefonda saqlandi, keyinroq yuboriladi",
+  "syncError": "Sinxronlab bo‘lmadi — tez orada qayta uriniladi",
+  "syncMismatch": "Telefonda boshqa akkaunt ma’lumotlari bor — sinxronlash to‘xtatilgan",
+  "syncNow": "Sinxronlash",
   "loginPromptTitle": "Ma’lumotlaringizni yo‘qotmang",
   "loginPromptBody": "Ma’lumotlar xavfsiz bo‘lishi va ularni boshqa telefonlar bilan bo‘lishish uchun kiring.",
   "debtsCountLabel": "Qarzdorlar: {count}",

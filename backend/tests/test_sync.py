@@ -86,7 +86,11 @@ class TestConflicts:
         await push(client, tokens, c)
         older = {**c, "data": {"name": "old"}, "updated_at": T0.isoformat()}
         r = await push(client, tokens, older)
-        assert r.json() == {"accepted": [], "stale": [c["id"]]}
+        body = r.json()
+        assert body["accepted"] == []
+        # в ответе — актуальная версия сервера, её клиент принимает вместо своей
+        [current] = body["stale"]
+        assert current["id"] == c["id"] and current["data"] == {"name": "new"} and current["seq"] > 0
         [got] = (await pull(client, tokens)).json()["changes"]
         assert got["data"] == {"name": "new"}
 
@@ -103,7 +107,8 @@ class TestConflicts:
         c = change(data={"name": "A"})
         await push(client, tokens, c)
         r = await push(client, tokens, {**c, "data": {"name": "B"}})
-        assert r.json()["stale"] == [c["id"]]
+        assert [x["id"] for x in r.json()["stale"]] == [c["id"]]
+        assert r.json()["stale"][0]["data"] == {"name": "A"}
 
     async def test_delete_travels_as_soft_delete(self, client):
         tokens = await full_login(client)

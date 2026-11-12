@@ -275,6 +275,29 @@
   "accountSignOut": "Выйти",
   "accountSignOutTitle": "Выйти из аккаунта?",
   "accountSignOutBody": "Данные останутся на этом телефоне. Войти снова можно в любой момент.",
+  "syncTitle": "Синхронизация",
+  "syncRunning": "Синхронизация…",
+  "syncNever": "Ещё не синхронизировано",
+  "syncLastAt": "Всё сохранено · синхронизировано в {time}",
+  "@syncLastAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncPending": "Ждут отправки: {count}",
+  "@syncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncOffline": "Нет связи — данные сохранены на телефоне и отправятся позже",
+  "syncError": "Не удалось синхронизировать — скоро попробуем снова",
+  "syncMismatch": "На телефоне данные другого аккаунта — синхронизация приостановлена",
+  "syncNow": "Синхронизировать",
   "loginPromptTitle": "Не потеряйте данные",
   "loginPromptBody": "Войдите, чтобы данные были в сохранности и ими можно было делиться с другими телефонами.",
   "debtsCountLabel": "Должников: {count}",

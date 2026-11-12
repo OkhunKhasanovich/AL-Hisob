@@ -275,6 +275,29 @@
   "accountSignOut": "Shıǵıw",
   "accountSignOutTitle": "Akkauntdan shıǵılsınba?",
   "accountSignOutBody": "Maǵlıwmatlar usı telefonda qaladı. Qálegen waqıtta qayta kiriwińiz múmkin.",
+  "syncTitle": "Sinxronlaw",
+  "syncRunning": "Sinxronlanbaqta…",
+  "syncNever": "Ele sinxronlanbaǵan",
+  "syncLastAt": "Barlıǵı saqlandı · {time} da sinxronlandı",
+  "@syncLastAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncPending": "Jiberiwdi kútip tur: {count}",
+  "@syncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncOffline": "Baylanıs joq — maǵlıwmatlar telefonda saqlandı, keyinirek jiberiledi",
+  "syncError": "Sinxronlaw almadı — tez arada qayta urınıladı",
+  "syncMismatch": "Telefonda basqa akkaunt maǵlıwmatları bar — sinxronlaw toqtatıldı",
+  "syncNow": "Sinxronlaw",
   "loginPromptTitle": "Maǵlıwmatlarıńızdı joǵaltpań",
   "loginPromptBody": "Maǵlıwmatlar qáwipsiz bolıwı hám olardı basqa telefonlar menen bólisiw ushın kiriń.",
   "debtsCountLabel": "Qarızdarlar: {count}",

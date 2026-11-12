@@ -43,11 +43,6 @@ class PushRequest(BaseModel):
     changes: list[Change] = Field(max_length=MAX_CHANGES_PER_PUSH)
 
 
-class PushResponse(BaseModel):
-    accepted: list[UUID]  # записи сохранены (или уже были такими же)
-    stale: list[UUID]     # на сервере версия новее: клиент получит её при следующем получении изменений
-
-
 class PulledChange(BaseModel):
     entity: str
     id: UUID
@@ -55,6 +50,11 @@ class PulledChange(BaseModel):
     updated_at: datetime
     deleted_at: datetime | None
     seq: int
+
+
+class PushResponse(BaseModel):
+    accepted: list[UUID]  # записи сохранены (или уже были такими же)
+    stale: list["PulledChange"]  # на сервере версия новее: вот она, клиент принимает её
 
 
 class PullResponse(BaseModel):
@@ -65,6 +65,13 @@ class PullResponse(BaseModel):
 
 def _aware(value: datetime) -> datetime:
     return value if value.tzinfo else value.replace(tzinfo=UTC)
+
+
+def _pulled(row) -> PulledChange:
+    return PulledChange(
+        entity=row["entity"], id=row["id"], data=json.loads(row["data"]),
+        updated_at=row["updated_at"], deleted_at=row["deleted_at"], seq=row["seq"],
+    )
 
 
 _UPSERT = """
@@ -101,7 +108,7 @@ def build_router(settings) -> APIRouter:
             prepared.append((change, payload, updated, deleted))
 
         accepted: list[UUID] = []
-        stale: list[UUID] = []
+        stale: list[PulledChange] = []
         async with request.app.state.pool.acquire() as conn, conn.transaction():
             for change, payload, updated, deleted in prepared:
                 args = (user.id, change.entity, change.id, payload, updated, deleted)
@@ -114,7 +121,15 @@ def build_router(settings) -> APIRouter:
                     "from sync_records where user_id = $1 and entity = $2 and id = $3",
                     user.id, change.entity, change.id, updated, payload, deleted,
                 )
-                (accepted if same else stale).append(change.id)
+                if same:
+                    accepted.append(change.id)
+                else:
+                    current = await conn.fetchrow(
+                        "select entity, id, data, updated_at, deleted_at, seq from sync_records "
+                        "where user_id = $1 and entity = $2 and id = $3",
+                        user.id, change.entity, change.id,
+                    )
+                    stale.append(_pulled(current))
         return PushResponse(accepted=accepted, stale=stale)
 
     @router.get("/pull", response_model=PullResponse, dependencies=[Depends(limit)])
@@ -131,13 +146,7 @@ def build_router(settings) -> APIRouter:
         )
         has_more = len(rows) > limit_
         rows = rows[:limit_]
-        changes = [
-            PulledChange(
-                entity=r["entity"], id=r["id"], data=json.loads(r["data"]),
-                updated_at=r["updated_at"], deleted_at=r["deleted_at"], seq=r["seq"],
-            )
-            for r in rows
-        ]
+        changes = [_pulled(r) for r in rows]
         return PullResponse(changes=changes, cursor=rows[-1]["seq"] if rows else since, has_more=has_more)
 
     return router

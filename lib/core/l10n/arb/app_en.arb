@@ -488,6 +488,29 @@
   "accountSignOut": "Sign out",
   "accountSignOutTitle": "Sign out?",
   "accountSignOutBody": "Your data stays on this phone. You can sign in again at any time.",
+  "syncTitle": "Synchronization",
+  "syncRunning": "Syncing…",
+  "syncNever": "Not synced yet",
+  "syncLastAt": "All saved · synced at {time}",
+  "@syncLastAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncPending": "Waiting to be sent: {count}",
+  "@syncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncOffline": "No connection — data is saved on this phone and will be sent later",
+  "syncError": "Couldn’t sync — will try again soon",
+  "syncMismatch": "This phone holds data of another account — sync is paused",
+  "syncNow": "Sync",
   "loginPromptTitle": "Don’t lose your data",
   "loginPromptBody": "Sign in to keep your data safe and share it with other phones.",
   "debtsCountLabel": "Debtors: {count}",
