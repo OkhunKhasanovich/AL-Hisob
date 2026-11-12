@@ -120,3 +120,8 @@ class _NavButton extends StatelessWidget {
     );
   }
 }
+
+/// Поднимает плавающую кнопку страницы над панелью вкладок: страницы заходят под панель,
+/// и без этого кнопка оказалась бы прямо на ней.
+Widget liftAboveNav(BuildContext context, Widget fab) =>
+    Padding(padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom), child: fab);

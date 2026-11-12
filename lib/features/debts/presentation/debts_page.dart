@@ -1,5 +1,3 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +17,7 @@ import 'debt_filter_sheet.dart';
 import 'debtor_tile.dart';
 import 'debts_overview_card.dart';
 import 'debts_providers.dart';
+import '../../shell/floating_nav_bar.dart';
 
 class DebtsPage extends ConsumerWidget {
   const DebtsPage({super.key});
@@ -39,15 +38,18 @@ class DebtsPage extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        // Вкладки живут в одном дереве: одинаковые Hero-теги кнопок вызывают ошибку при переходах.
-        heroTag: null,
-        tooltip: l10n.addDebtor,
-        onPressed: () {
-          HapticFeedback.selectionClick();
-          context.push(Routes.debtorNew);
-        },
-        child: const Icon(Icons.person_add_alt_1_rounded),
+      floatingActionButton: liftAboveNav(
+        context,
+        FloatingActionButton(
+          // Вкладки живут в одном дереве: одинаковые Hero-теги кнопок вызывают ошибку при переходах.
+          heroTag: null,
+          tooltip: l10n.addDebtor,
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            context.push(Routes.debtorNew);
+          },
+          child: const Icon(Icons.person_add_alt_1_rounded),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(debtorSummariesProvider),
@@ -103,7 +105,9 @@ class _DebtorListState extends ConsumerState<_DebtorList> {
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
         // 1. Общий долг — самый верх.
-        SliverToBoxAdapter(child: DebtsOverviewCard(overview: overview, trend: ref.watch(debtTrendProvider))),
+        SliverToBoxAdapter(
+          child: DebtsOverviewCard(overview: overview, trend: ref.watch(debtTrendProvider)),
+        ),
 
         // 2. Поиск с воронкой фильтров в конце поля; не уезжает при прокрутке.
         SliverPersistentHeader(
@@ -136,7 +140,8 @@ class _DebtorListState extends ConsumerState<_DebtorList> {
                   avatar: Icon(debtFilterIcon(filter), size: 18),
                   label: Text('${debtFilterLabel(l10n, filter)} · ${rows.length}'),
                   deleteButtonTooltipMessage: l10n.filterReset,
-                  onDeleted: () => ref.read(selectedDebtFilterProvider.notifier).select(DebtFilter.all),
+                  onDeleted: () =>
+                      ref.read(selectedDebtFilterProvider.notifier).select(DebtFilter.all),
                 ),
               ),
             ),
@@ -156,16 +161,15 @@ class _DebtorListState extends ConsumerState<_DebtorList> {
                       ? l10n.debtsFilteredEmpty
                       : l10n.searchNoResults,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                  style: Theme.of(context).textTheme.bodyLarge
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ),
             ),
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+            padding: EdgeInsets.fromLTRB(16, 4, 16, 96 + MediaQuery.paddingOf(context).bottom),
             sliver: SliverList.builder(
               itemCount: rows.length,
               itemBuilder: (context, i) {
@@ -189,15 +193,18 @@ class _DebtorListState extends ConsumerState<_DebtorList> {
   }
 }
 
-/// Закреплённая под обзором строка (поиск + фильтр). Пока под ней ничего нет — прозрачная;
-/// когда карточки заходят под неё, становится матовым стеклом: размытие и лёгкая подложка
-/// цвета фона, без тёмной плашки и смены цвета шапки.
+/// Закреплённая под обзором строка (поиск + фильтр). Фон строки сплошной и точно цвета страницы:
+/// карточки уходят под неё и не просвечивают, а плашки не видно. Ниже поля — короткое
+/// затухание, чтобы карточки скрывались плавно, а не обрезались резкой линией.
 class _PinnedHeader extends SliverPersistentHeaderDelegate {
   _PinnedHeader({required this.height, required this.child, required this.color});
 
+  /// Высота строки с полем; затухание рисуется ниже и в высоту не входит.
   final double height;
   final Widget child;
   final Color color;
+
+  static const fade = 14.0;
 
   @override
   double get minExtent => height;
@@ -207,18 +214,31 @@ class _PinnedHeader extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: overlapsContent ? 16 : 0.001,
-          sigmaY: overlapsContent ? 16 : 0.001,
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(
+          child: ColoredBox(key: const ValueKey('search-header'), color: color),
         ),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          color: color.withValues(alpha: overlapsContent ? 0.62 : 0),
-          child: child,
+        Positioned(
+          left: 0,
+          right: 0,
+          top: height,
+          height: fade,
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [color, color.withValues(alpha: 0)],
+                ),
+              ),
+            ),
+          ),
         ),
-      ),
+        Positioned.fill(child: child),
+      ],
     );
   }
 
@@ -241,14 +261,12 @@ class _EmptyBook extends StatelessWidget {
         const SizedBox(height: 48),
         Icon(Icons.menu_book_rounded, size: 72, color: theme.colorScheme.primary),
         const SizedBox(height: 16),
-        Text(l10n.debtsEmptyTitle,
-            textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
+        Text(l10n.debtsEmptyTitle, textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
         const SizedBox(height: 8),
         Text(
           l10n.debtsEmptyHint,
           textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
       ],
     );

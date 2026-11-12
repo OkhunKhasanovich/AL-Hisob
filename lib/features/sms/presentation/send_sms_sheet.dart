@@ -17,6 +17,8 @@ import 'sms_ui_helpers.dart';
 /// Шторка отправки SMS-напоминания одному должнику.
 Future<void> showSendSmsSheet(BuildContext context, DebtorSummary debtor) {
   return showModalBottomSheet<void>(
+    // Поверх панели вкладок, а не под ней: панель не просвечивает и не перекрывает кнопки шторки.
+    useRootNavigator: true,
     context: context,
     isScrollControlled: true,
     showDragHandle: true,

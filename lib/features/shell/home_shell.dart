@@ -75,6 +75,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
     return Scaffold(
       body: navigationShell,
+      // Без подложки под панелью: страницы заходят под неё, вокруг «таблетки» виден их фон.
+      extendBody: true,
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

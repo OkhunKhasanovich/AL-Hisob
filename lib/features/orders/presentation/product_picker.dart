@@ -15,6 +15,8 @@ Future<List<ProductSummary>?> showProductPicker(
   required Set<String> alreadyAdded,
 }) {
   return showModalBottomSheet<List<ProductSummary>>(
+    // Поверх панели вкладок, а не под ней: панель не просвечивает и не перекрывает кнопки шторки.
+    useRootNavigator: true,
     context: context,
     isScrollControlled: true,
     showDragHandle: true,

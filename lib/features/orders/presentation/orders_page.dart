@@ -15,6 +15,7 @@ import '../data/orders_providers.dart';
 import '../domain/order_models.dart';
 import '../domain/order_workflow.dart';
 import 'order_labels.dart';
+import '../../shell/floating_nav_bar.dart';
 
 /// Вкладка «Заказы». Оптовик ведёт заказы покупателей; у покупателя они
 /// появятся после синхронизации (этапы 8–9).
@@ -54,7 +55,7 @@ class _WholesalerOrders extends ConsumerWidget {
 
     return Scaffold(
       appBar: SectionAppBar(title: l10n.tabOrders),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: liftAboveNav(context, FloatingActionButton.extended(
         // Вкладки живут в одном дереве: одинаковые Hero-теги кнопок вызывают ошибку при переходах.
         heroTag: null,
         onPressed: () {
@@ -63,7 +64,7 @@ class _WholesalerOrders extends ConsumerWidget {
         },
         icon: const Icon(Icons.add_rounded),
         label: Text(l10n.newOrder),
-      ),
+      )),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(orderSummariesProvider),
         child: all.when(
@@ -126,7 +127,7 @@ class _OrderList extends ConsumerWidget {
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+            padding: EdgeInsets.fromLTRB(16, 4, 16, 96 + MediaQuery.paddingOf(context).bottom),
             sliver: SliverList.builder(
               itemCount: visible.length,
               itemBuilder: (context, i) => _OrderTile(summary: visible[i]),

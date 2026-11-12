@@ -27,7 +27,7 @@ class MorePage extends ConsumerWidget {
     return Scaffold(
       appBar: SectionAppBar(title: l10n.moreTitle),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
         children: [
           const ProfileCard(),
           const AccountTile(),
