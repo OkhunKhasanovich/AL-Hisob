@@ -84,6 +84,7 @@ class UpdateState {
     this.receivedBytes = 0,
     this.totalBytes,
     this.retry = 0,
+    this.retryReason,
     this.bytesPerSecond = 0,
   });
 
@@ -103,6 +104,9 @@ class UpdateState {
 
   /// Номер повторной попытки после обрыва связи; 0 — всё идёт гладко.
   final int retry;
+
+  /// Короткая причина последнего сбоя связи (для строки «Aloqa uzildi…»).
+  final String? retryReason;
 
   /// Сглаженная скорость скачивания, байт/с (0 — пока неизвестна).
   final double bytesPerSecond;
@@ -208,6 +212,7 @@ class UpdateController extends Notifier<UpdateState> {
     var lastEmit = -1000;
     var lastBytes = 0;
     var speed = 0.0;
+    String? reason;
     void emit({required double progress, required int received, int? total, int retry = 0}) {
       final now = clock.elapsedMilliseconds;
       final finished = total != null && received >= total;
@@ -227,6 +232,7 @@ class UpdateController extends Notifier<UpdateState> {
         receivedBytes: received,
         totalBytes: total,
         retry: retry,
+        retryReason: retry > 0 ? reason : null,
         bytesPerSecond: speed,
       );
     }
@@ -245,6 +251,7 @@ class UpdateController extends Notifier<UpdateState> {
           total = t;
           emit(progress: progress, received: r, total: t);
         },
+        onFailure: (r) => reason = r,
         onRetry: (attempt) => emit(progress: progress, received: received, total: total, retry: attempt),
       );
       return file.path;

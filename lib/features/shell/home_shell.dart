@@ -159,7 +159,7 @@ class _DownloadStrip extends ConsumerWidget {
                         Expanded(
                           child: Text(
                             _statusText(context, state),
-                            maxLines: 1,
+                            maxLines: state.retry > 0 ? 2 : 1,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: scheme.onSurfaceVariant,
@@ -195,7 +195,11 @@ String _megabytes(int bytes) => (bytes / (1024 * 1024)).toStringAsFixed(1);
 
 String _statusText(BuildContext context, UpdateState state) {
   final l10n = context.l10n;
-  if (state.retry > 0) return l10n.updateReconnecting(state.retry);
+  if (state.retry > 0) {
+    final reason = state.retryReason;
+    final text = l10n.updateReconnecting(state.retry);
+    return reason == null ? text : '$text\n$reason';
+  }
   final percent = (state.progress * 100).round();
   final total = state.totalBytes;
   if (total == null || total <= 0) return l10n.updateDownloading(percent);

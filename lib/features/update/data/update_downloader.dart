@@ -72,13 +72,15 @@ class UpdateDownloader {
     ..autoUncompress = false;
 
   /// [onProgress] — доля 0…1. [onBytes] — сколько байт получено и сколько всего.
-  /// [onRetry] вызывается перед повторной попыткой (с её номером, начиная с 1).
+  /// [onRetry] вызывается перед повторной попыткой (с её номером, начиная с 1),
+  /// [onFailure] — с короткой причиной сбоя (`stalled`, `HTTP 503`…), чтобы показать её пользователю.
   /// [isCancelled] проверяется между кусками данных.
   Future<File> download(
     UpdateInfo info, {
     void Function(double fraction)? onProgress,
     void Function(int received, int? total)? onBytes,
     void Function(int attempt)? onRetry,
+    void Function(String reason)? onFailure,
     bool Function()? isCancelled,
   }) async {
     if (!_isAllowed(info.apkUrl)) {
@@ -121,6 +123,7 @@ class UpdateDownloader {
           onProgress: onProgress,
           onBytes: onBytes,
           onRetry: onRetry,
+          onFailure: onFailure,
           isCancelled: isCancelled,
         );
         parallelDone = true;
@@ -146,6 +149,7 @@ class UpdateDownloader {
         if (failures >= maxAttempts) {
           throw UpdateDownloadException('gave up after $failures attempts: ${e.reason}');
         }
+        onFailure?.call(e.reason);
         onRetry?.call(failures);
         await Future<void>.delayed(_backoff(failures));
       }
@@ -179,6 +183,7 @@ class UpdateDownloader {
     void Function(double fraction)? onProgress,
     void Function(int received, int? total)? onBytes,
     void Function(int attempt)? onRetry,
+    void Function(String reason)? onFailure,
     bool Function()? isCancelled,
   }) async {
     final blocksFile = File('${part.path}.blocks');
@@ -201,7 +206,9 @@ class UpdateDownloader {
     }
 
     var doneBytes = done.fold<int>(0, (sum, i) => sum + blockLength(i));
-    final inFlight = <int, int>{}; // блок → сколько байт уже получено в этой попытке
+    // Блок → сколько его байт уже записано (с начала блока подряд). Пока блок не готов, это число
+    // сохраняется между попытками: после обрыва блок докачивается с того места, где остановились.
+    final inFlight = <int, int>{};
     void report() {
       final received = doneBytes + inFlight.values.fold<int>(0, (a, b) => a + b);
       onProgress?.call((received / size).clamp(0.0, 1.0));
@@ -226,6 +233,7 @@ class UpdateDownloader {
             if (failures >= maxAttempts) {
               throw UpdateDownloadException('gave up resolving url: ${e.reason}');
             }
+            onFailure?.call(e.reason);
             onRetry?.call(failures);
             await Future<void>.delayed(_backoff(failures));
           }
@@ -247,28 +255,43 @@ class UpdateDownloader {
       var aborted = false;
       var chain = Future<void>.value(); // записи в .blocks — по одной
 
-      Future<void> worker() async {
+      // Сколько соединений сейчас разрешено. Если сеть (или провайдер) не тянет столько
+      // параллельных потоков, число снижается до одного: один поток надёжнее шести оборванных.
+      var allowed = connections;
+      var recentFailures = 0;
+      void noteFailure() {
+        recentFailures++;
+        if (recentFailures >= 2 && allowed > 1) {
+          allowed--;
+          recentFailures = 0;
+        }
+      }
+
+      Future<void> worker(int index) async {
         final raf = await part.open(mode: FileMode.append);
         try {
           while (!aborted && next < pending.length) {
+            // Лишние соединения уходят после своего блока: остальные дотянут файл.
+            if (index >= allowed) break;
             if (isCancelled?.call() ?? false) throw UpdateCancelledException();
             final block = pending[next++];
             final start = block * blockSize;
             final length = blockLength(block);
 
             var failures = 0;
+            inFlight.putIfAbsent(block, () => 0);
             while (true) {
-              inFlight[block] = 0;
+              final gotBefore = inFlight[block]!;
               try {
                 await _fetchBlock(
                   client,
                   url,
                   raf,
-                  start,
-                  length,
+                  start + gotBefore,
+                  length - gotBefore,
                   isAborted: () => aborted || (isCancelled?.call() ?? false),
                   onChunk: (n) {
-                    inFlight[block] = (inFlight[block] ?? 0) + n;
+                    inFlight[block] = inFlight[block]! + n;
                     report();
                   },
                   onExpired: refreshUrl,
@@ -276,11 +299,14 @@ class UpdateDownloader {
                 );
                 break;
               } on _Retryable catch (e) {
-                inFlight.remove(block);
-                failures++;
+                // Если за попытку что-то докачалось — это не «подряд неудачи».
+                failures = inFlight[block]! > gotBefore ? 1 : failures + 1;
                 if (failures >= maxAttempts) {
+                  inFlight.remove(block);
                   throw UpdateDownloadException('gave up on block $block: ${e.reason}');
                 }
+                noteFailure();
+                onFailure?.call(e.reason);
                 onRetry?.call(failures);
                 await Future<void>.delayed(_backoff(failures));
               }
@@ -289,6 +315,7 @@ class UpdateDownloader {
             inFlight.remove(block);
             done.add(block);
             doneBytes += length;
+            if (recentFailures > 0) recentFailures--;
             report();
             // Список готовых блоков записываем по очереди, чтобы файл не перемешался.
             chain = chain.then((_) => blocksFile.writeAsString(done.join(',')));
@@ -302,7 +329,7 @@ class UpdateDownloader {
       }
 
       final results = await Future.wait(
-        [for (var i = 0; i < connections && i < pending.length; i++) worker()],
+        [for (var i = 0; i < connections && i < pending.length; i++) worker(i)],
         eagerError: false,
         // Ошибки соберём ниже, чтобы выбрать главную.
       ).then<Object?>((_) => null).catchError((Object e) => e);
@@ -367,11 +394,11 @@ class UpdateDownloader {
     } on TimeoutException {
       throw _Retryable('stalled');
     } on SocketException catch (e) {
-      throw _Retryable('network: ${e.message}');
+      throw _Retryable('network: ${_short(e.osError?.message ?? e.message)}');
     } on HttpException catch (e) {
-      throw _Retryable('http: ${e.message}');
+      throw _Retryable('http: ${_short(e.message)}');
     } on TlsException catch (e) {
-      throw _Retryable('tls: ${e.message}');
+      throw _Retryable('tls: ${_short(e.message)}');
     }
   }
 
@@ -410,11 +437,11 @@ class UpdateDownloader {
       } on TimeoutException {
         throw _Retryable('stalled');
       } on SocketException catch (e) {
-        throw _Retryable('network: ${e.message}');
+        throw _Retryable('network: ${_short(e.osError?.message ?? e.message)}');
       } on HttpException catch (e) {
-        throw _Retryable('http: ${e.message}');
+        throw _Retryable('http: ${_short(e.message)}');
       } on TlsException catch (e) {
-        throw _Retryable('tls: ${e.message}');
+        throw _Retryable('tls: ${_short(e.message)}');
       }
     }
     throw UpdateDownloadException('too many redirects');
@@ -484,11 +511,11 @@ class UpdateDownloader {
     } on TimeoutException {
       throw _Retryable('stalled');
     } on SocketException catch (e) {
-      throw _Retryable('network: ${e.message}');
+      throw _Retryable('network: ${_short(e.osError?.message ?? e.message)}');
     } on HttpException catch (e) {
-      throw _Retryable('http: ${e.message}');
+      throw _Retryable('http: ${_short(e.message)}');
     } on TlsException catch (e) {
-      throw _Retryable('tls: ${e.message}');
+      throw _Retryable('tls: ${_short(e.message)}');
     } finally {
       client.close(force: true);
     }
@@ -522,6 +549,9 @@ class UpdateDownloader {
     }
   }
 }
+
+/// Причина сбоя покороче, чтобы поместилась в строку состояния.
+String _short(String text) => text.length <= 40 ? text : '${text.substring(0, 40)}…';
 
 /// Сбой, после которого стоит попробовать ещё раз (обрыв, зависание, 5xx).
 class _Retryable implements Exception {

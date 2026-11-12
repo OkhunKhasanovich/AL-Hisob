@@ -402,6 +402,54 @@ void main() {
       expect(await file.readAsBytes(), bytes);
     });
 
+    test('обрыв посреди блока: блок докачивается с места обрыва, а не с начала', () async {
+      serveRanged('/p3b.apk', flaky: (request, call) async {
+        if (call == 3) {
+          final range = RegExp(r'bytes=(\d+)-(\d+)').firstMatch(request.headers.value(HttpHeaders.rangeHeader)!)!;
+          final start = int.parse(range.group(1)!);
+          final end = int.parse(range.group(2)!);
+          final socket = await request.response.detachSocket(writeHeaders: false);
+          socket.add(ascii.encode('HTTP/1.1 206 Partial Content\r\n'
+              'Content-Range: bytes $start-$end/${bytes.length}\r\n'
+              'Content-Length: ${end - start + 1}\r\n\r\n'));
+          socket.add(bytes.sublist(start, start + 20000)); // 20 000 из 50 000 и обрыв
+          await socket.flush();
+          socket.destroy();
+          return true;
+        }
+        return false;
+      });
+      final reasons = <String>[];
+      final file = await parallel().download(info(path: '/p3b.apk'), onFailure: reasons.add);
+
+      expect(await file.readAsBytes(), bytes);
+      expect(reasons, hasLength(1));
+      final ranges = server.rangeHeaders.whereType<String>().map((r) => int.parse(RegExp(r'bytes=(\d+)-').firstMatch(r)!.group(1)!)).toList();
+      expect(ranges.any((start) => start % 50000 == 20000), isTrue,
+          reason: 'повторный запрос начался с 20 000-го байта блока');
+    });
+
+    test('частые сбои: число соединений снижается, загрузка всё равно заканчивается', () async {
+      var lateActive = 0;
+      serveRanged('/p3c.apk', flaky: (request, call) async {
+        if (call >= 2 && call <= 9) {
+          request.response.statusCode = HttpStatus.serviceUnavailable;
+          await request.response.close();
+          return true;
+        }
+        if (call > 16 && active > lateActive) lateActive = active;
+        return false;
+      });
+      final reasons = <String>[];
+      final file = await parallel(connections: 4, maxAttempts: 6)
+          .download(info(path: '/p3c.apk'), onFailure: reasons.add);
+
+      expect(await file.readAsBytes(), bytes);
+      expect(reasons, everyElement('HTTP 503'));
+      expect(reasons.length, greaterThanOrEqualTo(6));
+      expect(lateActive, lessThanOrEqualTo(1), reason: 'после сбоев качает одно соединение');
+    });
+
     test('сервер игнорирует Range (200): без падения качает одним потоком', () async {
       serveRanged('/p4.apk', supportRange: false);
       final file = await parallel().download(info(path: '/p4.apk'));
