@@ -12,6 +12,8 @@ on:
         required: true
         default: resources
         options:
+          - install       # первая установка Al-Hisob на сервер (рядом с другими проектами)
+          - add-swap      # добавить 1 ГБ подкачки (если её нет)
           - diagnose      # почему не пускает: отпечаток ключа и какие пользователи его принимают
           - resources     # память, диск, занятые порты (проверка перед установкой)
           - status        # контейнеры, nginx, версия кода
@@ -19,6 +21,19 @@ on:
           - logs          # последние 200 строк журнала API
           - restart       # перезапуск API
           - set-webhook   # заново зарегистрировать вебхук Telegram-бота
+      domain:
+        description: Домен API (только для install)
+        type: string
+        required: false
+        default: alhisob.myservices.uz
+      email:
+        description: Почта для уведомлений Let's Encrypt (только для install)
+        type: string
+        required: false
+      bot_username:
+        description: Имя бота без @ (только для install)
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -30,7 +45,7 @@ concurrency:
 jobs:
   ops:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - name: Check secrets
         env:
@@ -52,6 +67,10 @@ jobs:
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
           ACTION: ${{ inputs.action }}
           API_DOMAIN: ${{ vars.API_DOMAIN }}
+          DOMAIN_IN: ${{ inputs.domain }}
+          EMAIL_IN: ${{ inputs.email }}
+          BOT_USERNAME_IN: ${{ inputs.bot_username }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
           set -euo pipefail
           install -m 700 -d ~/.ssh
@@ -96,5 +115,30 @@ jobs:
               remote 'cd /opt/al-hisob/deploy && docker compose restart api && sleep 3 && docker compose ps' ;;
             set-webhook)
               remote 'cd /opt/al-hisob/deploy && docker compose exec -T api python -m app.cli set-webhook' ;;
+            add-swap)
+              remote 'if swapon --show | grep -q .; then echo "swap already present"; swapon --show; else sudo fallocate -l 1G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile >/dev/null && sudo swapon /swapfile && (grep -q "^/swapfile " /etc/fstab || echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab >/dev/null) && echo "swap added" && free -h; fi' ;;
+            install)
+              for v in DOMAIN_IN EMAIL_IN BOT_USERNAME_IN TELEGRAM_BOT_TOKEN; do
+                [ -n "${!v}" ] || { echo "::error::$v is empty (domain, email and bot_username are inputs; TELEGRAM_BOT_TOKEN is a secret)"; exit 1; }
+              done
+              # 1. DNS: домен должен уже указывать на этот сервер, иначе сертификат не выдадут.
+              resolved=$(getent hosts "$DOMAIN_IN" | awk '{print $1}' | head -n1 || true)
+              if [ "$resolved" != "$DEPLOY_HOST" ]; then
+                echo "::error::DNS: $DOMAIN_IN resolves to '${resolved:-nothing}', not to the server. Add the A record and wait a few minutes."
+                exit 1
+              fi
+              echo "DNS ok: $DOMAIN_IN points to the server"
+              # 2. Скрипт установки (из репозитория) и его запуск от root. Другие проекты на сервере не трогаются.
+              remote 'curl -fsSL https://raw.githubusercontent.com/OkhunKhasanovich/Al-Hisob/main/deploy/bootstrap.sh -o /tmp/al-hisob-bootstrap.sh'
+              remote "sudo env DOMAIN='$DOMAIN_IN' EMAIL='$EMAIL_IN' bash /tmp/al-hisob-bootstrap.sh"
+              # 3. Токен бота и имя бота — в .env на сервере. Токен идёт по stdin, в командной строке его нет.
+              PYCODE='import sys,re;p="/opt/al-hisob/deploy/.env";t=sys.stdin.readline().strip();u=sys.stdin.readline().strip();f=lambda s,k,v:re.sub("^"+k+"=.*$",lambda m:k+"="+v,s,flags=re.M) if re.search("^"+k+"=",s,re.M) else s+"\n"+k+"="+v+"\n";s=open(p).read();s=f(s,"TELEGRAM_BOT_TOKEN",t);s=f(s,"TELEGRAM_BOT_USERNAME",u);open(p,"w").write(s)'
+              printf '%s\n%s\n' "$TELEGRAM_BOT_TOKEN" "$BOT_USERNAME_IN" | remote "sudo python3 -c '$PYCODE'"
+              echo "bot settings written to .env"
+              # 4. Запуск и вебхук.
+              remote 'cd /opt/al-hisob/deploy && sudo docker compose up -d --build && sleep 8 && sudo docker compose ps'
+              remote 'cd /opt/al-hisob/deploy && sudo docker compose exec -T api python -m app.cli set-webhook'
+              sleep 3
+              curl -fsS "https://$DOMAIN_IN/health" && echo && echo "INSTALLED: https://$DOMAIN_IN/health answers" ;;
             *) echo "::error::unknown action"; exit 1 ;;
           esac
