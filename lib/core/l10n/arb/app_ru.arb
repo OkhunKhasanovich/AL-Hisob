@@ -375,6 +375,24 @@
     }
   },
   "payFullDebtHint": "Нажмите, чтобы подставить",
+  "payAmountMax": "Не больше текущего долга: {amount}",
+  "@payAmountMax": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payExceedsDebt": "Оплата больше долга. Сейчас долг: {amount}",
+  "@payExceedsDebt": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payNoDebt": "У должника нет долга, принимать нечего",
+  "deleteWouldOverpay": "Нельзя удалить: оплат станет больше, чем выданного в долг",
   "debtSettled": "Погашен",
   "debtRemaining": "Осталось {left} из {total}",
   "@debtRemaining": {

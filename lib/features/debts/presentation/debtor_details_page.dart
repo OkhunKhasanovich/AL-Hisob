@@ -145,11 +145,14 @@ class _DetailsContent extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () => showTransactionSheet(
-                    context,
-                    debtorId: d.id,
-                    kind: DebtKind.payment,
-                  ),
+                  // Нет долга — принимать оплату не за что.
+                  onPressed: summary.balance <= 0
+                      ? null
+                      : () => showTransactionSheet(
+                            context,
+                            debtorId: d.id,
+                            kind: DebtKind.payment,
+                          ),
                   icon: const Icon(Icons.arrow_downward_rounded),
                   label: Text(l10n.paymentShortButton, maxLines: 1),
                   style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
@@ -271,7 +274,16 @@ class _TransactionTile extends ConsumerWidget {
     );
     if (ok == true) {
       HapticFeedback.mediumImpact();
-      await repo.deleteTransaction(transaction.id);
+      try {
+        await repo.deleteTransaction(transaction.id);
+      } on DeletionCausesOverpaymentException {
+        // Без этой записи оплат стало бы больше долгов: сначала нужно убрать лишние оплаты.
+        if (context.mounted) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(l10n.deleteWouldOverpay)));
+        }
+      }
     }
   }
 

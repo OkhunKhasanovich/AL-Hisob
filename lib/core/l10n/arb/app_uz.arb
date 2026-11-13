@@ -375,6 +375,24 @@
     }
   },
   "payFullDebtHint": "Qo‘yish uchun bosing",
+  "payAmountMax": "Joriy qarzdan ko‘p emas: {amount}",
+  "@payAmountMax": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payExceedsDebt": "To‘lov qarzdan ortiq. Hozirgi qarz: {amount}",
+  "@payExceedsDebt": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payNoDebt": "Qarzdorning qarzi yo‘q, qabul qiladigan narsa yo‘q",
+  "deleteWouldOverpay": "O‘chirib bo‘lmaydi: to‘lovlar qarzdan ko‘p bo‘lib qoladi",
   "debtSettled": "To‘langan",
   "debtRemaining": "{total} dan {left} qoldi",
   "@debtRemaining": {

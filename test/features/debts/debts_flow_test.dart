@@ -217,6 +217,89 @@ void main() {
     await closeApp(tester);
   });
 
+  testWidgets('оплату больше долга ввести нельзя: поле ограничено текущим долгом', (tester) async {
+    late String id;
+    await tester.runAsync(() async {
+      final repo = DebtorsRepository(db);
+      id = await repo.createDebtor(const DebtorInput(name: 'Alisher'));
+      await repo.addTransaction(
+        debtorId: id,
+        kind: DebtKind.debt,
+        amount: 1000,
+        occurredAt: DateTime.now(),
+      );
+    });
+    await openDebts(tester);
+    await tester.tap(find.text('Alisher'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await settle(tester);
+
+    await tester.tap(find.text('Погашение'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await settle(tester);
+
+    // Подсказка о пределе.
+    expect(find.text('Не больше текущего долга: 1 000 сум'), findsOneWidget);
+
+    // Долг 1 000, вводим 2 000 — в поле остаётся 1 000.
+    await tester.enterText(find.byType(TextField).first, '2000');
+    await tester.pump();
+    expect(find.text('1 000'), findsOneWidget, reason: 'сверх долга не вводится');
+    expect(find.text('2 000'), findsNothing);
+
+    // Любое число побольше тоже сводится к пределу.
+    await tester.enterText(find.byType(TextField).first, '999999999');
+    await tester.pump();
+    expect(find.text('1 000'), findsOneWidget);
+
+    // Часть долга вводится как обычно, оплата сохраняется.
+    await tester.enterText(find.byType(TextField).first, '400');
+    await tester.pump();
+    expect(find.text('400'), findsOneWidget);
+    await tapAsync(
+      tester,
+      find.descendant(of: find.byType(TransactionForm), matching: find.byType(FilledButton)),
+    );
+    final details = await tester.runAsync(() => DebtorsRepository(db).loadDetails(id));
+    expect(details!.summary.balance, 600);
+
+    // Теперь предел — 600.
+    await tester.tap(find.text('Погашение'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await settle(tester);
+    expect(find.text('Не больше текущего долга: 600 сум'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, '1000');
+    await tester.pump();
+    expect(find.text('600'), findsOneWidget);
+
+    await closeApp(tester);
+  });
+
+  testWidgets('без долга оплату принять нельзя: кнопка «Погашение» неактивна', (tester) async {
+    await tester.runAsync(() => DebtorsRepository(db).createDebtor(const DebtorInput(name: 'Zero')));
+    await openDebts(tester);
+    await tester.tap(find.text('Zero'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await settle(tester);
+
+    final payment = tester.widget<FilledButton>(find.ancestor(
+      of: find.text('Погашение'),
+      matching: find.byWidgetPredicate((w) => w is FilledButton),
+    ));
+    expect(payment.onPressed, isNull, reason: 'нет долга — принимать нечего');
+    final debt = tester.widget<FilledButton>(find.ancestor(
+      of: find.text('В долг'),
+      matching: find.byWidgetPredicate((w) => w is FilledButton),
+    ));
+    expect(debt.onPressed, isNotNull, reason: 'выдать в долг можно всегда');
+
+    await closeApp(tester);
+  });
+
   testWidgets('удаление должника из карточки возвращает в пустую книгу', (tester) async {
     await tester.runAsync(() async {
       final repo = DebtorsRepository(db);

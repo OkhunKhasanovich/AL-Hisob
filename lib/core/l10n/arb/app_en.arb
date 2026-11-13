@@ -644,6 +644,24 @@
     }
   },
   "payFullDebtHint": "Tap to fill in",
+  "payAmountMax": "Up to the current debt: {amount}",
+  "@payAmountMax": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payExceedsDebt": "Payment is larger than the debt. Current debt: {amount}",
+  "@payExceedsDebt": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payNoDebt": "This debtor owes nothing, so there is nothing to receive",
+  "deleteWouldOverpay": "Can’t delete: payments would exceed the debts",
   "debtSettled": "Settled",
   "debtRemaining": "{left} left of {total}",
   "@debtRemaining": {

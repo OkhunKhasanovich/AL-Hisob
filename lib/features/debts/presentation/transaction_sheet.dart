@@ -6,6 +6,7 @@ import '../../../core/domain/debt_kind.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/utils/money.dart';
 import '../../../core/widgets/amount_input_formatter.dart';
+import '../data/debtors_repository.dart' show PaymentExceedsDebtException;
 import 'debts_providers.dart';
 
 /// Шторка «Дал в долг» / «Получил оплату».
@@ -121,6 +122,17 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
             comment: _comment.text,
           );
       widget.onDone();
+    } on PaymentExceedsDebtException catch (e) {
+      // Долг успел уменьшиться (например, пришла синхронизация): подсказываем актуальный предел.
+      if (!mounted) return;
+      setState(() => _saving = false);
+      final l10n = context.l10n;
+      if (e.balance > 0 && amount > e.balance) _fill(e.balance);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(l10n.payExceedsDebt('${formatAmount(e.balance)} ${l10n.currencySum}'))),
+        );
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -136,7 +148,12 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
     final theme = Theme.of(context);
     final isDebt = widget.kind == DebtKind.debt;
     final title = isDebt ? l10n.gaveDebtButton : l10n.receivedPaymentButton;
-    final balance = ref.watch(debtorDetailsProvider(widget.debtorId)).value?.summary.balance ?? 0;
+    final loadedBalance = ref.watch(debtorDetailsProvider(widget.debtorId)).value?.summary.balance;
+    final balance = loadedBalance ?? 0;
+    // Оплату нельзя ввести больше текущего долга; у выдачи долга предела нет.
+    final limit = (!isDebt && loadedBalance != null) ? (balance > 0 ? balance : 0) : null;
+    final noDebt = limit == 0;
+    final overLimit = limit != null && (_parsedAmount ?? 0) > limit;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -147,12 +164,16 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
         TextField(
           controller: _amount,
           autofocus: true,
+          enabled: !noDebt,
           keyboardType: TextInputType.number,
-          inputFormatters: const [AmountInputFormatter()],
+          inputFormatters: [AmountInputFormatter(max: limit)],
           style: theme.textTheme.headlineSmall,
           decoration: InputDecoration(
             labelText: l10n.amountLabel,
             suffixText: l10n.currencySum,
+            helperText: noDebt
+                ? l10n.payNoDebt
+                : (limit != null ? l10n.payAmountMax('${formatAmount(limit)} ${l10n.currencySum}') : null),
             border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
           ),
         ),
@@ -184,7 +205,7 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
         ),
         const SizedBox(height: 8),
         FilledButton(
-          onPressed: (_parsedAmount == null || _saving) ? null : _submit,
+          onPressed: (_parsedAmount == null || _saving || noDebt || overLimit) ? null : _submit,
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
           child: _saving
               ? const SizedBox(

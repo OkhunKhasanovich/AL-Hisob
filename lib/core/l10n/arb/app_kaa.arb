@@ -375,6 +375,24 @@
     }
   },
   "payFullDebtHint": "Toltırıw ushın basıń",
+  "payAmountMax": "Házirgi qarızdan kóp emes: {amount}",
+  "@payAmountMax": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payExceedsDebt": "Tólem qarızdan artıq. Házirgi qarız: {amount}",
+  "@payExceedsDebt": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payNoDebt": "Qarızdardıń qarızı joq, qabıllaytuǵın nárse joq",
+  "deleteWouldOverpay": "Óshirip bolmaydı: tólemler qarızdan kóp bolıp qaladı",
   "debtSettled": "Tólengen",
   "debtRemaining": "{total} nan {left} qaldı",
   "@debtRemaining": {

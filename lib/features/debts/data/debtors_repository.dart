@@ -45,6 +45,27 @@ class DebtorDetails {
   final List<DebtTransaction> transactions;
 }
 
+/// Оплата больше текущего долга: так записать нельзя, иначе у должника появилась бы «переплата».
+class PaymentExceedsDebtException implements Exception {
+  PaymentExceedsDebtException({required this.balance});
+
+  /// Текущий долг (0, если долга нет): больше этой суммы принять нельзя.
+  final int balance;
+
+  @override
+  String toString() => 'PaymentExceedsDebtException(balance: $balance)';
+}
+
+/// Удаление долговой записи оставило бы больше оплат, чем долгов (получилась бы переплата).
+class DeletionCausesOverpaymentException implements Exception {
+  DeletionCausesOverpaymentException({required this.balanceAfter});
+
+  final int balanceAfter;
+
+  @override
+  String toString() => 'DeletionCausesOverpaymentException(balanceAfter: $balanceAfter)';
+}
+
 class DebtorsRepository {
   DebtorsRepository(this._db);
 
@@ -248,6 +269,8 @@ class DebtorsRepository {
 
   // ---------- операции ----------
 
+  /// Добавляет операцию. Оплата не может быть больше текущего долга: иначе бросает
+  /// [PaymentExceedsDebtException] и ничего не записывает (проверка и запись — одной транзакцией).
   Future<DebtTransaction> addTransaction({
     required String debtorId,
     required DebtKind kind,
@@ -259,27 +282,57 @@ class DebtorsRepository {
     if (amount <= 0 || amount > maxAmount) {
       throw ArgumentError.value(amount, 'amount', 'Amount must be in 1..$maxAmount');
     }
-    return _db.into(_db.debtTransactions).insertReturning(
-          DebtTransactionsCompanion.insert(
-            debtorId: debtorId,
-            kind: kind,
-            amount: amount,
-            occurredAt: occurredAt,
-            comment: Value(_blankToNull(comment)),
-            orderId: Value(orderId),
-          ),
-        );
+    return _db.transaction(() async {
+      if (kind == DebtKind.payment) {
+        final balance = await _balance(debtorId);
+        if (amount > balance) throw PaymentExceedsDebtException(balance: balance < 0 ? 0 : balance);
+      }
+      return _db.into(_db.debtTransactions).insertReturning(
+            DebtTransactionsCompanion.insert(
+              debtorId: debtorId,
+              kind: kind,
+              amount: amount,
+              occurredAt: occurredAt,
+              comment: Value(_blankToNull(comment)),
+              orderId: Value(orderId),
+            ),
+          );
+    });
   }
 
-  Future<void> deleteTransaction(String id) async {
-    final now = DateTime.now();
-    await (_db.update(_db.debtTransactions)..where((t) => t.id.equals(id))).write(
-      DebtTransactionsCompanion(
-        deletedAt: Value(now),
-        updatedAt: Value(now),
-        syncStatus: const Value(SyncStatus.pending),
-      ),
-    );
+  /// Удаляет операцию (мягко). Долговую запись нельзя удалить, если после этого оплат
+  /// окажется больше долгов: бросает [DeletionCausesOverpaymentException].
+  Future<void> deleteTransaction(String id) {
+    return _db.transaction(() async {
+      final tx = await (_db.select(_db.debtTransactions)
+            ..where((t) => t.id.equals(id) & t.deletedAt.isNull()))
+          .getSingleOrNull();
+      if (tx == null) return;
+      if (tx.kind == DebtKind.debt) {
+        final after = await _balance(tx.debtorId) - tx.amount;
+        if (after < 0) throw DeletionCausesOverpaymentException(balanceAfter: after);
+      }
+      final now = DateTime.now();
+      await (_db.update(_db.debtTransactions)..where((t) => t.id.equals(id))).write(
+        DebtTransactionsCompanion(
+          deletedAt: Value(now),
+          updatedAt: Value(now),
+          syncStatus: const Value(SyncStatus.pending),
+        ),
+      );
+    });
+  }
+
+  /// Текущий долг по действующим операциям: выдано минус полученные оплаты.
+  Future<int> _balance(String debtorId) async {
+    final rows = await (_db.select(_db.debtTransactions)
+          ..where((t) => t.debtorId.equals(debtorId) & t.deletedAt.isNull()))
+        .get();
+    var balance = 0;
+    for (final r in rows) {
+      balance += r.kind == DebtKind.debt ? r.amount : -r.amount;
+    }
+    return balance;
   }
 
   // ---------- внутреннее ----------

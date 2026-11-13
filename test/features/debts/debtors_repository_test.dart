@@ -150,19 +150,132 @@ void main() {
 
     test('удаление операции пересчитывает баланс', () async {
       final id = await newDebtor();
-      final tx = await repo.addTransaction(
-          debtorId: id, kind: DebtKind.debt, amount: 700, occurredAt: DateTime(2026, 1, 1));
       await repo.addTransaction(
+          debtorId: id, kind: DebtKind.debt, amount: 700, occurredAt: DateTime(2026, 1, 1));
+      final pay = await repo.addTransaction(
           debtorId: id, kind: DebtKind.payment, amount: 200, occurredAt: DateTime(2026, 1, 2));
       expect((await repo.loadDetails(id))!.summary.balance, 500);
 
-      await repo.deleteTransaction(tx.id);
+      await repo.deleteTransaction(pay.id);
 
       final details = (await repo.loadDetails(id))!;
-      expect(details.summary.balance, -200);
+      expect(details.summary.balance, 700);
       expect(details.transactions, hasLength(1));
-      final row = (await db.select(db.debtTransactions).get()).singleWhere((t) => t.id == tx.id);
+      final row = (await db.select(db.debtTransactions).get()).singleWhere((t) => t.id == pay.id);
       expect(row.deletedAt, isNotNull);
+    });
+
+    group('оплата не может быть больше долга', () {
+      Future<void> pay(String id, int amount) => repo
+          .addTransaction(
+              debtorId: id, kind: DebtKind.payment, amount: amount, occurredAt: DateTime(2026, 2, 1))
+          .then((_) {});
+
+      Future<String> debtorOwing(int amount) async {
+        final id = await newDebtor();
+        await repo.addTransaction(
+            debtorId: id, kind: DebtKind.debt, amount: amount, occurredAt: DateTime(2026, 1, 1));
+        return id;
+      }
+
+      test('долг 1 000, оплата 2 000 — отказ, ничего не записано', () async {
+        final id = await debtorOwing(1000);
+
+        await expectLater(
+          pay(id, 2000),
+          throwsA(isA<PaymentExceedsDebtException>().having((e) => e.balance, 'balance', 1000)),
+        );
+
+        expect((await repo.loadDetails(id))!.summary.balance, 1000);
+        expect((await repo.loadDetails(id))!.transactions, hasLength(1));
+      });
+
+      test('ровно весь долг принимается, на копейку больше — нет', () async {
+        final id = await debtorOwing(1000);
+        await expectLater(pay(id, 1001), throwsA(isA<PaymentExceedsDebtException>()));
+        await pay(id, 1000);
+        expect((await repo.loadDetails(id))!.summary.balance, 0);
+      });
+
+      test('частичные оплаты суммируются: после них предел уменьшается', () async {
+        final id = await debtorOwing(1000);
+        await pay(id, 400);
+        await pay(id, 300);
+        await expectLater(
+          pay(id, 400),
+          throwsA(isA<PaymentExceedsDebtException>().having((e) => e.balance, 'balance', 300)),
+        );
+        await pay(id, 300);
+        expect((await repo.loadDetails(id))!.summary.balance, 0);
+      });
+
+      test('нет долга — оплату принять нельзя (предел 0)', () async {
+        final id = await newDebtor();
+        await expectLater(
+          pay(id, 1),
+          throwsA(isA<PaymentExceedsDebtException>().having((e) => e.balance, 'balance', 0)),
+        );
+        // После полного погашения тоже.
+        final owing = await debtorOwing(500);
+        await pay(owing, 500);
+        await expectLater(pay(owing, 1), throwsA(isA<PaymentExceedsDebtException>()));
+      });
+
+      test('новая выдача долга снова открывает возможность принять оплату', () async {
+        final id = await debtorOwing(100);
+        await pay(id, 100);
+        await repo.addTransaction(
+            debtorId: id, kind: DebtKind.debt, amount: 50, occurredAt: DateTime(2026, 3, 1));
+        await pay(id, 50);
+        expect((await repo.loadDetails(id))!.summary.balance, 0);
+      });
+
+      test('удалённые операции не считаются в пределе', () async {
+        final id = await newDebtor();
+        final big = await repo.addTransaction(
+            debtorId: id, kind: DebtKind.debt, amount: 5000, occurredAt: DateTime(2026, 1, 1));
+        await repo.addTransaction(
+            debtorId: id, kind: DebtKind.debt, amount: 1000, occurredAt: DateTime(2026, 1, 2));
+        await repo.deleteTransaction(big.id);
+        await expectLater(pay(id, 2000), throwsA(isA<PaymentExceedsDebtException>()));
+        await pay(id, 1000);
+      });
+
+      test('перенос долга из тетради — обычный долг: оплату в его пределах принять можно', () async {
+        final id = await repo.createDebtor(const DebtorInput(name: 'Notebook', initialDebt: 800));
+        await expectLater(pay(id, 900), throwsA(isA<PaymentExceedsDebtException>()));
+        await pay(id, 800);
+      });
+
+      test('удаление долговой записи, после которой оплат станет больше долга, запрещено', () async {
+        final id = await newDebtor();
+        final first = await repo.addTransaction(
+            debtorId: id, kind: DebtKind.debt, amount: 700, occurredAt: DateTime(2026, 1, 1));
+        await repo.addTransaction(
+            debtorId: id, kind: DebtKind.debt, amount: 300, occurredAt: DateTime(2026, 1, 2));
+        final payment = await repo.addTransaction(
+            debtorId: id, kind: DebtKind.payment, amount: 500, occurredAt: DateTime(2026, 1, 3));
+
+        // Без долга 700 осталось бы 300 долга и 500 оплат.
+        await expectLater(
+          repo.deleteTransaction(first.id),
+          throwsA(isA<DeletionCausesOverpaymentException>().having((e) => e.balanceAfter, 'after', -200)),
+        );
+        expect((await repo.loadDetails(id))!.summary.balance, 500, reason: 'ничего не удалено');
+
+        // Сначала убрать оплату — тогда долговую запись удалить можно.
+        await repo.deleteTransaction(payment.id);
+        await repo.deleteTransaction(first.id);
+        expect((await repo.loadDetails(id))!.summary.balance, 300);
+      });
+
+      test('удаление оплаты и удаление долга, не создающее переплаты, разрешены', () async {
+        final id = await newDebtor();
+        final a = await repo.addTransaction(
+            debtorId: id, kind: DebtKind.debt, amount: 100, occurredAt: DateTime(2026, 1, 1));
+        await repo.deleteTransaction(a.id);
+        expect((await repo.loadDetails(id))!.summary.balance, 0);
+      });
     });
 
     test('БД не принимает нулевую сумму (check constraint)', () async {
