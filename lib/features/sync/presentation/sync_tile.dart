@@ -40,11 +40,13 @@ class SyncTile extends ConsumerWidget {
       subtitle: Text(text),
       trailing: s.phase == SyncPhase.accountMismatch
           ? null
-          : TextButton(
+          // Значок вместо длинной подписи: заголовок и состояние остаются читаемыми.
+          : IconButton(
+              tooltip: l10n.syncNow,
+              icon: const Icon(Icons.sync_rounded),
               onPressed: s.phase == SyncPhase.syncing
                   ? null
                   : () => ref.read(syncControllerProvider.notifier).syncNow(),
-              child: Text(l10n.syncNow),
             ),
     );
   }
