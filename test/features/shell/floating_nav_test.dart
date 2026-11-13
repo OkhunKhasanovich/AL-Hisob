@@ -244,4 +244,25 @@ void main() {
     expect(whole.height, closeTo(floatingNavHeight + 48, 0.5));
     await closeApp(tester);
   });
+
+  testWidgets('нажатие на значок вкладки не рисует ripple и подсветку', (tester) async {
+    await openApp(tester);
+    final bar = find.byType(FloatingNavBar);
+    expect(find.descendant(of: bar, matching: find.byType(InkResponse)), findsNothing);
+    expect(find.descendant(of: bar, matching: find.byType(InkWell)), findsNothing);
+
+    // Пока палец прижат, панель выглядит так же, как до нажатия: вспышки нет.
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.descendant(of: bar, matching: find.byTooltip('Ещё'))),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    final material = tester.renderObject(find.descendant(of: bar, matching: find.byType(Material)).first);
+    expect(material, isNot(paints..circle()), reason: 'ripple не рисуется');
+    await gesture.up();
+    await tester.pump(); // кадр, с которого стартует анимация пятна
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(tester.getCenter(find.byKey(const ValueKey('nav-indicator'))).dx, greaterThan(250),
+        reason: 'вкладка при этом переключается');
+    await closeApp(tester);
+  });
 }

@@ -107,8 +107,9 @@ class _NavButton extends StatelessWidget {
       label: item.label,
       child: Tooltip(
         message: item.label,
-        child: InkResponse(
-          radius: 30,
+        // Без ripple и подсветки: при нажатии ничего не «просвечивает», меняется только активная вкладка.
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: onTap,
           child: Center(
             child: AnimatedScale(
