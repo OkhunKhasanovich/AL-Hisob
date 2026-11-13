@@ -10,6 +10,7 @@ import '../../features/debts/presentation/debtor_form_page.dart';
 import '../../features/debts/presentation/debts_page.dart';
 import '../../features/more/more_page.dart';
 import '../../features/onboarding/onboarding_page.dart';
+import '../../features/onboarding/onboarding_sign_in_page.dart';
 import '../../features/orders/presentation/order_details_page.dart';
 import '../../features/orders/presentation/order_editor_page.dart';
 import '../../features/orders/presentation/orders_page.dart';
@@ -39,6 +40,16 @@ GoRouter createRouter({String initialLocation = Routes.splash}) {
           key: state.pageKey,
           child: const OnboardingPage(),
           transitionDuration: const Duration(milliseconds: 500),
+          transitionsBuilder: (context, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      GoRoute(
+        path: Routes.onboardingSignIn,
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: const OnboardingSignInPage(),
+          transitionDuration: const Duration(milliseconds: 400),
           transitionsBuilder: (context, animation, _, child) =>
               FadeTransition(opacity: animation, child: child),
         ),

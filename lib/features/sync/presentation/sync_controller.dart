@@ -51,6 +51,7 @@ class SyncController extends Notifier<SyncState> {
   StreamSubscription<Object?>? _dbSub;
   AppLifecycleListener? _lifecycle;
   bool _running = false;
+  Future<void>? _current;
   bool _again = false;
   int _failures = 0;
 
@@ -112,13 +113,19 @@ class SyncController extends Notifier<SyncState> {
     unawaited(syncNow());
   }
 
-  /// Синхронизировать сейчас (кнопка). Не бросает исключений.
-  Future<void> syncNow() async {
-    if (!ref.mounted || !_enabled) return;
-    if (_running) {
+  /// Синхронизировать сейчас (кнопка). Не бросает исключений. Если цикл уже идёт, новый не
+  /// запускается, а возвращается тот же: вызывающий дожидается его окончания.
+  Future<void> syncNow() {
+    if (!ref.mounted || !_enabled) return Future.value();
+    final running = _current;
+    if (running != null) {
       _again = true;
-      return;
+      return running;
     }
+    return _current = _runCycle().whenComplete(() => _current = null);
+  }
+
+  Future<void> _runCycle() async {
     _running = true;
     _retry?.cancel();
     final engine = ref.read(syncEngineProvider);

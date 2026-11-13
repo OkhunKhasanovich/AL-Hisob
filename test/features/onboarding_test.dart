@@ -50,7 +50,7 @@ void main() {
 
     // Роль выбрана, но название слишком короткое.
     await tester.enterText(find.byType(TextFormField), 'B');
-    await tester.tap(find.text('Покупатель'));
+    await tester.tap(find.text('Розничный продавец'));
     await tester.pump();
     expect(continueButton(tester).onPressed, isNull);
     expect(find.text('Введите от 2 до 60 символов'), findsOneWidget);
