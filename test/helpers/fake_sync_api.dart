@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:al_hisob/features/sync/domain/sync_api.dart';
 
 /// Сервер синхронизации в памяти с теми же правилами, что и настоящий:
@@ -32,7 +34,10 @@ class FakeSyncApi implements SyncApi {
     _maybeFail();
     final accepted = <String>{};
     final stale = <SyncChange>[];
-    for (final c in changes) {
+    for (final sent in changes) {
+      // Как по сети: запись проходит через настоящий JSON. Так ловятся значения,
+      // которые не кодируются (например, `Set` из конвертера), а на «сервере» их не видно.
+      final c = _wire(sent);
       final key = '${c.entity}/${c.id}';
       final current = _records[key];
       if (current == null || c.updatedAt.isAfter(current.updatedAt)) {
@@ -59,6 +64,9 @@ class FakeSyncApi implements SyncApi {
       hasMore: newer.length > limit,
     );
   }
+
+  static SyncChange _wire(SyncChange c) =>
+      SyncChange.fromJson((jsonDecode(jsonEncode(c.toJson())) as Map).cast<String, Object?>());
 
   SyncChange _stored(SyncChange c) => SyncChange(
         entity: c.entity,

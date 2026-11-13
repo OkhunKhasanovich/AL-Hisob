@@ -37,7 +37,12 @@ class SyncTile extends ConsumerWidget {
           ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5))
           : Icon(icon, color: color),
       title: Text(l10n.syncTitle),
-      subtitle: Text(text),
+      subtitle: Text(
+        // Для ошибки добавляем причину мелкой строкой: так по скриншоту видно, что не так.
+        (s.phase == SyncPhase.error || s.phase == SyncPhase.offline) && s.detail != null
+            ? '$text\n${s.detail}'
+            : text,
+      ),
       trailing: s.phase == SyncPhase.accountMismatch
           ? null
           // Значок вместо длинной подписи: заголовок и состояние остаются читаемыми.

@@ -103,11 +103,27 @@ void main() {
     final id = await debtors.createDebtor(const DebtorInput(name: 'Alisher'));
 
     await until(() => container.read(syncControllerProvider).phase == SyncPhase.offline);
+    expect(container.read(syncControllerProvider).detail, 'network');
     expect(container.read(syncControllerProvider).pending, greaterThan(0));
     expect(await debtors.loadSummaries(), hasLength(1));
 
     await until(() => api.find('debtors', id) != null); // повтор после паузы
     await until(() => container.read(syncControllerProvider).phase == SyncPhase.idle);
+  });
+
+  test('причина сбоя сохраняется в состоянии: сеть, ответ сервера, неожиданная ошибка', () async {
+    container = make();
+    await container.read(authControllerProvider.future);
+    api.failNext = SyncApiException('not_found', status: 404);
+    container.listen(syncControllerProvider, (_, _) {});
+    await DebtorsRepository(db).createDebtor(const DebtorInput(name: 'Alisher'));
+
+    await until(() => container.read(syncControllerProvider).phase == SyncPhase.error);
+    expect(container.read(syncControllerProvider).detail, 'HTTP 404 · not_found');
+
+    // Следующая попытка удалась: причина исчезает.
+    await until(() => container.read(syncControllerProvider).phase == SyncPhase.idle);
+    expect(container.read(syncControllerProvider).detail, isNull);
   });
 
   test('not signed in: nothing is sent and the state stays off', () async {
@@ -169,6 +185,7 @@ void main() {
     await DebtorsRepository(db).createDebtor(const DebtorInput(name: 'Alisher'));
 
     await until(() => container.read(syncControllerProvider).phase == SyncPhase.error);
+    expect(container.read(syncControllerProvider).detail, 'StateError');
   });
 }
 

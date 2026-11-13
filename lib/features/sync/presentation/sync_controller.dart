@@ -25,18 +25,24 @@ enum SyncPhase {
 }
 
 class SyncState {
-  const SyncState({this.phase = SyncPhase.off, this.pending = 0, this.lastSyncedAt});
+  const SyncState({this.phase = SyncPhase.off, this.pending = 0, this.lastSyncedAt, this.detail});
 
   final SyncPhase phase;
+
+  /// Короткая техническая причина последнего сбоя (`HTTP 404 · not_found`, `network`…).
+  /// Показывается мелким текстом, чтобы по скриншоту было понятно, что не так.
+  final String? detail;
 
   /// Сколько записей ждёт отправки.
   final int pending;
   final DateTime? lastSyncedAt;
 
-  SyncState copyWith({SyncPhase? phase, int? pending, DateTime? lastSyncedAt}) => SyncState(
+  SyncState copyWith({SyncPhase? phase, int? pending, DateTime? lastSyncedAt, String? detail}) =>
+      SyncState(
         phase: phase ?? this.phase,
         pending: pending ?? this.pending,
         lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+        detail: detail,
       );
 }
 
@@ -150,9 +156,13 @@ class SyncController extends Notifier<SyncState> {
     } on SyncAccountMismatch {
       if (ref.mounted) state = state.copyWith(phase: SyncPhase.accountMismatch);
     } on SyncApiException catch (e) {
-      await _failed(engine, e.isNetwork ? SyncPhase.offline : SyncPhase.error);
-    } on Object {
-      await _failed(engine, SyncPhase.error);
+      await _failed(
+        engine,
+        e.isNetwork ? SyncPhase.offline : SyncPhase.error,
+        e.isNetwork ? 'network' : 'HTTP ${e.status} · ${e.code}',
+      );
+    } on Object catch (e) {
+      await _failed(engine, SyncPhase.error, '${e.runtimeType}');
     } finally {
       _running = false;
     }
@@ -164,7 +174,7 @@ class SyncController extends Notifier<SyncState> {
     }
   }
 
-  Future<void> _failed(SyncEngine engine, SyncPhase phase) async {
+  Future<void> _failed(SyncEngine engine, SyncPhase phase, String detail) async {
     if (!ref.mounted) return;
     _failures++;
     int pending = state.pending;
@@ -174,7 +184,7 @@ class SyncController extends Notifier<SyncState> {
       // оставляем прежнее число
     }
     if (!ref.mounted) return;
-    state = state.copyWith(phase: phase, pending: pending);
+    state = state.copyWith(phase: phase, pending: pending, detail: detail);
     _retry?.cancel();
     _retry = Timer(ref.read(syncTimingProvider).retryAfter(_failures), _kick);
   }

@@ -4,7 +4,11 @@ import '../../domain/shop_role.dart';
 import '../sync_columns.dart';
 
 /// Роли в БД: имена через запятую («wholesaler,buyer»).
-class ShopRolesConverter extends TypeConverter<Set<ShopRole>, String> {
+///
+/// `JsonTypeConverter`: в JSON (для синхронизации) роли идут той же строкой, что и в БД.
+/// Без него `toJson()` отдавал бы `Set`, который не кодируется в JSON, и синхронизация падала.
+class ShopRolesConverter extends TypeConverter<Set<ShopRole>, String>
+    with JsonTypeConverter<Set<ShopRole>, String> {
   const ShopRolesConverter();
 
   @override

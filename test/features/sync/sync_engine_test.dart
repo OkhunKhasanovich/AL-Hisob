@@ -5,6 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:al_hisob/core/database/app_database.dart';
 import 'package:al_hisob/core/database/sync_columns.dart';
 import 'package:al_hisob/core/domain/debt_kind.dart';
+import 'package:al_hisob/core/domain/order_status.dart';
+import 'package:al_hisob/core/domain/product_unit.dart';
+import 'package:al_hisob/core/domain/shop_role.dart';
+import 'package:al_hisob/core/domain/sms_status.dart';
+import 'package:al_hisob/features/profile/shop_profile_repository.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:al_hisob/features/debts/data/debtors_repository.dart';
 import 'package:al_hisob/features/sync/data/sync_engine.dart';
 import 'package:al_hisob/features/sync/domain/sync_api.dart';
@@ -27,6 +33,8 @@ class Device {
 
   Future<List<Debtor>> allDebtors() => db.select(db.debtors).get();
 }
+
+typedef TableInfoLike = Future<List<Map<String, Object?>>> Function(AppDatabase db);
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -212,6 +220,88 @@ void main() {
 
     expect(report.skipped, 2);
     expect((await b.allDebtors()).map((d) => d.id), [good]);
+  });
+
+  test('все 11 таблиц проходят через настоящий JSON туда и обратно без потерь', () async {
+    // Ловит то, что не видно на «чистых» объектах: значения, которые нельзя закодировать в JSON.
+    final db = a.db;
+    await ShopProfileRepository(db).create(name: 'Shop', roles: {ShopRole.wholesaler, ShopRole.buyer});
+    final debtor = await a.debtors.createDebtor(const DebtorInput(name: 'Alisher', phones: ['901234567']));
+    await a.debtors.addTransaction(
+      debtorId: debtor,
+      kind: DebtKind.debt,
+      amount: 1000,
+      occurredAt: DateTime(2026, 5, 1),
+    );
+    await db.into(db.smsTemplates).insert(SmsTemplatesCompanion.insert(language: 'ru', body: 'Hello {name}'));
+    await db.into(db.smsLogs).insert(SmsLogsCompanion.insert(
+          debtorId: debtor,
+          phone: '+998901234567',
+          body: 'Hello',
+          status: SmsStatus.sent,
+        ));
+    final product = await db.into(db.products).insertReturning(ProductsCompanion.insert(
+          name: 'Cola',
+          unit: ProductUnit.piece,
+          unitPrice: 12000,
+          packKind: const Value(PackKind.box),
+          packSize: const Value(24),
+          packPrice: const Value(250000),
+        ));
+    await db.into(db.productPhotos).insert(
+          ProductPhotosCompanion.insert(productId: product.id, fileName: 'a.jpg', position: 0),
+        );
+    final order = await db.into(db.orders).insertReturning(OrdersCompanion.insert(
+          number: 1,
+          customerId: debtor,
+          status: OrderStatus.created,
+          total: 24000,
+        ));
+    await db.into(db.orderItems).insert(OrderItemsCompanion.insert(
+          orderId: order.id,
+          name: 'Cola',
+          unit: ProductUnit.piece,
+          quantity: 2,
+          unitPrice: 12000,
+          lineTotal: 24000,
+          position: 0,
+        ));
+    await db.into(db.orderStatusHistory).insert(OrderStatusHistoryCompanion.insert(
+          orderId: order.id,
+          status: OrderStatus.created,
+          actorName: 'Shop',
+        ));
+
+    await a.sync();
+    expect(await a.engine.pendingCount(), 0);
+    expect(server.records.map((r) => r.entity).toSet(), hasLength(11), reason: 'на сервер ушли все таблицы');
+
+    await b.sync();
+
+    Future<List<Map<String, Object?>>> rows(AppDatabase d, TableInfoLike t) => t(d);
+    final tables = <TableInfoLike>[
+      (d) async => [for (final r in await d.select(d.shopProfiles).get()) r.toJson().cast()],
+      (d) async => [for (final r in await d.select(d.debtors).get()) r.toJson().cast()],
+      (d) async => [for (final r in await d.select(d.debtorPhones).get()) r.toJson().cast()],
+      (d) async => [for (final r in await d.select(d.debtTransactions).get()) r.toJson().cast()],
+      (d) async => [for (final r in await d.select(d.smsTemplates).get()) r.toJson().cast()],
+      (d) async => [for (final r in await d.select(d.smsLogs).get()) r.toJson().cast()],
+      (d) async => [for (final r in await d.select(d.products).get()) r.toJson().cast()],
+      (d) async => [for (final r in await d.select(d.productPhotos).get()) r.toJson().cast()],
+      (d) async => [for (final r in await d.select(d.orders).get()) r.toJson().cast()],
+      (d) async => [for (final r in await d.select(d.orderItems).get()) r.toJson().cast()],
+      (d) async => [for (final r in await d.select(d.orderStatusHistory).get()) r.toJson().cast()],
+    ];
+    for (final t in tables) {
+      final fromA = await rows(a.db, t);
+      final fromB = await rows(b.db, t);
+      expect(fromA, hasLength(1));
+      expect(fromB, hasLength(1));
+      // Совпадает всё, кроме отметки синхронизации (на B запись уже «совпадает с сервером»).
+      expect({...fromB.single}..remove('syncStatus'), {...fromA.single}..remove('syncStatus'));
+    }
+    final profile = await ShopProfileRepository(b.db).current();
+    expect(profile!.roles, {ShopRole.wholesaler, ShopRole.buyer}, reason: 'роли набором дошли целыми');
   });
 
   test('pulled rows are stored as synced', () async {
