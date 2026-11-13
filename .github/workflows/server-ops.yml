@@ -15,6 +15,7 @@ on:
           - install       # первая установка Al-Hisob на сервер (рядом с другими проектами)
           - add-swap      # добавить 1 ГБ подкачки (если её нет)
           - authorize-deploy  # разрешить ключу CI вход под пользователем deploy (для деплоя без sudo)
+          - grant-deploy-access  # отдать пользователю CI папку /opt/al-hisob и доступ к Docker (чтобы деплой работал под ним)
           - diagnose      # почему не пускает: отпечаток ключа и какие пользователи его принимают
           - resources     # память, диск, занятые порты (проверка перед установкой)
           - status        # контейнеры, nginx, версия кода
@@ -120,6 +121,11 @@ jobs:
               # Публичная часть берётся из ключа CI (приватный ключ с раннера не уходит); добавляется один раз.
               ssh-keygen -y -P "" -f ~/.ssh/deploy_key > ~/.ssh/deploy_key.pub
               remote 'k=$(cat); f=/home/deploy/.ssh/authorized_keys; sudo test -d /home/deploy/.ssh || { echo "no deploy user: run install first"; exit 1; }; if sudo grep -qxF "$k" "$f" 2>/dev/null; then echo "key already authorized for deploy"; else printf "%s\n" "$k" | sudo tee -a "$f" >/dev/null; echo "key authorized for deploy"; fi; sudo chown deploy:deploy "$f"; sudo chmod 600 "$f"' < ~/.ssh/deploy_key.pub ;;
+            grant-deploy-access)
+              # Папку проекта создала установка под sudo, и git не пускает в неё другого владельца.
+              # Отдаём её пользователю, под которым заходит CI, и добавляем его в группу docker
+              # (применится при следующем входе по SSH, то есть уже в следующем деплое).
+              remote 'u=$(id -un); g=$(id -gn); sudo chown -R "$u:$g" /opt/al-hisob && sudo usermod -aG docker "$u" && echo "owner of /opt/al-hisob is now $u; $u is in group docker" && ls -ld /opt/al-hisob && id "$u"' ;;
             add-swap)
               remote 'if swapon --show | grep -q .; then echo "swap already present"; swapon --show; else sudo fallocate -l 1G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile >/dev/null && sudo swapon /swapfile && (grep -q "^/swapfile " /etc/fstab || echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab >/dev/null) && echo "swap added" && free -h; fi' ;;
             install)
