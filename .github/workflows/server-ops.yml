@@ -15,6 +15,7 @@ on:
           - install       # первая установка Al-Hisob на сервер (рядом с другими проектами)
           - add-swap      # добавить 1 ГБ подкачки (если её нет)
           - authorize-deploy  # разрешить ключу CI вход под пользователем deploy (для деплоя без sudo)
+          - sync-check    # есть ли на сервере адреса синхронизации и что отвечали телефонам (по журналу nginx)
           - grant-deploy-access  # отдать пользователю CI папку /opt/al-hisob и доступ к Docker (чтобы деплой работал под ним)
           - diagnose      # почему не пускает: отпечаток ключа и какие пользователи его принимают
           - resources     # память, диск, занятые порты (проверка перед установкой)
@@ -121,6 +122,10 @@ jobs:
               # Публичная часть берётся из ключа CI (приватный ключ с раннера не уходит); добавляется один раз.
               ssh-keygen -y -P "" -f ~/.ssh/deploy_key > ~/.ssh/deploy_key.pub
               remote 'k=$(cat); f=/home/deploy/.ssh/authorized_keys; sudo test -d /home/deploy/.ssh || { echo "no deploy user: run install first"; exit 1; }; if sudo grep -qxF "$k" "$f" 2>/dev/null; then echo "key already authorized for deploy"; else printf "%s\n" "$k" | sudo tee -a "$f" >/dev/null; echo "key authorized for deploy"; fi; sudo chown deploy:deploy "$f"; sudo chmod 600 "$f"' < ~/.ssh/deploy_key.pub ;;
+            sync-check)
+              echo "--- from the internet (401 = route exists, 404 = old code):"
+              curl -s -o /dev/null -w "external GET /v1/sync/pull -> %{http_code}\n" --max-time 20 "https://$DOMAIN_IN/v1/sync/pull" || true
+              remote 'echo "--- API itself:"; curl -s -o /dev/null -w "GET /v1/sync/pull -> %{http_code}\n" http://127.0.0.1:8000/v1/sync/pull; curl -s -o /dev/null -w "POST /v1/sync/push -> %{http_code}\n" -X POST http://127.0.0.1:8000/v1/sync/push; echo "--- nginx: last requests to /v1/sync (time, status):"; sudo sh -c "cat /var/log/nginx/access.log.1 /var/log/nginx/access.log 2>/dev/null" | grep "/v1/sync" | awk "{print \$4, \$6, \$7, \$9, \$10}" | tail -15; echo "--- API errors:"; cd /opt/al-hisob/deploy && sudo docker compose logs --tail 300 api 2>&1 | grep -iE "error|exception|traceback" | tail -15; echo "--- end"' ;;
             grant-deploy-access)
               # Папку проекта создала установка под sudo, и git не пускает в неё другого владельца.
               # Отдаём её пользователю, под которым заходит CI, и добавляем его в группу docker
