@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:al_hisob/core/database/app_database.dart';
 import 'package:al_hisob/core/database/sync_columns.dart';
+import 'package:al_hisob/core/domain/debt_direction.dart';
 import 'package:al_hisob/core/domain/debt_kind.dart';
 import 'package:al_hisob/core/domain/order_status.dart';
 import 'package:al_hisob/core/domain/product_unit.dart';
@@ -302,6 +303,36 @@ void main() {
     }
     final profile = await ShopProfileRepository(b.db).current();
     expect(profile!.roles, {ShopRole.wholesaler, ShopRole.buyer}, reason: 'роли набором дошли целыми');
+  });
+
+  test('должник от старой версии приложения (без поля direction) принимается как «мне должны»', () async {
+    final id = '11111111-1111-4111-8111-111111111111';
+    await server.push('t', [
+      SyncChange(
+        entity: 'debtors',
+        id: id,
+        updatedAt: DateTime(2026, 5, 1),
+        // Как отправила бы версия до появления «Я должен»: полей direction нет.
+        data: {
+          'id': id,
+          'createdAt': DateTime(2026, 5, 1).millisecondsSinceEpoch,
+          'updatedAt': DateTime(2026, 5, 1).millisecondsSinceEpoch,
+          'deletedAt': null,
+          'syncStatus': 1,
+          'name': 'Old app debtor',
+          'shopName': null,
+          'address': null,
+          'note': null,
+        },
+      ),
+    ]);
+
+    final report = await b.sync();
+
+    expect(report.skipped, 0);
+    final row = (await b.allDebtors()).single;
+    expect(row.name, 'Old app debtor');
+    expect(row.direction, DebtDirection.receivable);
   });
 
   test('pulled rows are stored as synced', () async {

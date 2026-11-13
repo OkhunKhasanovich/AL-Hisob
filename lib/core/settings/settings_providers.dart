@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../domain/debt_direction.dart';
 import '../../features/debts/domain/debt_filter.dart';
 import '../database/app_database.dart';
 import 'settings_repository.dart';
@@ -90,3 +91,21 @@ class DebtsOverviewCompactController extends Notifier<bool> {
 
 final debtsOverviewCompactProvider =
     NotifierProvider<DebtsOverviewCompactController, bool>(DebtsOverviewCompactController.new);
+
+/// Какая книга открыта на экране «Долги»: «мне должны» или «я должен» (запоминается).
+class DebtsSideController extends Notifier<DebtDirection> {
+  @override
+  DebtDirection build() => ref.watch(initialSettingsProvider).debtsSide;
+
+  Future<void> select(DebtDirection side) async {
+    if (state == side) return;
+    state = side;
+    await ref.read(settingsRepositoryProvider).saveDebtsSide(side);
+  }
+
+  Future<void> toggle() => select(
+        state == DebtDirection.receivable ? DebtDirection.payable : DebtDirection.receivable,
+      );
+}
+
+final debtsSideProvider = NotifierProvider<DebtsSideController, DebtDirection>(DebtsSideController.new);

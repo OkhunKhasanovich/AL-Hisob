@@ -375,6 +375,31 @@
     }
   },
   "payFullDebtHint": "Qo‘yish uchun bosing",
+  "debtsPayableTitle": "Men qarzdorman",
+  "debtsPayableTotalLabel": "Siz qarzdorsiz",
+  "debtsSwitchToPayable": "Yetkazib beruvchilarga qarzlarim",
+  "debtsSwitchToReceivable": "Menga qarzdorlar",
+  "suppliersCountLabel": "Yetkazib beruvchilar: {count}",
+  "@suppliersCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "supplierEmptyTitle": "Hozircha yetkazib beruvchilar yo‘q",
+  "supplierEmptyHint": "Siz qarzdor bo‘lgan yetkazib beruvchini qo‘shing",
+  "addSupplier": "Yetkazib beruvchi qo‘shish",
+  "supplierNewTitle": "Yangi yetkazib beruvchi",
+  "supplierEditTitle": "Yetkazib beruvchini tahrirlash",
+  "supplierCurrentDebtHint": "Hozir unga qancha qarzdorsiz: daftardan ko‘chiring",
+  "deleteSupplierTitle": "Yetkazib beruvchi o‘chirilsinmi?",
+  "deleteSupplierBody": "Yetkazib beruvchi va u bilan barcha amallar o‘chiriladi.",
+  "tookDebtButton": "Qarzga oldim",
+  "paidSupplierButton": "To‘ladim",
+  "tookDebtShortButton": "Qarzga oldim",
+  "paidSupplierShortButton": "To‘ladim",
+  "remindAllButton": "Hammaga eslatish",
   "payAmountMax": "Joriy qarzdan ko‘p emas: {amount}",
   "@payAmountMax": {
     "placeholders": {

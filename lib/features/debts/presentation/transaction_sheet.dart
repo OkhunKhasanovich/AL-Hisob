@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/domain/debt_direction.dart';
 import '../../../core/domain/debt_kind.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/utils/money.dart';
@@ -14,6 +15,7 @@ Future<void> showTransactionSheet(
   BuildContext context, {
   required String debtorId,
   required DebtKind kind,
+  DebtDirection direction = DebtDirection.receivable,
 }) {
   return showModalBottomSheet<void>(
     // Поверх панели вкладок, а не под ней: панель не просвечивает и не перекрывает кнопки шторки.
@@ -32,6 +34,7 @@ Future<void> showTransactionSheet(
         child: TransactionForm(
           debtorId: debtorId,
           kind: kind,
+          direction: direction,
           onDone: () => Navigator.of(sheetContext).pop(),
         ),
       ),
@@ -45,10 +48,14 @@ class TransactionForm extends ConsumerStatefulWidget {
     required this.debtorId,
     required this.kind,
     required this.onDone,
+    this.direction = DebtDirection.receivable,
   });
 
   final String debtorId;
   final DebtKind kind;
+
+  /// Чья книга: у «я должен» другие подписи («Взял в долг» / «Оплатил»).
+  final DebtDirection direction;
   final VoidCallback onDone;
 
   @override
@@ -147,7 +154,10 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final isDebt = widget.kind == DebtKind.debt;
-    final title = isDebt ? l10n.gaveDebtButton : l10n.receivedPaymentButton;
+    final payable = widget.direction == DebtDirection.payable;
+    final title = isDebt
+        ? (payable ? l10n.tookDebtButton : l10n.gaveDebtButton)
+        : (payable ? l10n.paidSupplierButton : l10n.receivedPaymentButton);
     final loadedBalance = ref.watch(debtorDetailsProvider(widget.debtorId)).value?.summary.balance;
     final balance = loadedBalance ?? 0;
     // Оплату нельзя ввести больше текущего долга; у выдачи долга предела нет.

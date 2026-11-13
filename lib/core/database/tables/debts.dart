@@ -1,11 +1,17 @@
 import 'package:drift/drift.dart';
 
+import '../../domain/debt_direction.dart';
 import '../../domain/debt_kind.dart';
 import '../sync_columns.dart';
 
-/// Должник (покупатель, которому дали товар в долг).
+/// Должник (покупатель, которому дали товар в долг) или поставщик, которому должен я:
+/// сторону задаёт [direction]. Операции и баланс у обоих устроены одинаково.
 class Debtors extends Table with SyncColumns {
   TextColumn get name => text().withLength(min: 1, max: 120)();
+
+  /// 0 — мне должны, 1 — я должен ([DebtDirection]). Старые записи — «мне должны».
+  IntColumn get direction =>
+      intEnum<DebtDirection>().withDefault(Constant(DebtDirection.receivable.index))();
   TextColumn get shopName => text().nullable()();
   TextColumn get address => text().nullable()();
   TextColumn get note => text().nullable()();

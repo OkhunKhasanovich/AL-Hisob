@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:al_hisob/core/database/app_database.dart';
 import 'package:al_hisob/core/database/sync_columns.dart';
+import 'package:al_hisob/core/domain/debt_direction.dart';
 import 'package:al_hisob/features/debts/domain/debt_summary.dart';
 import 'package:al_hisob/features/debts/domain/search/debtor_search.dart';
 
@@ -20,6 +21,7 @@ DebtorSummary person(
         updatedAt: _t,
         syncStatus: SyncStatus.pending,
         name: name,
+        direction: DebtDirection.receivable,
         shopName: shop,
       ),
       phones: phones,

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/domain/debt_direction.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/settings/settings_providers.dart';
 import '../../../core/utils/money.dart';
@@ -138,7 +139,11 @@ class _BulkSmsPageState extends ConsumerState<BulkSmsPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final sender = ref.watch(smsSenderProvider);
-    final all = ref.watch(debtorSummariesProvider).value ?? const <DebtorSummary>[];
+    // Напоминания получают только те, кто должен мне; поставщикам SMS не отправляются.
+    final all = [
+      for (final s in ref.watch(debtorSummariesProvider).value ?? const <DebtorSummary>[])
+        if (s.debtor.direction == DebtDirection.receivable) s,
+    ];
     final candidates = _candidates(all);
     final config = ref.watch(debtFilterConfigProvider);
     final language = _currentLanguage(context);

@@ -21,8 +21,11 @@ class SyncEntity {
   static SyncEntity of<T extends Table, D extends DataClass>(
     AppDatabase db,
     TableInfo<T, D> table,
-    D Function(Map<String, dynamic> json) fromJson,
-  ) {
+    D Function(Map<String, dynamic> json) fromJson, {
+    // Значения для полей, которых нет в записи от более старой версии приложения
+    // (появились позже): иначе такая запись не разбиралась бы и терялась.
+    Map<String, Object?> defaults = const {},
+  }) {
     final name = table.actualTableName;
     Map<String, Object?> encode(D row) => row.toJson().cast<String, Object?>();
     Future<List<D>> select(String where, List<Variable> variables) async {
@@ -56,7 +59,7 @@ class SyncEntity {
         return rows.isEmpty ? null : encode(rows.first);
       },
       (json) async {
-        final row = fromJson({...json, 'syncStatus': SyncStatus.synced.index});
+        final row = fromJson({...defaults, ...json, 'syncStatus': SyncStatus.synced.index});
         await db.into(table).insert(row as Insertable<D>, mode: InsertMode.insertOrReplace);
       },
       (id) => db.customUpdate(
@@ -98,7 +101,8 @@ class SyncEntity {
 /// Все синхронизируемые таблицы. Порядок — от родителей к детям.
 List<SyncEntity> buildSyncEntities(AppDatabase db) => [
       SyncEntity.of(db, db.shopProfiles, ShopProfile.fromJson),
-      SyncEntity.of(db, db.debtors, Debtor.fromJson),
+      // `direction`: запись от версии без этого поля — «мне должны» (0).
+      SyncEntity.of(db, db.debtors, Debtor.fromJson, defaults: const {'direction': 0}),
       SyncEntity.of(db, db.debtorPhones, DebtorPhone.fromJson),
       SyncEntity.of(db, db.debtTransactions, DebtTransaction.fromJson),
       SyncEntity.of(db, db.smsTemplates, SmsTemplate.fromJson),

@@ -92,6 +92,12 @@ class MorePage extends ConsumerWidget {
           DebtSettingsSection(
             extra: [
               ListTile(
+                leading: const Icon(Icons.campaign_rounded),
+                title: Text(l10n.bulkSmsTitle),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => context.push(Routes.bulkSms),
+              ),
+              ListTile(
                 leading: const Icon(Icons.sms_rounded),
                 title: Text(l10n.smsTemplatesTitle),
                 trailing: const Icon(Icons.chevron_right_rounded),

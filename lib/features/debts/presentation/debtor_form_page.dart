@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/domain/debt_direction.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/utils/money.dart';
+import '../../../core/settings/settings_providers.dart';
 import '../../../core/utils/phone.dart';
 import '../../../core/widgets/amount_input_formatter.dart';
 import '../data/debtors_repository.dart';
@@ -37,10 +39,18 @@ class _DebtorFormPageState extends ConsumerState<DebtorFormPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isEdit = widget.debtorId != null;
+    // Новый — в той книге, которая открыта; существующий — в своей.
+    final direction = isEdit
+        ? (ref.watch(debtorDetailsProvider(widget.debtorId!)).value?.summary.debtor.direction ??
+            ref.watch(debtsSideProvider))
+        : ref.watch(debtsSideProvider);
+    final payable = direction == DebtDirection.payable;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? l10n.debtorEditTitle : l10n.debtorNewTitle),
+        title: Text(isEdit
+            ? (payable ? l10n.supplierEditTitle : l10n.debtorEditTitle)
+            : (payable ? l10n.supplierNewTitle : l10n.debtorNewTitle)),
       ),
       body: isEdit
           ? FutureBuilder<DebtorDetails?>(
@@ -124,6 +134,7 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
       // Текущий долг задаётся только у нового должника; дальше — через операции.
       initialDebt: widget.debtorId == null ? (parseAmount(_currentDebt.text) ?? 0) : 0,
       initialDebtComment: context.l10n.initialDebtComment,
+      direction: ref.read(debtsSideProvider),
     );
     try {
       final id = widget.debtorId;
@@ -243,7 +254,9 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
                 decoration: _decoration(
                   l10n.debtorCurrentDebtLabel,
                   icon: Icons.payments_rounded,
-                ).copyWith(suffixText: l10n.currencySum, helperText: l10n.debtorCurrentDebtHint),
+                ).copyWith(suffixText: l10n.currencySum, helperText: ref.watch(debtsSideProvider) == DebtDirection.payable
+                    ? l10n.supplierCurrentDebtHint
+                    : l10n.debtorCurrentDebtHint),
               ),
               const SizedBox(height: 16),
             ],

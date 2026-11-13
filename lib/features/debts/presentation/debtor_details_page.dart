@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/domain/debt_direction.dart';
 import '../../../core/domain/debt_kind.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/router/routes.dart';
@@ -53,8 +54,12 @@ class _DetailsContent extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n.deleteDebtorTitle),
-        content: Text(l10n.deleteDebtorBody),
+        title: Text(details.summary.debtor.direction == DebtDirection.payable
+            ? l10n.deleteSupplierTitle
+            : l10n.deleteDebtorTitle),
+        content: Text(details.summary.debtor.direction == DebtDirection.payable
+            ? l10n.deleteSupplierBody
+            : l10n.deleteDebtorBody),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancelButton)),
           FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.deleteButton)),
@@ -72,6 +77,7 @@ class _DetailsContent extends ConsumerWidget {
     final theme = Theme.of(context);
     final summary = details.summary;
     final d = summary.debtor;
+    final payable = d.direction == DebtDirection.payable;
     // Оплаты гасят самые старые долги первыми; у каждого долга видно, сколько осталось.
     final allocations = allocatePayments(details.transactions);
 
@@ -136,9 +142,10 @@ class _DetailsContent extends ConsumerWidget {
                     context,
                     debtorId: d.id,
                     kind: DebtKind.debt,
+                    direction: d.direction,
                   ),
                   icon: const Icon(Icons.arrow_upward_rounded),
-                  label: Text(l10n.debtShortButton, maxLines: 1),
+                  label: Text(payable ? l10n.tookDebtShortButton : l10n.debtShortButton, maxLines: 1),
                   style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
                 ),
               ),
@@ -152,14 +159,17 @@ class _DetailsContent extends ConsumerWidget {
                             context,
                             debtorId: d.id,
                             kind: DebtKind.payment,
+                            direction: d.direction,
                           ),
                   icon: const Icon(Icons.arrow_downward_rounded),
-                  label: Text(l10n.paymentShortButton, maxLines: 1),
+                  label: Text(payable ? l10n.paidSupplierShortButton : l10n.paymentShortButton, maxLines: 1),
                   style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
                 ),
               ),
             ],
           ),
+          // Напоминание по SMS нужно должникам; поставщикам вы их не отправляете.
+          if (!payable) ...[
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: () {
@@ -175,6 +185,7 @@ class _DetailsContent extends ConsumerWidget {
             label: Text(l10n.smsReminderTitle),
             style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
           ),
+          ],
           if (_hasInfo(summary)) ...[
             const SizedBox(height: 12),
             Card(

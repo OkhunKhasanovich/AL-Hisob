@@ -17,6 +17,15 @@ final debtorSummariesProvider = StreamProvider<List<DebtorSummary>>(
   (ref) => ref.watch(debtorsRepositoryProvider).watchSummaries(),
 );
 
+/// Должники выбранной книги («мне должны» или «я должен»). Всё на экране «Долги»
+/// (список, поиск, итоги, график) строится из них.
+final sideSummariesProvider = Provider<AsyncValue<List<DebtorSummary>>>((ref) {
+  final side = ref.watch(debtsSideProvider);
+  return ref.watch(debtorSummariesProvider).whenData(
+        (all) => [for (final s in all) if (s.debtor.direction == side) s],
+      );
+});
+
 /// Карточка одного должника.
 final debtorDetailsProvider = StreamProvider.autoDispose.family<DebtorDetails?, String>(
   (ref, id) => ref.watch(debtorsRepositoryProvider).watchDetails(id),
@@ -46,8 +55,12 @@ final debtSearchQueryProvider =
 
 /// Динамика общего долга за неделю; `null`, пока данные грузятся, или если долгов не было.
 final debtTrendProvider = Provider<DebtTrend?>((ref) {
-  final txs = ref.watch(_activeTransactionsProvider).value;
-  if (txs == null) return null;
+  final all = ref.watch(_activeTransactionsProvider).value;
+  final side = ref.watch(sideSummariesProvider).value;
+  if (all == null || side == null) return null;
+  // Только операции должников выбранной книги: у «я должен» своя динамика.
+  final ids = {for (final s in side) s.debtor.id};
+  final txs = [for (final t in all) if (ids.contains(t.debtorId)) t];
   final trend = computeDebtTrend(txs, now: DateTime.now());
   return trend.isEmpty ? null : trend;
 });
@@ -58,7 +71,7 @@ final _activeTransactionsProvider = StreamProvider<List<DebtTransaction>>(
 
 /// Индекс пересобирается только при изменении данных, а не при каждой букве.
 final debtSearchIndexProvider = Provider<DebtorSearchIndex?>((ref) {
-  final all = ref.watch(debtorSummariesProvider).value;
+  final all = ref.watch(sideSummariesProvider).value;
   return all == null ? null : DebtorSearchIndex(all);
 });
 
@@ -73,7 +86,7 @@ class DebtorRow {
 /// Что показывать в списке: без запроса — отфильтрованный и отсортированный список;
 /// с запросом — результаты поиска по релевантности, суженные выбранным фильтром.
 final visibleDebtorsProvider = Provider<List<DebtorRow>?>((ref) {
-  final all = ref.watch(debtorSummariesProvider).value;
+  final all = ref.watch(sideSummariesProvider).value;
   if (all == null) return null;
   final filter = ref.watch(selectedDebtFilterProvider);
   final config = ref.watch(debtFilterConfigProvider);

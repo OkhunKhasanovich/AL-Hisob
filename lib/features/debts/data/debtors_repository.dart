@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/database/sync_columns.dart';
 import '../../../core/database/watch.dart';
+import '../../../core/domain/debt_direction.dart';
 import '../../../core/domain/debt_kind.dart';
 import '../../../core/utils/money.dart';
 import '../../../core/utils/phone.dart';
@@ -21,6 +22,7 @@ class DebtorInput {
     this.phones = const [],
     this.initialDebt = 0,
     this.initialDebtComment,
+    this.direction = DebtDirection.receivable,
   });
 
   final String name;
@@ -35,6 +37,9 @@ class DebtorInput {
   /// Только при создании: превращается в обычную операцию «долг» на сегодня.
   final int initialDebt;
   final String? initialDebtComment;
+
+  /// Чья задолженность: мне должны или я должен. Задаётся при создании и не меняется.
+  final DebtDirection direction;
 }
 
 /// Карточка должника: сводка + операции (новые сверху).
@@ -132,6 +137,7 @@ class DebtorsRepository {
       final debtor = await _db.into(_db.debtors).insertReturning(
             DebtorsCompanion.insert(
               name: cleaned.name,
+              direction: Value(input.direction),
               shopName: Value(cleaned.shopName),
               address: Value(cleaned.address),
               note: Value(cleaned.note),

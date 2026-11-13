@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/domain/debt_direction.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/settings/settings_providers.dart';
@@ -25,16 +26,28 @@ class DebtsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final summaries = ref.watch(debtorSummariesProvider);
+    final side = ref.watch(debtsSideProvider);
+    final payable = side == DebtDirection.payable;
+    final summaries = ref.watch(sideSummariesProvider);
 
     return Scaffold(
       appBar: SectionAppBar(
-        title: l10n.tabDebts,
+        title: payable ? l10n.debtsPayableTitle : l10n.tabDebts,
         actions: [
+          // Переключатель книги: «мне должны» ⇄ «я должен». Точка на значке — открыта книга «я должен».
           IconButton(
-            tooltip: l10n.bulkSmsTitle,
-            icon: const Icon(Icons.campaign_rounded),
-            onPressed: () => context.push(Routes.bulkSms),
+            tooltip: payable ? l10n.debtsSwitchToReceivable : l10n.debtsSwitchToPayable,
+            icon: Badge(
+              isLabelVisible: payable,
+              smallSize: 8,
+              child: const Icon(Icons.swap_horiz_rounded),
+            ),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              // Фильтр относился к другой книге: начинаем с полного списка.
+              ref.read(selectedDebtFilterProvider.notifier).select(DebtFilter.all);
+              ref.read(debtsSideProvider.notifier).toggle();
+            },
           ),
         ],
       ),
@@ -43,7 +56,7 @@ class DebtsPage extends ConsumerWidget {
         FloatingActionButton(
           // Вкладки живут в одном дереве: одинаковые Hero-теги кнопок вызывают ошибку при переходах.
           heroTag: null,
-          tooltip: l10n.addDebtor,
+          tooltip: payable ? l10n.addSupplier : l10n.addDebtor,
           onPressed: () {
             HapticFeedback.selectionClick();
             context.push(Routes.debtorNew);
@@ -62,7 +75,7 @@ class DebtsPage extends ConsumerWidget {
             padding: const EdgeInsets.all(32),
             children: [Text('$e', textAlign: TextAlign.center)],
           ),
-          data: (all) => all.isEmpty ? const _EmptyBook() : _DebtorList(all: all),
+          data: (all) => all.isEmpty ? _EmptyBook(payable: payable) : _DebtorList(all: all, payable: payable),
         ),
       ),
     );
@@ -71,9 +84,12 @@ class DebtsPage extends ConsumerWidget {
 
 /// Экран с данными: обзор → поиск с фильтром (закреплён) → список.
 class _DebtorList extends ConsumerStatefulWidget {
-  const _DebtorList({required this.all});
+  const _DebtorList({required this.all, required this.payable});
 
   final List<DebtorSummary> all;
+
+  /// Открыта книга «я должен».
+  final bool payable;
 
   @override
   ConsumerState<_DebtorList> createState() => _DebtorListState();
@@ -109,6 +125,7 @@ class _DebtorListState extends ConsumerState<_DebtorList> {
           child: DebtsOverviewCard(
             overview: overview,
             trend: ref.watch(debtTrendProvider),
+            payable: widget.payable,
             initialCompact: ref.read(debtsOverviewCompactProvider),
             onCompactChanged: ref.read(debtsOverviewCompactProvider.notifier).set,
             // Счётчик просрочки: нажатие показывает только просроченных, повторное снимает фильтр.
@@ -146,12 +163,25 @@ class _DebtorListState extends ConsumerState<_DebtorList> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: InputChip(
-                  avatar: Icon(debtFilterIcon(filter), size: 18),
-                  label: Text('${debtFilterLabel(l10n, filter)} · ${rows.length}'),
-                  deleteButtonTooltipMessage: l10n.filterReset,
-                  onDeleted: () =>
-                      ref.read(selectedDebtFilterProvider.notifier).select(DebtFilter.all),
+                child: Wrap(
+                  spacing: 8,
+                  children: [
+                    InputChip(
+                      avatar: Icon(debtFilterIcon(filter), size: 18),
+                      label: Text('${debtFilterLabel(l10n, filter)} · ${rows.length}'),
+                      deleteButtonTooltipMessage: l10n.filterReset,
+                      onDeleted: () =>
+                          ref.read(selectedDebtFilterProvider.notifier).select(DebtFilter.all),
+                    ),
+                    // Просроченным естественно напомнить сразу: открывается рассылка (там они выбраны).
+                    if (filter == DebtFilter.overdue && !widget.payable && rows.isNotEmpty)
+                      ActionChip(
+                        key: const ValueKey('remind-all'),
+                        avatar: const Icon(Icons.sms_rounded, size: 18),
+                        label: Text(l10n.remindAllButton),
+                        onPressed: () => context.push(Routes.bulkSms),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -257,7 +287,9 @@ class _PinnedHeader extends SliverPersistentHeaderDelegate {
 }
 
 class _EmptyBook extends StatelessWidget {
-  const _EmptyBook();
+  const _EmptyBook({required this.payable});
+
+  final bool payable;
 
   @override
   Widget build(BuildContext context) {
@@ -271,10 +303,14 @@ class _EmptyBook extends StatelessWidget {
         const SizedBox(height: 48),
         Icon(Icons.menu_book_rounded, size: 72, color: theme.colorScheme.primary),
         const SizedBox(height: 16),
-        Text(l10n.debtsEmptyTitle, textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
+        Text(
+          payable ? l10n.supplierEmptyTitle : l10n.debtsEmptyTitle,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.titleLarge,
+        ),
         const SizedBox(height: 8),
         Text(
-          l10n.debtsEmptyHint,
+          payable ? l10n.supplierEmptyHint : l10n.debtsEmptyHint,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),

@@ -375,6 +375,31 @@
     }
   },
   "payFullDebtHint": "Toltırıw ushın basıń",
+  "debtsPayableTitle": "Men qarızdarman",
+  "debtsPayableTotalLabel": "Siz qarızdarsız",
+  "debtsSwitchToPayable": "Jetkizip beriwshilerge qarızlarım",
+  "debtsSwitchToReceivable": "Maǵan qarızdarlar",
+  "suppliersCountLabel": "Jetkizip beriwshiler: {count}",
+  "@suppliersCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "supplierEmptyTitle": "Házirshe jetkizip beriwshiler joq",
+  "supplierEmptyHint": "Siz qarızdar bolǵan jetkizip beriwshini qosıń",
+  "addSupplier": "Jetkizip beriwshi qosıw",
+  "supplierNewTitle": "Jańa jetkizip beriwshi",
+  "supplierEditTitle": "Jetkizip beriwshini ózgertiw",
+  "supplierCurrentDebtHint": "Házir oǵan qansha qarızdarsız: dápterden kóshiriń",
+  "deleteSupplierTitle": "Jetkizip beriwshi óshirilsin be?",
+  "deleteSupplierBody": "Jetkizip beriwshi hám onıń menen barlıq ámeller óshiriledi.",
+  "tookDebtButton": "Qarızǵa aldım",
+  "paidSupplierButton": "Tólédim",
+  "tookDebtShortButton": "Qarızǵa aldım",
+  "paidSupplierShortButton": "Tólédim",
+  "remindAllButton": "Barlıǵına eslet",
   "payAmountMax": "Házirgi qarızdan kóp emes: {amount}",
   "@payAmountMax": {
     "placeholders": {

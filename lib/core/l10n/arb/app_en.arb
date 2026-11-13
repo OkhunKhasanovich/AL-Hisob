@@ -644,6 +644,31 @@
     }
   },
   "payFullDebtHint": "Tap to fill in",
+  "debtsPayableTitle": "I owe",
+  "debtsPayableTotalLabel": "You owe",
+  "debtsSwitchToPayable": "My debts to suppliers",
+  "debtsSwitchToReceivable": "Owed to me",
+  "suppliersCountLabel": "Suppliers: {count}",
+  "@suppliersCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "supplierEmptyTitle": "No suppliers yet",
+  "supplierEmptyHint": "Add a supplier you owe money to",
+  "addSupplier": "Add supplier",
+  "supplierNewTitle": "New supplier",
+  "supplierEditTitle": "Edit supplier",
+  "supplierCurrentDebtHint": "How much you owe them now: copy it from your notebook",
+  "deleteSupplierTitle": "Delete this supplier?",
+  "deleteSupplierBody": "The supplier and all operations with them will be removed.",
+  "tookDebtButton": "Took on credit",
+  "paidSupplierButton": "Paid",
+  "tookDebtShortButton": "On credit",
+  "paidSupplierShortButton": "Paid",
+  "remindAllButton": "Remind everyone",
   "payAmountMax": "Up to the current debt: {amount}",
   "@payAmountMax": {
     "placeholders": {

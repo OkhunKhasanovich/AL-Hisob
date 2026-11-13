@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/domain/debt_direction.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/utils/money.dart';
 import '../../../core/utils/phone.dart';
@@ -53,7 +54,11 @@ class _CustomerPickerState extends ConsumerState<_CustomerPicker> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final all = ref.watch(debtorSummariesProvider).value ?? const <DebtorSummary>[];
+    // Покупатель заказа — тот, кто должен мне; поставщики («я должен») в списке не нужны.
+    final all = [
+      for (final s in ref.watch(debtorSummariesProvider).value ?? const <DebtorSummary>[])
+        if (s.debtor.direction == DebtDirection.receivable) s,
+    ];
     final hits = DebtorSearchIndex(all).search(_query);
 
     return Column(

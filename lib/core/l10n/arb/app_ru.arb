@@ -375,6 +375,31 @@
     }
   },
   "payFullDebtHint": "Нажмите, чтобы подставить",
+  "debtsPayableTitle": "Я должен",
+  "debtsPayableTotalLabel": "Вы должны",
+  "debtsSwitchToPayable": "Мои долги поставщикам",
+  "debtsSwitchToReceivable": "Мне должны",
+  "suppliersCountLabel": "Поставщиков: {count}",
+  "@suppliersCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "supplierEmptyTitle": "Пока нет поставщиков",
+  "supplierEmptyHint": "Добавьте поставщика, которому вы должны",
+  "addSupplier": "Добавить поставщика",
+  "supplierNewTitle": "Новый поставщик",
+  "supplierEditTitle": "Изменить поставщика",
+  "supplierCurrentDebtHint": "Сколько вы должны ему сейчас: перенесите из тетради",
+  "deleteSupplierTitle": "Удалить поставщика?",
+  "deleteSupplierBody": "Поставщик и все операции с ним будут удалены.",
+  "tookDebtButton": "Взял в долг",
+  "paidSupplierButton": "Оплатил",
+  "tookDebtShortButton": "Взял в долг",
+  "paidSupplierShortButton": "Оплатил",
+  "remindAllButton": "Напомнить всем",
   "payAmountMax": "Не больше текущего долга: {amount}",
   "@payAmountMax": {
     "placeholders": {

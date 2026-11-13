@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../domain/debt_direction.dart';
 import '../domain/debt_kind.dart';
 import '../domain/order_status.dart';
 import '../domain/product_unit.dart';
@@ -34,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
   /// Увеличивать при каждом изменении схемы и выполнять
   /// `dart run drift_dev schema dump ...` (см. README).
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -66,6 +67,10 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(schema.orderStatusHistory);
             await m.create(schema.idxOrderItemsOrder);
             await m.create(schema.idxOrderHistoryOrder);
+          },
+          from6To7: (m, schema) async {
+            // Сторона долга: у всех существующих записей «мне должны» (значение по умолчанию 0).
+            await m.addColumn(schema.debtors, schema.debtors.direction);
           },
         ),
         beforeOpen: (details) async {

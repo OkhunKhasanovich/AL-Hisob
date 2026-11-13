@@ -32,6 +32,7 @@ class DebtsOverviewCard extends StatefulWidget {
     this.onCompactChanged,
     this.overdueSelected = false,
     this.onOverdueTap,
+    this.payable = false,
   });
 
   final DebtsOverview overview;
@@ -47,6 +48,9 @@ class DebtsOverviewCard extends StatefulWidget {
 
   /// Фильтр «Просроченные» сейчас включён (счётчик подсвечивается).
   final bool overdueSelected;
+
+  /// Книга «я должен»: другой акцент цвета и подписи («Вы должны», «Поставщиков»).
+  final bool payable;
 
   /// Нажатие на счётчик просрочки; `null` — счётчик не нажимается.
   final VoidCallback? onOverdueTap;
@@ -83,6 +87,9 @@ class _DebtsOverviewCardState extends State<DebtsOverviewCard> with SingleTicker
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final radius = BorderRadius.circular(28);
+    // «Мне должны» — основной акцент, «я должен» — другой: сразу видно, какая книга открыта.
+    final fg = widget.payable ? scheme.onTertiaryContainer : scheme.onPrimaryContainer;
+    final bg = widget.payable ? scheme.tertiaryContainer : scheme.primaryContainer;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -90,15 +97,18 @@ class _DebtsOverviewCardState extends State<DebtsOverviewCard> with SingleTicker
         key: const ValueKey('overview-card'),
         behavior: HitTestBehavior.opaque,
         onDoubleTap: _toggle,
-        child: DecoratedBox(
+        child: AnimatedContainer(
+          // Смена книги: фон плавно перетекает в другой цвет.
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
           decoration: BoxDecoration(
             borderRadius: radius,
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [scheme.primaryContainer, scheme.secondaryContainer],
+              colors: [bg, scheme.secondaryContainer],
             ),
-            border: Border.all(color: scheme.onPrimaryContainer.withValues(alpha: 0.08)),
+            border: Border.all(color: fg.withValues(alpha: 0.08)),
           ),
           child: ClipRRect(
             borderRadius: radius,
@@ -112,8 +122,8 @@ class _DebtsOverviewCardState extends State<DebtsOverviewCard> with SingleTicker
                         center: const Alignment(-0.9, -1.1),
                         radius: 1.1,
                         colors: [
-                          scheme.onPrimaryContainer.withValues(alpha: 0.10),
-                          scheme.onPrimaryContainer.withValues(alpha: 0),
+                          fg.withValues(alpha: 0.10),
+                          fg.withValues(alpha: 0),
                         ],
                       ),
                     ),
@@ -129,6 +139,8 @@ class _DebtsOverviewCardState extends State<DebtsOverviewCard> with SingleTicker
                       trend: widget.trend,
                       overdueSelected: widget.overdueSelected,
                       onOverdueTap: widget.onOverdueTap,
+                      payable: widget.payable,
+                      fg: fg,
                     ),
                   ),
                 ),
@@ -173,6 +185,8 @@ class _Layout extends StatelessWidget {
     required this.trend,
     required this.overdueSelected,
     required this.onOverdueTap,
+    required this.payable,
+    required this.fg,
   });
 
   final double t;
@@ -181,6 +195,8 @@ class _Layout extends StatelessWidget {
   final DebtTrend? trend;
   final bool overdueSelected;
   final VoidCallback? onOverdueTap;
+  final bool payable;
+  final Color fg;
 
   /// Доля перехода для элемента, который начинает позже или заканчивает раньше остальных.
   double _stage(double begin, double end) =>
@@ -190,17 +206,16 @@ class _Layout extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
 
     final amountBase = theme.textTheme.headlineMedium?.copyWith(
       fontWeight: FontWeight.w800,
-      color: scheme.onPrimaryContainer,
+      color: fg,
     );
     final labelBig = theme.textTheme.labelLarge?.copyWith(
-      color: scheme.onPrimaryContainer.withValues(alpha: 0.85),
+      color: fg.withValues(alpha: 0.85),
     );
     final labelSmall = theme.textTheme.labelMedium?.copyWith(
-      color: scheme.onPrimaryContainer.withValues(alpha: 0.85),
+      color: fg.withValues(alpha: 0.85),
     );
 
     // Размеры двух видов.
@@ -261,7 +276,7 @@ class _Layout extends StatelessWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                l10n.debtsTotalLabel,
+                payable ? l10n.debtsPayableTotalLabel : l10n.debtsTotalLabel,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle.lerp(labelBig, labelSmall, main),
@@ -280,6 +295,7 @@ class _Layout extends StatelessWidget {
               // С середины карточки сумма гаснет к правому краю — там график; в тонком виде не нужно.
               fadeFromX: width / 2 - 20,
               fadeEndAlpha: lerpDouble(0.22, 1, _stage(0, 0.6))!,
+              color: fg,
             ),
           ),
           Positioned.fill(
@@ -316,8 +332,8 @@ class _Layout extends StatelessWidget {
           key: const ValueKey('stat-debtors'),
           icon: Icons.groups_rounded,
           value: overview.debtorCount,
-          label: l10n.debtsCountLabel(overview.debtorCount),
-          color: scheme.onPrimaryContainer,
+          label: payable ? l10n.suppliersCountLabel(overview.debtorCount) : l10n.debtsCountLabel(overview.debtorCount),
+          color: fg,
         ),
         if (overview.overdueCount > 0) ...[
           const SizedBox(width: 14),
@@ -347,6 +363,7 @@ class _Amount extends StatelessWidget {
     required this.maxWidth,
     required this.fadeFromX,
     required this.fadeEndAlpha,
+    required this.color,
   });
 
   final int amount;
@@ -360,10 +377,11 @@ class _Amount extends StatelessWidget {
   /// Прозрачность у правого края: 0.22 — затухает, 1 — без затухания.
   final double fadeEndAlpha;
 
+  /// Цвет подписи «сум».
+  final Color color;
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
     return TweenAnimationBuilder<double>(
       tween: Tween(end: amount.toDouble()),
       duration: const Duration(milliseconds: 500),
@@ -388,7 +406,7 @@ class _Amount extends StatelessWidget {
               children: [
                 TextSpan(
                   text: ' $currency',
-                  style: TextStyle(color: scheme.onPrimaryContainer.withValues(alpha: 0.6)),
+                  style: TextStyle(color: color.withValues(alpha: 0.6)),
                 ),
               ],
             ),

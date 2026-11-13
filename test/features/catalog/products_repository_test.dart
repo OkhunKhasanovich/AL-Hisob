@@ -305,7 +305,7 @@ void main() {
   });
 
   test('миграция: таблицы товаров существуют в схеме', () async {
-    expect(db.schemaVersion, 6);
+    expect(db.schemaVersion, 7);
     expect(await db.select(db.products).get(), isEmpty);
     expect(await db.select(db.productPhotos).get(), isEmpty);
   });

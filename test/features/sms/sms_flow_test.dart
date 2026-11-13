@@ -288,7 +288,12 @@ void main() {
 
   group('массовая рассылка', () {
     Future<void> openBulk(WidgetTester tester) async {
-      await tester.tap(find.byTooltip('Массовая рассылка'));
+      // Рассылка теперь в «Ещё» (значок динамика в шапке «Долги» заменён переключателем книг).
+      await tester.tap(find.byTooltip('Ещё'));
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.ensureVisible(find.text('Массовая рассылка'));
+      await tester.pump();
+      await tester.tap(find.text('Массовая рассылка'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 600));
       await settle(tester);

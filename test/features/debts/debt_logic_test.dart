@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:al_hisob/core/database/app_database.dart';
 import 'package:al_hisob/core/database/sync_columns.dart';
+import 'package:al_hisob/core/domain/debt_direction.dart';
 import 'package:al_hisob/core/domain/debt_kind.dart';
 import 'package:al_hisob/features/debts/domain/debt_filter.dart';
 import 'package:al_hisob/features/debts/domain/debt_summary.dart';
@@ -15,6 +16,7 @@ Debtor _debtor(String id, String name, {DateTime? deletedAt}) => Debtor(
       deletedAt: deletedAt,
       syncStatus: SyncStatus.pending,
       name: name,
+      direction: DebtDirection.receivable,
     );
 
 DebtTransaction _tx(
