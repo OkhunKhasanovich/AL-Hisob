@@ -31,9 +31,30 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- Ссылка из Telegram-бота («Открыть Al-Hisob») только поднимает приложение на экран:
+                 переход по маршрутам Flutter при этом отключён, чтобы не прервать начатый вход. -->
+            <meta-data
+              android:name="flutter_deeplinking_enabled"
+              android:value="false"
+              />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Android App Links: https://alhisob.myservices.uz/open открывает приложение сразу, без браузера.
+                 Подтверждается файлом /.well-known/assetlinks.json на сервере (отпечаток подписи APK). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="alhisob.myservices.uz" android:path="/open"/>
+            </intent-filter>
+            <!-- Запасной путь: страница /open запускает приложение через intent со схемой alhisob://. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="alhisob" android:host="open"/>
             </intent-filter>
         </activity>
         <!-- Отдаёт скачанный APK системному установщику. -->

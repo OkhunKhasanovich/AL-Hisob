@@ -21,7 +21,9 @@ def _share_keyboard(lang: str | None) -> dict[str, Any]:
     }
 
 
-async def handle_update(pool: asyncpg.Pool, telegram: TelegramClient, update: dict[str, Any]) -> None:
+async def handle_update(
+    pool: asyncpg.Pool, telegram: TelegramClient, update: dict[str, Any], *, open_url: str | None = None
+) -> None:
     message = update.get("message")
     if not isinstance(message, dict):
         return
@@ -35,7 +37,7 @@ async def handle_update(pool: asyncpg.Pool, telegram: TelegramClient, update: di
 
     contact = message.get("contact")
     if isinstance(contact, dict):
-        await _handle_contact(pool, telegram, chat_id, telegram_id, sender, contact, lang)
+        await _handle_contact(pool, telegram, chat_id, telegram_id, sender, contact, lang, open_url)
         return
 
     text = (message.get("text") or "").strip()
@@ -53,7 +55,7 @@ async def handle_update(pool: asyncpg.Pool, telegram: TelegramClient, update: di
     await telegram.send_message(chat_id, messages.text(lang, "help"))
 
 
-async def _handle_contact(pool, telegram, chat_id, telegram_id, sender, contact, lang) -> None:
+async def _handle_contact(pool, telegram, chat_id, telegram_id, sender, contact, lang, open_url=None) -> None:
     name = " ".join(p for p in (sender.get("first_name"), sender.get("last_name")) if p) or sender.get("username")
     try:
         approved = await service.bot_approve_contact(
@@ -66,12 +68,21 @@ async def _handle_contact(pool, telegram, chat_id, telegram_id, sender, contact,
     except service.ContactRejected:
         await telegram.send_message(chat_id, messages.text(lang, "not_own"), _share_keyboard(lang))
         return
+    if approved and open_url:
+        # Кнопка под сообщением открывает приложение. Клавиатура с номером была «одноразовой»
+        # и уже свернулась: у одного сообщения может быть только один reply_markup.
+        markup = {"inline_keyboard": [[{"text": messages.text(lang, "open_button"), "url": open_url}]]}
+        await telegram.send_message(chat_id, messages.text(lang, "done"), markup)
+        return
     key = "done" if approved else "no_request"
     await telegram.send_message(chat_id, messages.text(lang, key), {"remove_keyboard": True})
 
 
 def build_webhook_router(settings) -> APIRouter:
     router = APIRouter()
+    # Только настоящий https-адрес: Telegram не принимает остальные ссылки в кнопках.
+    base = settings.public_base_url.rstrip("/")
+    open_url = f"{base}/open" if base.startswith("https://") else None
 
     @router.post("/telegram/webhook", include_in_schema=False)
     async def webhook(
@@ -88,7 +99,9 @@ def build_webhook_router(settings) -> APIRouter:
         except ValueError:
             raise HTTPException(status_code=400, detail={"code": "bad_json"}) from None
         try:
-            await handle_update(request.app.state.pool, request.app.state.telegram, update)
+            await handle_update(
+                request.app.state.pool, request.app.state.telegram, update, open_url=open_url
+            )
         except Exception:  # noqa: BLE001 — Telegram не должен повторять запрос из-за нашей ошибки
             log.exception("failed to handle telegram update")
         return {"ok": True}

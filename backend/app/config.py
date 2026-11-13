@@ -16,6 +16,15 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://postgres@localhost/alhisob"
     public_base_url: str = "http://localhost:8000"
 
+    # Кнопка «Открыть приложение» в Telegram: Android App Links (ссылка https://<домен>/open открывает приложение).
+    android_package: str = "uz.alhisob.app"
+    # SHA-256 отпечаток(и) сертификата подписи APK, через запятую. Это публичные данные (не секрет).
+    android_cert_sha256: str = (
+        "DC:2F:1C:E5:36:E3:9E:F4:20:71:9F:2E:17:C6:35:84:88:74:5E:E2:A9:A6:7E:6D:C8:D0:F3:1D:15:C3:CC:BE"
+    )
+    # Куда вести, если приложение не установлено.
+    app_download_url: str = "https://github.com/OkhunKhasanovich/AL-Hisob/releases/latest"
+
     jwt_secret: str = "dev-secret-change-me-please-0123456789abcdef"
     access_token_ttl_minutes: int = 15
     refresh_token_ttl_days: int = 90

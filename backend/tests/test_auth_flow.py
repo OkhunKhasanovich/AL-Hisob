@@ -83,7 +83,9 @@ class TestLoginViaBot:
         # номер подтверждён → бот сообщает «готово»
         await post_update(client, bot_update(contact={"phone_number": "998901234567", "user_id": 111}))
         assert "Готово" in telegram.last["text"]
-        assert telegram.last["reply_markup"] == {"remove_keyboard": True}
+        assert telegram.last["reply_markup"] == {
+            "inline_keyboard": [[{"text": "📲 Открыть Al-Hisob", "url": "https://api.test/open"}]]
+        }
 
         r = await poll(client, start)
         body = r.json()
