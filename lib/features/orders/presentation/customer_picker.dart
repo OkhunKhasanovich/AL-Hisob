@@ -6,6 +6,7 @@ import '../../../core/l10n/l10n.dart';
 import '../../../core/utils/money.dart';
 import '../../../core/utils/phone.dart';
 import '../../debts/data/debtors_repository.dart';
+import '../../debts/domain/debtor_note.dart';
 import '../../debts/domain/debt_summary.dart';
 import '../../debts/domain/search/debtor_search.dart';
 import '../../debts/presentation/debts_providers.dart';
@@ -93,7 +94,7 @@ class _CustomerPickerState extends ConsumerState<_CustomerPicker> {
                 ),
                 title: Text(s.debtor.name),
                 subtitle: Text([
-                  if (s.debtor.shopName != null) s.debtor.shopName!,
+                  if (debtorNote(s.debtor) != null) debtorNote(s.debtor)!,
                   if (s.phones.isNotEmpty) formatPhone(s.phones.first),
                 ].join(' · ')),
                 trailing: s.balance > 0

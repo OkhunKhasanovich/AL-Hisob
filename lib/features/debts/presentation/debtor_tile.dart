@@ -5,6 +5,7 @@ import '../../../core/l10n/l10n.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/utils/phone.dart';
 import '../domain/debt_summary.dart';
+import '../domain/debtor_note.dart';
 import 'balance_style.dart';
 import 'debtor_avatar.dart';
 
@@ -15,8 +16,8 @@ String lastOperationText(AppLocalizations l10n, int days) => switch (days) {
       _ => l10n.debtDaysAgo(days),
     };
 
-/// Карточка должника в списке: кто, сколько должен, когда была последняя операция,
-/// сколько операций и какая часть выданного уже возвращена.
+/// Карточка должника в списке — только главное, в три строки: имя и долг; заметка (если есть);
+/// телефон и давность последней операции. Число операций и доля оплаты — в карточке должника.
 class DebtorTile extends StatelessWidget {
   const DebtorTile({
     super.key,
@@ -45,6 +46,39 @@ class DebtorTile extends StatelessWidget {
     final extraPhones = matchedPhone == null && summary.phones.length > 1 ? summary.phones.length - 1 : 0;
     final muted = theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
 
+    final note = debtorNote(d);
+
+    // Справа внизу — давность последней операции; у просроченных вместо неё значок с числом дней.
+    Widget? trailing;
+    if (days != null) {
+      trailing = overdue
+          ? _OverdueBadge(days: days)
+          : _Info(icon: Icons.schedule_rounded, text: lastOperationText(l10n, days));
+    }
+
+    final contact = phone != null
+        ? Row(
+            children: [
+              Icon(
+                Icons.phone_rounded,
+                size: 13,
+                color: matchedPhone != null ? scheme.primary : scheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  extraPhones > 0 ? '${formatPhone(phone)}  +$extraPhones' : formatPhone(phone),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: matchedPhone != null
+                      ? muted?.copyWith(color: scheme.primary, fontWeight: FontWeight.w600)
+                      : muted,
+                ),
+              ),
+            ],
+          )
+        : null;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       clipBehavior: Clip.antiAlias,
@@ -52,136 +86,65 @@ class DebtorTile extends StatelessWidget {
         onTap: () => context.push(Routes.debtorDetails(d.id)),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DebtorAvatar(id: d.id, name: d.name, radius: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              DebtorAvatar(id: d.id, name: d.name, radius: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Имя и сумма долга.
+                    Row(
                       children: [
-                        Text(
-                          d.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                        Expanded(
+                          child: Text(
+                            d.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                          ),
                         ),
-                        // Заметка — прямо под именем: по ней сразу видно, кто это (до двух строк).
-                        if (d.note != null && d.note!.trim().isNotEmpty)
-                          Padding(
-                            key: const ValueKey('debtor-note'),
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Text(
-                              d.note!,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurface,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
+                        const SizedBox(width: 8),
+                        Text(
+                          balanceText(l10n, summary.balance),
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: balanceColor(scheme, summary.balance),
                           ),
-                        // Магазин и телефон — каждый в своей строке: в одной строке рядом с суммой долга
-                        // для названия магазина не оставалось места, и оно пропадало за многоточием.
-                        if (d.shopName != null && d.shopName!.trim().isNotEmpty)
-                          Padding(
-                            key: const ValueKey('debtor-shop'),
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Row(
-                              children: [
-                                Icon(Icons.storefront_rounded, size: 13, color: scheme.onSurfaceVariant),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    d.shopName!,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: muted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        if (phone != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.phone_rounded,
-                                  size: 13,
-                                  color: matchedPhone != null ? scheme.primary : scheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    extraPhones > 0 ? '${formatPhone(phone)}  +$extraPhones' : formatPhone(phone),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: matchedPhone != null
-                                        ? muted?.copyWith(color: scheme.primary, fontWeight: FontWeight.w600)
-                                        : muted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        balanceText(l10n, summary.balance),
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: balanceColor(scheme, summary.balance),
+                    // Заметка — прямо под именем (до двух строк).
+                    if (note != null)
+                      Padding(
+                        key: const ValueKey('debtor-note'),
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          note,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurface,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ),
-                      if (overdue && days != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: _OverdueBadge(days: days),
+                    // Телефон слева, давность справа — одной строкой.
+                    if (contact != null || trailing != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            Expanded(child: contact ?? const SizedBox.shrink()),
+                            if (trailing != null) ...[const SizedBox(width: 8), trailing],
+                          ],
                         ),
-                    ],
-                  ),
-                ],
-              ),
-              if (days != null || summary.operationCount > 0) ...[
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 14,
-                  runSpacing: 4,
-                  children: [
-                    if (days != null)
-                      _Info(icon: Icons.schedule_rounded, text: lastOperationText(l10n, days)),
-                    if (summary.operationCount > 0)
-                      _Info(icon: Icons.receipt_long_rounded, text: l10n.debtOperationsCount(summary.operationCount)),
-                    if (summary.totalGiven > 0)
-                      _Info(
-                        icon: Icons.payments_rounded,
-                        text: l10n.debtPaidShare((summary.paidShare * 100).round()),
                       ),
                   ],
                 ),
-              ],
-              if (summary.totalGiven > 0) ...[
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: summary.paidShare,
-                    minHeight: 4,
-                    backgroundColor: scheme.surfaceContainerHighest,
-                  ),
-                ),
-              ],
+              ),
             ],
           ),
         ),

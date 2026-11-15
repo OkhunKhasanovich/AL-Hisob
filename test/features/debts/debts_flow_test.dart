@@ -81,7 +81,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), 'Alisher');
-    await tester.enterText(fields.at(2), '90 123 45 67');
+    await tester.enterText(fields.at(1), '90 123 45 67');
     await tester.pump();
     await tapAsync(tester, find.text('Сохранить'));
 
@@ -552,7 +552,7 @@ void main() {
     await closeApp(tester);
   });
 
-  testWidgets('карточка должника информативна: магазин, телефон, операции, возврат, давность', (tester) async {
+  testWidgets('карточка должника в списке: имя, долг, заметка, телефон, давность — без лишнего', (tester) async {
     await tester.runAsync(() async {
       final repo = DebtorsRepository(db);
       final id = await repo.createDebtor(const DebtorInput(
@@ -569,15 +569,13 @@ void main() {
 
     expect(find.text('Alisher'), findsOneWidget);
     expect(find.text('+998 90 123 45 67  +1'), findsOneWidget, reason: 'телефон и сколько ещё номеров');
-    expect(find.text('Baraka Market'), findsOneWidget, reason: 'магазин — отдельной строкой, не обрезается');
-    final shop = tester.getRect(find.byKey(const ValueKey('debtor-shop')));
-    final phone = tester.getRect(find.text('+998 90 123 45 67  +1'));
-    expect(shop.bottom, lessThanOrEqualTo(phone.top + 1), reason: 'магазин над телефоном');
+    expect(find.text('Baraka Market'), findsOneWidget, reason: 'бывшее название магазина теперь — заметка под именем');
     expect(find.text('600 000 сум'), findsWidgets, reason: 'текущий долг');
     expect(find.text('Сегодня'), findsOneWidget, reason: 'последняя операция — оплата сегодня');
-    expect(find.text('2 опер.'), findsOneWidget);
-    expect(find.text('Оплачено 40%'), findsOneWidget);
-    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    // Второстепенное из списка убрано (оно есть в карточке должника): число операций, доля оплаты, полоска.
+    expect(find.text('2 опер.'), findsNothing);
+    expect(find.text('Оплачено 40%'), findsNothing);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
     expect(find.textContaining('Просрочен'), findsNothing);
 
     await closeApp(tester);

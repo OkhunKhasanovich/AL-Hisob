@@ -94,27 +94,98 @@ void main() {
       await closeApp(tester);
     });
 
-    testWidgets('«дукон»: название магазина видно целиком, рядом с большой суммой долга и длинным номером', (tester) async {
+    testWidgets('«дукон» в заметке: под именем; телефон целиком и давность справа на одной строке', (tester) async {
       final id = await addDebtor(
         tester,
-        const DebtorInput(name: 'Охун', shopName: 'дукон', note: 'Рынок, ряд 5', phones: ['900200300']),
+        const DebtorInput(name: 'Охун', note: 'дукон', phones: ['900200300']),
       );
       await tester.runAsync(() => DebtorsRepository(db).addTransaction(
             debtorId: id,
             kind: DebtKind.debt,
             amount: 1200000,
-            occurredAt: DateTime.now(),
+            occurredAt: DateTime.now().subtract(const Duration(days: 2)),
           ));
       await openApp(tester);
 
-      expect(find.text('дукон'), findsOneWidget, reason: 'магазин не пропал за многоточием');
-      expect(find.text('Рынок, ряд 5'), findsOneWidget, reason: 'заметка показана');
-      expect(find.text('+998 90 020 03 00'), findsOneWidget, reason: 'номер целиком, без многоточия');
+      expect(find.text('дукон'), findsOneWidget);
+      final phone = tester.getRect(find.text('+998 90 020 03 00'));
       final name = tester.getRect(find.text('Охун'));
+      final amount = tester.getRect(find.descendant(of: find.byType(Card), matching: find.text('1 200 000 сум')));
       final note = tester.getRect(find.byKey(const ValueKey('debtor-note')));
-      final shop = tester.getRect(find.byKey(const ValueKey('debtor-shop')));
-      expect(name.bottom, lessThanOrEqualTo(note.top + 1));
-      expect(note.bottom, lessThanOrEqualTo(shop.top + 1));
+      final ago = tester.getRect(find.text('2 дн. назад'));
+      expect(name.bottom, lessThanOrEqualTo(note.top + 1), reason: 'заметка под именем');
+      expect(note.bottom, lessThanOrEqualTo(phone.top + 1), reason: 'затем телефон');
+      expect(amount.top, closeTo(name.top, 6), reason: 'сумма на одной строке с именем');
+      expect(ago.top, closeTo(phone.top, 6), reason: 'давность на строке телефона');
+      expect(ago.left, greaterThan(phone.right), reason: 'справа от него, не поверх');
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.textContaining('опер.'), findsNothing);
+      expect(find.textContaining('Оплачено'), findsNothing);
+      await closeApp(tester);
+    });
+
+    testWidgets('старое название магазина показывается как заметка и не пропадает', (tester) async {
+      await addDebtor(tester, const DebtorInput(name: 'Кушни', shopName: 'Baraka', note: 'ряд 5', phones: ['901234567']));
+      await openApp(tester);
+      expect(find.text('ряд 5 • Baraka'), findsOneWidget, reason: 'заметка и бывший магазин — вместе под именем');
+      await closeApp(tester);
+    });
+
+    testWidgets('форма: одно поле «Заметка», поля «Магазин» нет; старое значение переезжает в заметку при правке', (tester) async {
+      final id = await addDebtor(tester, const DebtorInput(name: 'Охун', shopName: 'дукон', phones: ['900200300']));
+      await openApp(tester);
+      await tester.tap(find.text('Охун'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+      await settle(tester);
+      await tester.tap(find.byTooltip('Изменить'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+      await settle(tester);
+
+      expect(find.text('Магазин (необязательно)'), findsNothing);
+      expect(find.text('Заметка (необязательно)'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, 'дукон'), findsOneWidget, reason: 'старое значение подставлено в заметку');
+
+      await tester.ensureVisible(find.text('Сохранить'));
+      await tester.pump();
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Сохранить'));
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      });
+      await settle(tester);
+
+      final row = (await tester.runAsync(() => db.select(db.debtors).get()))!.single;
+      expect(row.note, 'дукон', reason: 'переехало в заметку');
+      expect(row.shopName, isNull, reason: 'отдельного магазина больше нет');
+      expect(id, row.id);
+      await closeApp(tester);
+    });
+
+    testWidgets('карточка низкая: без заметки это две строки', (tester) async {
+      final id = await addDebtor(
+        tester,
+        const DebtorInput(name: 'Bobur', shopName: 'Baraka', phones: ['901234567']),
+      );
+      await tester.runAsync(() => DebtorsRepository(db).addTransaction(
+            debtorId: id, kind: DebtKind.debt, amount: 5000, occurredAt: DateTime.now()));
+      await openApp(tester);
+      final card = tester.getSize(find.byType(Card).first);
+      expect(card.height, lessThan(100), reason: 'компактная: имя/сумма и телефон/давность, без полоски и строки чипов');
+      await closeApp(tester);
+    });
+
+    testWidgets('просроченный: вместо «N дн. назад» значок с числом дней, без дубля', (tester) async {
+      final id = await addDebtor(tester, const DebtorInput(name: 'Late', phones: ['901234567']));
+      await tester.runAsync(() => DebtorsRepository(db).addTransaction(
+            debtorId: id,
+            kind: DebtKind.debt,
+            amount: 5000,
+            occurredAt: DateTime.now().subtract(const Duration(days: 59)),
+          ));
+      await openApp(tester);
+      expect(find.byKey(const ValueKey('overdue-badge')), findsOneWidget);
+      expect(find.text('59 дн. назад'), findsNothing);
       await closeApp(tester);
     });
 

@@ -14,6 +14,7 @@ import '../../../core/utils/phone.dart';
 import '../data/debtors_repository.dart';
 import '../domain/debt_allocation.dart';
 import '../domain/debt_summary.dart';
+import '../domain/debtor_note.dart';
 import '../../sms/presentation/send_sms_sheet.dart';
 import '../../sms/presentation/sms_log_section.dart';
 import 'balance_style.dart';
@@ -204,8 +205,6 @@ class _DetailsContent extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Column(
                   children: [
-                    if (d.shopName != null)
-                      _InfoRow(icon: Icons.storefront_rounded, text: d.shopName!),
                     for (final phone in summary.phones)
                       _InfoRow(
                         key: ValueKey('phone-$phone'),
@@ -216,8 +215,8 @@ class _DetailsContent extends ConsumerWidget {
                       ),
                     if (d.address != null)
                       _InfoRow(icon: Icons.location_on_rounded, text: d.address!),
-                    if (d.note != null)
-                      _InfoRow(icon: Icons.notes_rounded, text: d.note!),
+                    if (debtorNote(d) != null)
+                      _InfoRow(icon: Icons.notes_rounded, text: debtorNote(d)!),
                   ],
                 ),
               ),
@@ -248,10 +247,7 @@ class _DetailsContent extends ConsumerWidget {
 
   bool _hasInfo(DebtorSummary summary) {
     final d = summary.debtor;
-    return d.shopName != null ||
-        d.address != null ||
-        d.note != null ||
-        summary.phones.isNotEmpty;
+    return debtorNote(d) != null || d.address != null || summary.phones.isNotEmpty;
   }
 }
 

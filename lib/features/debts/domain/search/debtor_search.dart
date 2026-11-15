@@ -1,4 +1,5 @@
 import '../../../../core/utils/phone.dart';
+import '../debtor_note.dart';
 import '../debt_summary.dart';
 import 'phone_matcher.dart';
 import '../../../../core/search/text_normalizer.dart';
@@ -22,7 +23,7 @@ class SearchHit {
 class _Entry {
   _Entry(this.summary)
       : nameTokens = searchTokens(summary.debtor.name),
-        shopTokens = searchTokens(summary.debtor.shopName ?? ''),
+        shopTokens = searchTokens(debtorNote(summary.debtor) ?? ''),
         nameKey = toSearchKey(summary.debtor.name),
         localPhones = [for (final p in summary.phones) (p, localPart(p))];
 

@@ -11,6 +11,7 @@ import '../../../core/settings/settings_providers.dart';
 import '../../../core/utils/phone.dart';
 import '../../../core/widgets/amount_input_formatter.dart';
 import '../data/debtors_repository.dart';
+import '../domain/debtor_note.dart';
 import 'debts_providers.dart';
 
 /// Создание ([debtorId] == null) и редактирование должника.
@@ -87,7 +88,6 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
 
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
-  late final TextEditingController _shop;
   late final TextEditingController _address;
   late final TextEditingController _note;
   final _currentDebt = TextEditingController();
@@ -99,9 +99,9 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
     super.initState();
     final d = widget.initial?.summary.debtor;
     _name = TextEditingController(text: d?.name ?? '');
-    _shop = TextEditingController(text: d?.shopName ?? '');
     _address = TextEditingController(text: d?.address ?? '');
-    _note = TextEditingController(text: d?.note ?? '');
+    // Название магазина слилось с заметкой: у старых записей оно подставляется сюда и при сохранении переезжает в заметку.
+    _note = TextEditingController(text: d == null ? '' : debtorNote(d) ?? '');
     final phones = widget.initial?.summary.phones ?? const <String>[];
     _phones = [
       for (final p in phones)
@@ -112,7 +112,7 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
 
   @override
   void dispose() {
-    for (final c in [_name, _shop, _address, _note, _currentDebt, ..._phones]) {
+    for (final c in [_name, _address, _note, _currentDebt, ..._phones]) {
       c.dispose();
     }
     super.dispose();
@@ -127,7 +127,6 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
     final repo = ref.read(debtorsRepositoryProvider);
     final input = DebtorInput(
       name: _name.text,
-      shopName: _shop.text,
       address: _address.text,
       note: _note.text,
       phones: [for (final c in _phones) c.text],
@@ -187,16 +186,6 @@ class _DebtorFormBodyState extends ConsumerState<_DebtorFormBody> {
               decoration: _decoration(
                 l10n.debtorNameLabel,
                 icon: Icons.person_rounded,
-              ),
-            ),
-            const SizedBox(height: 4),
-            TextFormField(
-              controller: _shop,
-              textCapitalization: TextCapitalization.words,
-              textInputAction: TextInputAction.next,
-              decoration: _decoration(
-                l10n.debtorShopLabel,
-                icon: Icons.storefront_rounded,
               ),
             ),
             const SizedBox(height: 16),
