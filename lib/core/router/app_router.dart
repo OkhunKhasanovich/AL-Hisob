@@ -9,6 +9,7 @@ import '../../features/debts/presentation/debtor_details_page.dart';
 import '../../features/debts/presentation/debtor_form_page.dart';
 import '../../features/debts/presentation/debts_page.dart';
 import '../../features/more/more_page.dart';
+import '../../features/more/themes_page.dart';
 import '../../features/onboarding/onboarding_page.dart';
 import '../../features/onboarding/onboarding_sign_in_page.dart';
 import '../../features/orders/presentation/order_details_page.dart';
@@ -18,6 +19,7 @@ import '../../features/shell/home_shell.dart';
 import '../../features/sms/presentation/bulk_sms_page.dart';
 import '../../features/sms/presentation/sms_templates_page.dart';
 import '../../features/splash/splash_page.dart';
+import '../widgets/glass.dart';
 import 'routes.dart';
 
 GoRouter createRouter({String initialLocation = Routes.splash}) {
@@ -28,7 +30,7 @@ GoRouter createRouter({String initialLocation = Routes.splash}) {
         path: Routes.splash,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
-          child: const SplashPage(),
+          child: const GlassPage(child: SplashPage()),
           transitionDuration: const Duration(milliseconds: 400),
           transitionsBuilder: (context, animation, _, child) =>
               FadeTransition(opacity: animation, child: child),
@@ -38,7 +40,7 @@ GoRouter createRouter({String initialLocation = Routes.splash}) {
         path: Routes.onboarding,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
-          child: const OnboardingPage(),
+          child: const GlassPage(child: OnboardingPage()),
           transitionDuration: const Duration(milliseconds: 500),
           transitionsBuilder: (context, animation, _, child) =>
               FadeTransition(opacity: animation, child: child),
@@ -48,68 +50,72 @@ GoRouter createRouter({String initialLocation = Routes.splash}) {
         path: Routes.onboardingSignIn,
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
-          child: const OnboardingSignInPage(),
+          child: const GlassPage(child: OnboardingSignInPage()),
           transitionDuration: const Duration(milliseconds: 400),
           transitionsBuilder: (context, animation, _, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
       ),
       GoRoute(
+        path: Routes.themes,
+        builder: (_, _) => const GlassPage(child: ThemesPage()),
+      ),
+      GoRoute(
         path: Routes.login,
-        builder: (_, _) => const LoginPage(),
+        builder: (_, _) => const GlassPage(child: LoginPage()),
       ),
       GoRoute(
         path: Routes.orderNew,
-        builder: (_, _) => const OrderEditorPage(),
+        builder: (_, _) => const GlassPage(child: OrderEditorPage()),
       ),
       GoRoute(
         path: '/orders/:id',
-        builder: (_, state) => OrderDetailsPage(orderId: state.pathParameters['id']!),
+        builder: (_, state) => GlassPage(child: OrderDetailsPage(orderId: state.pathParameters['id']!)),
         routes: [
           GoRoute(
             path: 'edit',
-            builder: (_, state) => OrderEditorPage(orderId: state.pathParameters['id']),
+            builder: (_, state) => GlassPage(child: OrderEditorPage(orderId: state.pathParameters['id'])),
           ),
         ],
       ),
       GoRoute(
         path: Routes.productNew,
-        builder: (_, _) => const ProductFormPage(),
+        builder: (_, _) => const GlassPage(child: ProductFormPage()),
       ),
       GoRoute(
         path: '/products/:id',
-        builder: (_, state) => ProductDetailsPage(productId: state.pathParameters['id']!),
+        builder: (_, state) => GlassPage(child: ProductDetailsPage(productId: state.pathParameters['id']!)),
         routes: [
           GoRoute(
             path: 'edit',
-            builder: (_, state) => ProductFormPage(productId: state.pathParameters['id']),
+            builder: (_, state) => GlassPage(child: ProductFormPage(productId: state.pathParameters['id'])),
           ),
         ],
       ),
       GoRoute(
         path: Routes.bulkSms,
-        builder: (_, _) => const BulkSmsPage(),
+        builder: (_, _) => const GlassPage(child: BulkSmsPage()),
       ),
       GoRoute(
         path: Routes.smsTemplates,
-        builder: (_, _) => const SmsTemplatesPage(),
+        builder: (_, _) => const GlassPage(child: SmsTemplatesPage()),
       ),
       GoRoute(
         path: Routes.debtorNew,
-        builder: (_, _) => const DebtorFormPage(),
+        builder: (_, _) => const GlassPage(child: DebtorFormPage()),
       ),
       GoRoute(
         path: '/debtors/:id',
-        builder: (_, state) => DebtorDetailsPage(debtorId: state.pathParameters['id']!),
+        builder: (_, state) => GlassPage(child: DebtorDetailsPage(debtorId: state.pathParameters['id']!)),
         routes: [
           GoRoute(
             path: 'edit',
-            builder: (_, state) => DebtorFormPage(debtorId: state.pathParameters['id']),
+            builder: (_, state) => GlassPage(child: DebtorFormPage(debtorId: state.pathParameters['id'])),
           ),
         ],
       ),
       StatefulShellRoute(
-        builder: (context, state, shell) => HomeShell(navigationShell: shell),
+        builder: (context, state, shell) => GlassPage(child: HomeShell(navigationShell: shell)),
         navigatorContainerBuilder: HomeShell.branchContainer,
         branches: [
           StatefulShellBranch(routes: [

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/database/app_database.dart';
 import '../../core/domain/shop_role.dart';
 import '../../core/l10n/l10n.dart';
+import '../../core/theme/glass_style.dart';
+import '../../core/widgets/glass.dart';
 import 'profile_providers.dart';
 import 'shop_profile_form.dart';
 import 'shop_role_l10n.dart';
@@ -23,9 +25,7 @@ class ProfileCard extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
+      child: _Surface(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
           child: Row(
@@ -105,6 +105,25 @@ class ProfileCard extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Подложка карточки профиля: сплошная или стеклянная.
+class _Surface extends StatelessWidget {
+  const _Surface({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (GlassStyle.maybeOf(context) != null) {
+      return GlassSurface(borderRadius: BorderRadius.circular(20), child: child);
+    }
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(20),
+      child: child,
     );
   }
 }

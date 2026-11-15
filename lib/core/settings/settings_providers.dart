@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/debt_direction.dart';
+import '../theme/theme_style.dart';
 import '../../features/debts/domain/debt_filter.dart';
 import '../database/app_database.dart';
 import 'settings_repository.dart';
@@ -109,3 +110,17 @@ class DebtsSideController extends Notifier<DebtDirection> {
 }
 
 final debtsSideProvider = NotifierProvider<DebtsSideController, DebtDirection>(DebtsSideController.new);
+
+/// Стиль оформления (обычный / Liquid Glass); запоминается между запусками.
+class ThemeStyleController extends Notifier<ThemeStyle> {
+  @override
+  ThemeStyle build() => ref.watch(initialSettingsProvider).themeStyle;
+
+  Future<void> select(ThemeStyle style) async {
+    if (state == style) return;
+    state = style;
+    await ref.read(settingsRepositoryProvider).saveThemeStyle(style);
+  }
+}
+
+final themeStyleProvider = NotifierProvider<ThemeStyleController, ThemeStyle>(ThemeStyleController.new);

@@ -375,6 +375,13 @@
     }
   },
   "payFullDebtHint": "Toltırıw ushın basıń",
+  "themesTitle": "Temalar",
+  "themeStyleSection": "Stil",
+  "themeModeSection": "Jaqtı yamasa qarańǵı",
+  "themeStyleClassic": "Klassik",
+  "themeStyleClassicDesc": "Tınısh bir tústegi reńler",
+  "themeStyleGlass": "Liquid Glass",
+  "themeStyleGlassDesc": "Reńli fondaǵı yarım ayqın áynek",
   "phoneCallFailed": "Nómir terisiwdi ashıp bolmadı",
   "debtsPayableTitle": "Men qarızdarman",
   "debtsPayableTotalLabel": "Siz qarızdarsız",

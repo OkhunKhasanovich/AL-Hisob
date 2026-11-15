@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/glass_style.dart';
+import '../../core/widgets/glass.dart';
+
 class FloatingNavItem {
   const FloatingNavItem({required this.icon, required this.selectedIcon, required this.label});
 
@@ -34,15 +37,9 @@ class FloatingNavBar extends StatelessWidget {
     // Место под системные кнопки или жестовую полосу Android.
     final inset = MediaQuery.viewPaddingOf(context).bottom;
 
-    return Material(
-      color: scheme.surfaceContainerHigh,
-      elevation: 3,
-      shadowColor: Colors.black,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
+    final glass = GlassStyle.maybeOf(context) != null;
+    const topRadius = BorderRadius.vertical(top: Radius.circular(24));
+    final bar = Padding(
         padding: EdgeInsets.only(bottom: inset),
         child: SizedBox(
           height: floatingNavHeight,
@@ -64,7 +61,8 @@ class FloatingNavBar extends StatelessWidget {
                     height: indicatorHeight,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: scheme.secondaryContainer,
+                        // В стекле пятно — светлая «капля» с оттенком акцента.
+                        color: glass ? scheme.primary.withValues(alpha: 0.30) : scheme.secondaryContainer,
                         borderRadius: BorderRadius.circular(18),
                       ),
                     ),
@@ -86,7 +84,18 @@ class FloatingNavBar extends StatelessWidget {
             },
           ),
         ),
-      ),
+      );
+    if (glass) {
+      // Стекло с размытием: под панелью прокручивается содержимое, оно размывается и не мешает значкам.
+      return GlassSurface(borderRadius: topRadius, blur: 24, strong: true, child: bar);
+    }
+    return Material(
+      color: scheme.surfaceContainerHigh,
+      elevation: 3,
+      shadowColor: Colors.black,
+      shape: const RoundedRectangleBorder(borderRadius: topRadius),
+      clipBehavior: Clip.antiAlias,
+      child: bar,
     );
   }
 }

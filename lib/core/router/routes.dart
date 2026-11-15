@@ -6,6 +6,7 @@ abstract final class Routes {
   static const orders = '/orders';
   static const catalog = '/catalog';
   static const more = '/more';
+  static const themes = '/themes';
 
   static const bulkSms = '/sms/bulk';
   static const smsTemplates = '/sms/templates';

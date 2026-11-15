@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/l10n/l10n.dart';
+import '../../../core/theme/glass_style.dart';
 import '../../../core/utils/money.dart';
+import '../../../core/widgets/glass.dart';
 import '../domain/debt_filter.dart';
 import '../domain/debt_trend.dart';
 import 'debt_trend_backdrop.dart';
@@ -87,9 +89,30 @@ class _DebtsOverviewCardState extends State<DebtsOverviewCard> with SingleTicker
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final radius = BorderRadius.circular(28);
+    final glass = GlassStyle.maybeOf(context) != null;
     // «Мне должны» — основной акцент, «я должен» — другой: сразу видно, какая книга открыта.
-    final fg = widget.payable ? scheme.onTertiaryContainer : scheme.onPrimaryContainer;
+    // В стекле текст берёт обычный цвет поверхности (светлый в тёмной теме, тёмный в светлой),
+    // а книгу отличает оттенок стекла.
+    final fg = glass
+        ? scheme.onSurface
+        : (widget.payable ? scheme.onTertiaryContainer : scheme.onPrimaryContainer);
     final bg = widget.payable ? scheme.tertiaryContainer : scheme.primaryContainer;
+
+    final content = LayoutBuilder(
+      builder: (context, constraints) => AnimatedBuilder(
+        animation: _morph,
+        builder: (context, _) => _Layout(
+          t: _morph.value,
+          width: constraints.maxWidth,
+          overview: widget.overview,
+          trend: widget.trend,
+          overdueSelected: widget.overdueSelected,
+          onOverdueTap: widget.onOverdueTap,
+          payable: widget.payable,
+          fg: fg,
+        ),
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -97,57 +120,49 @@ class _DebtsOverviewCardState extends State<DebtsOverviewCard> with SingleTicker
         key: const ValueKey('overview-card'),
         behavior: HitTestBehavior.opaque,
         onDoubleTap: _toggle,
-        child: AnimatedContainer(
-          // Смена книги: фон плавно перетекает в другой цвет.
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut,
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [bg, scheme.secondaryContainer],
-            ),
-            border: Border.all(color: fg.withValues(alpha: 0.08)),
-          ),
-          child: ClipRRect(
-            borderRadius: radius,
-            child: Stack(
-              children: [
-                // Мягкий блик в левом верхнем углу — карточка не выглядит плоской.
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        center: const Alignment(-0.9, -1.1),
-                        radius: 1.1,
-                        colors: [
-                          fg.withValues(alpha: 0.10),
-                          fg.withValues(alpha: 0),
-                        ],
+        child: glass
+            // Стекло с размытием; оттенок — цвет акцента выбранной книги.
+            ? GlassSurface(
+                borderRadius: radius,
+                blur: 18,
+                strong: true,
+                tint: widget.payable ? scheme.tertiary : scheme.primary,
+                child: content,
+              )
+            : AnimatedContainer(
+                // Смена книги: фон плавно перетекает в другой цвет.
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOut,
+                decoration: BoxDecoration(
+                  borderRadius: radius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [bg, scheme.secondaryContainer],
+                  ),
+                  border: Border.all(color: fg.withValues(alpha: 0.08)),
+                ),
+                child: ClipRRect(
+                  borderRadius: radius,
+                  child: Stack(
+                    children: [
+                      // Мягкий блик в левом верхнем углу — карточка не выглядит плоской.
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: RadialGradient(
+                              center: const Alignment(-0.9, -1.1),
+                              radius: 1.1,
+                              colors: [fg.withValues(alpha: 0.10), fg.withValues(alpha: 0)],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      content,
+                    ],
                   ),
                 ),
-                LayoutBuilder(
-                  builder: (context, constraints) => AnimatedBuilder(
-                    animation: _morph,
-                    builder: (context, _) => _Layout(
-                      t: _morph.value,
-                      width: constraints.maxWidth,
-                      overview: widget.overview,
-                      trend: widget.trend,
-                      overdueSelected: widget.overdueSelected,
-                      onOverdueTap: widget.onOverdueTap,
-                      payable: widget.payable,
-                      fg: fg,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }

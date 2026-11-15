@@ -8,6 +8,7 @@ import '../../core/router/routes.dart';
 import '../../core/settings/settings_providers.dart';
 import '../../core/widgets/section_app_bar.dart';
 import '../../core/widgets/settings_group.dart';
+import 'themes_page.dart' show themeStyleLabel;
 import '../auth/presentation/account_tile.dart';
 import '../auth/presentation/login_prompt.dart' show serverConfiguredProvider;
 import '../debts/presentation/debt_settings_section.dart';
@@ -26,7 +27,6 @@ class MorePage extends ConsumerWidget {
     final l10n = context.l10n;
     final selected = ref.watch(localeProvider) ??
         resolveLocale(Localizations.localeOf(context), AppLocalizations.supportedLocales);
-    final themeMode = ref.watch(themeModeProvider);
 
     return Scaffold(
       appBar: SectionAppBar(title: l10n.moreTitle),
@@ -54,38 +54,21 @@ class MorePage extends ConsumerWidget {
                 ),
                 onTap: () => _pickLanguage(context, ref, selected),
               ),
+              // Раздел «Темы»: стиль оформления (обычный / Liquid Glass) и светлая/тёмная тема.
               ListTile(
                 leading: const Icon(Icons.palette_outlined),
-                title: Text(l10n.settingsTheme),
-                trailing: SegmentedButton<ThemeMode>(
-                  showSelectedIcon: false,
-                  style: const ButtonStyle(
-                    visualDensity: VisualDensity(horizontal: -2, vertical: -2),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  segments: [
-                    ButtonSegment(
-                      value: ThemeMode.system,
-                      icon: const Icon(Icons.brightness_auto_rounded, size: 18),
-                      tooltip: l10n.themeSystem,
+                title: Text(l10n.themesTitle),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      themeStyleLabel(l10n, ref.watch(themeStyleProvider)),
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
-                    ButtonSegment(
-                      value: ThemeMode.light,
-                      icon: const Icon(Icons.light_mode_rounded, size: 18),
-                      tooltip: l10n.themeLight,
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.dark,
-                      icon: const Icon(Icons.dark_mode_rounded, size: 18),
-                      tooltip: l10n.themeDark,
-                    ),
+                    const Icon(Icons.chevron_right_rounded),
                   ],
-                  selected: {themeMode},
-                  onSelectionChanged: (s) {
-                    HapticFeedback.selectionClick();
-                    ref.read(themeModeProvider.notifier).select(s.first);
-                  },
                 ),
+                onTap: () => context.push(Routes.themes),
               ),
             ],
           ),

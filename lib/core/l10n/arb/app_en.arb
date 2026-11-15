@@ -644,6 +644,13 @@
     }
   },
   "payFullDebtHint": "Tap to fill in",
+  "themesTitle": "Themes",
+  "themeStyleSection": "Style",
+  "themeModeSection": "Light or dark",
+  "themeStyleClassic": "Classic",
+  "themeStyleClassicDesc": "Calm solid colours",
+  "themeStyleGlass": "Liquid Glass",
+  "themeStyleGlassDesc": "Translucent glass on a colourful backdrop",
   "phoneCallFailed": "Couldn’t open the dialer",
   "debtsPayableTitle": "I owe",
   "debtsPayableTotalLabel": "You owe",

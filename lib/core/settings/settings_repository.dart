@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/debts/domain/debt_filter.dart';
 import '../domain/debt_direction.dart';
+import '../theme/theme_style.dart';
 import '../database/app_database.dart';
 
 /// Настройки, которые нужны до первого кадра.
@@ -13,6 +14,7 @@ class AppSettingsSnapshot {
     this.smsPauseSeconds = defaultSmsPauseSeconds,
     this.debtsOverviewCompact = false,
     this.debtsSide = DebtDirection.receivable,
+    this.themeStyle = ThemeStyle.classic,
   });
 
   static const defaultSmsPauseSeconds = 3;
@@ -32,6 +34,9 @@ class AppSettingsSnapshot {
 
   /// Какая книга открыта на экране «Долги»: «мне должны» или «я должен».
   final DebtDirection debtsSide;
+
+  /// Стиль оформления: обычный или Liquid Glass.
+  final ThemeStyle themeStyle;
 }
 
 class SettingsRepository {
@@ -46,6 +51,7 @@ class SettingsRepository {
   static const _smsPauseKey = 'sms_pause_seconds';
   static const _overviewCompactKey = 'debts_overview_compact';
   static const _debtsSideKey = 'debts_side';
+  static const _themeStyleKey = 'theme_style';
 
   Future<AppSettingsSnapshot> load() async {
     final rows = await _db.select(_db.appSettings).get();
@@ -68,12 +74,16 @@ class SettingsRepository {
           .clamp(1, 30),
       debtsOverviewCompact: map[_overviewCompactKey] == '1',
       debtsSide: map[_debtsSideKey] == 'payable' ? DebtDirection.payable : DebtDirection.receivable,
+      themeStyle: map[_themeStyleKey] == 'glass' ? ThemeStyle.liquidGlass : ThemeStyle.classic,
     );
   }
 
   Future<void> saveLocale(Locale? locale) => _put(_localeKey, locale?.languageCode);
 
   Future<void> saveThemeMode(ThemeMode mode) => _put(_themeKey, mode.name);
+
+  Future<void> saveThemeStyle(ThemeStyle style) =>
+      _put(_themeStyleKey, style == ThemeStyle.liquidGlass ? 'glass' : null);
 
   Future<void> saveDebtsSide(DebtDirection side) =>
       _put(_debtsSideKey, side == DebtDirection.payable ? 'payable' : null);

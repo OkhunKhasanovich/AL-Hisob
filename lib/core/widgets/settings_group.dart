@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../theme/glass_style.dart';
+import 'glass.dart';
+
 /// Блок настроек: маленький заголовок и скруглённая карточка с плотными строками.
 /// Строки (`ListTile`) внутри получают единые компактные отступы без своих настроек.
 class SettingsGroup extends StatelessWidget {
@@ -30,11 +33,9 @@ class SettingsGroup extends StatelessWidget {
                 ),
               ),
             ),
-          Material(
-            color: scheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(20),
-            clipBehavior: Clip.antiAlias,
-            child: ListTileTheme.merge(
+          _surface(
+            context,
+            ListTileTheme.merge(
               dense: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 14),
               horizontalTitleGap: 12,
@@ -45,6 +46,19 @@ class SettingsGroup extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  /// Подложка блока: сплошная карточка или стекло.
+  Widget _surface(BuildContext context, Widget child) {
+    if (GlassStyle.maybeOf(context) != null) {
+      return GlassSurface(borderRadius: BorderRadius.circular(20), child: child);
+    }
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      child: child,
     );
   }
 }

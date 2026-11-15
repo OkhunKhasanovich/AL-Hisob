@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/debt_direction.dart';
 import '../../../core/l10n/l10n.dart';
+import '../../../core/theme/glass_style.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/settings/settings_providers.dart';
 import '../../../core/widgets/debounced_search_field.dart';
@@ -142,6 +145,7 @@ class _DebtorListState extends ConsumerState<_DebtorList> {
           delegate: _PinnedHeader(
             height: 60,
             color: Theme.of(context).scaffoldBackgroundColor,
+            glass: GlassStyle.maybeOf(context) != null,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: DebouncedSearchField(
@@ -237,7 +241,10 @@ class _DebtorListState extends ConsumerState<_DebtorList> {
 /// карточки уходят под неё и не просвечивают, а плашки не видно. Ниже поля — короткое
 /// затухание, чтобы карточки скрывались плавно, а не обрезались резкой линией.
 class _PinnedHeader extends SliverPersistentHeaderDelegate {
-  _PinnedHeader({required this.height, required this.child, required this.color});
+  _PinnedHeader({required this.height, required this.child, required this.color, this.glass = false});
+
+  /// Стиль Liquid Glass: вместо сплошной плашки — размытие того, что прокручивается под строкой.
+  final bool glass;
 
   /// Высота строки с полем; затухание рисуется ниже и в высоту не входит.
   final double height;
@@ -254,6 +261,21 @@ class _PinnedHeader extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    if (glass) {
+      return Stack(
+        children: [
+          Positioned.fill(
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: ColoredBox(key: const ValueKey('search-header'), color: Colors.transparent),
+              ),
+            ),
+          ),
+          Positioned.fill(child: child),
+        ],
+      );
+    }
     return Stack(
       clipBehavior: Clip.none,
       children: [

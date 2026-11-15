@@ -375,6 +375,13 @@
     }
   },
   "payFullDebtHint": "Нажмите, чтобы подставить",
+  "themesTitle": "Темы",
+  "themeStyleSection": "Стиль",
+  "themeModeSection": "Светлая или тёмная",
+  "themeStyleClassic": "Классическая",
+  "themeStyleClassicDesc": "Спокойные сплошные цвета",
+  "themeStyleGlass": "Liquid Glass",
+  "themeStyleGlassDesc": "Полупрозрачное стекло на цветном фоне",
   "phoneCallFailed": "Не удалось открыть набор номера",
   "debtsPayableTitle": "Я должен",
   "debtsPayableTotalLabel": "Вы должны",

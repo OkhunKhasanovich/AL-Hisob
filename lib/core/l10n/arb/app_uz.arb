@@ -375,6 +375,13 @@
     }
   },
   "payFullDebtHint": "Qo‘yish uchun bosing",
+  "themesTitle": "Mavzular",
+  "themeStyleSection": "Uslub",
+  "themeModeSection": "Yorug‘ yoki qorong‘i",
+  "themeStyleClassic": "Klassik",
+  "themeStyleClassicDesc": "Sokin bir xil ranglar",
+  "themeStyleGlass": "Liquid Glass",
+  "themeStyleGlassDesc": "Rangli fondagi shaffof shisha",
   "phoneCallFailed": "Raqam terishni ochib bo‘lmadi",
   "debtsPayableTitle": "Men qarzdorman",
   "debtsPayableTotalLabel": "Siz qarzdorsiz",

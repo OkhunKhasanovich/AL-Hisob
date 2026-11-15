@@ -25,11 +25,12 @@ class _AlHisobAppState extends ConsumerState<AlHisobApp> {
   Widget build(BuildContext context) {
     // Фоновая синхронизация живёт всё время работы приложения; на перерисовку она не влияет.
     ref.listen(syncControllerProvider, (_, _) {});
+    final style = ref.watch(themeStyleProvider);
     return MaterialApp.router(
       onGenerateTitle: (context) => context.l10n.appName,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: AppTheme.light(style: style),
+      darkTheme: AppTheme.dark(style: style),
       themeMode: ref.watch(themeModeProvider),
       locale: ref.watch(localeProvider),
       supportedLocales: AppLocalizations.supportedLocales,

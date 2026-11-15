@@ -200,17 +200,15 @@ void main() {
     await closeApp(tester);
   });
 
-  testWidgets('«Ещё»: компактные блоки; язык выбирается из меню, тема — значками', (tester) async {
+  testWidgets('«Ещё»: компактные блоки; язык выбирается из шторки, «Темы» — отдельным разделом', (tester) async {
     await openApp(tester);
     await tester.tap(find.byTooltip('Ещё'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Тема — три значка с подсказками, без длинных подписей.
-    for (final tip in ['Как в системе', 'Светлая', 'Тёмная']) {
-      expect(find.byTooltip(tip), findsOneWidget, reason: tip);
-    }
-    expect(find.text('Как в системе'), findsNothing);
+    // Тема — одна строка «Темы» со ссылкой на раздел; значков светлая/тёмная в «Ещё» уже нет.
+    expect(find.widgetWithText(ListTile, 'Темы'), findsOneWidget);
+    expect(find.byTooltip('Светлая'), findsNothing);
     expect(find.byType(ChoiceChip), findsNothing, reason: 'языки не раскрыты россыпью фишек');
 
     // Строки плотные: заметно ниже обычных (56).
