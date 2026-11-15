@@ -94,6 +94,30 @@ void main() {
       await closeApp(tester);
     });
 
+    testWidgets('«дукон»: название магазина видно целиком, рядом с большой суммой долга и длинным номером', (tester) async {
+      final id = await addDebtor(
+        tester,
+        const DebtorInput(name: 'Охун', shopName: 'дукон', note: 'Рынок, ряд 5', phones: ['900200300']),
+      );
+      await tester.runAsync(() => DebtorsRepository(db).addTransaction(
+            debtorId: id,
+            kind: DebtKind.debt,
+            amount: 1200000,
+            occurredAt: DateTime.now(),
+          ));
+      await openApp(tester);
+
+      expect(find.text('дукон'), findsOneWidget, reason: 'магазин не пропал за многоточием');
+      expect(find.text('Рынок, ряд 5'), findsOneWidget, reason: 'заметка показана');
+      expect(find.text('+998 90 020 03 00'), findsOneWidget, reason: 'номер целиком, без многоточия');
+      final name = tester.getRect(find.text('Охун'));
+      final note = tester.getRect(find.byKey(const ValueKey('debtor-note')));
+      final shop = tester.getRect(find.byKey(const ValueKey('debtor-shop')));
+      expect(name.bottom, lessThanOrEqualTo(note.top + 1));
+      expect(note.bottom, lessThanOrEqualTo(shop.top + 1));
+      await closeApp(tester);
+    });
+
     testWidgets('без заметки или с пустой строки под именем нет', (tester) async {
       await addDebtor(tester, const DebtorInput(name: 'NoNote'));
       await openApp(tester);

@@ -85,43 +85,46 @@ class DebtorTile extends StatelessWidget {
                               ),
                             ),
                           ),
-                        if (phone != null || d.shopName != null)
+                        // Магазин и телефон — каждый в своей строке: в одной строке рядом с суммой долга
+                        // для названия магазина не оставалось места, и оно пропадало за многоточием.
+                        if (d.shopName != null && d.shopName!.trim().isNotEmpty)
+                          Padding(
+                            key: const ValueKey('debtor-shop'),
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              children: [
+                                Icon(Icons.storefront_rounded, size: 13, color: scheme.onSurfaceVariant),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    d.shopName!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: muted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (phone != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 2),
                             child: Row(
                               children: [
                                 Icon(
-                                  phone != null ? Icons.phone_rounded : Icons.storefront_rounded,
+                                  Icons.phone_rounded,
                                   size: 13,
                                   color: matchedPhone != null ? scheme.primary : scheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 4),
-                                // «+998 90 123 45 67 • Магазин» в одну строку; при нехватке места
-                                // сокращается название магазина, а не номер.
                                 Flexible(
-                                  child: Text.rich(
-                                    TextSpan(
-                                      children: [
-                                        if (phone != null)
-                                          TextSpan(
-                                            text: extraPhones > 0
-                                                ? '${formatPhone(phone)}  +$extraPhones'
-                                                : formatPhone(phone),
-                                            style: matchedPhone != null
-                                                ? TextStyle(
-                                                    color: scheme.primary,
-                                                    fontWeight: FontWeight.w600,
-                                                  )
-                                                : null,
-                                          ),
-                                        if (phone != null && d.shopName != null)
-                                          const TextSpan(text: ' • '),
-                                        if (d.shopName != null) TextSpan(text: d.shopName),
-                                      ],
-                                    ),
+                                  child: Text(
+                                    extraPhones > 0 ? '${formatPhone(phone)}  +$extraPhones' : formatPhone(phone),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: muted,
+                                    style: matchedPhone != null
+                                        ? muted?.copyWith(color: scheme.primary, fontWeight: FontWeight.w600)
+                                        : muted,
                                   ),
                                 ),
                               ],

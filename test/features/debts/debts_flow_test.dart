@@ -568,11 +568,11 @@ void main() {
     await openDebts(tester);
 
     expect(find.text('Alisher'), findsOneWidget);
-    expect(
-      find.text('+998 90 123 45 67  +1 • Baraka Market'),
-      findsOneWidget,
-      reason: 'телефон (и сколько ещё), затем • и магазин — в одну строку',
-    );
+    expect(find.text('+998 90 123 45 67  +1'), findsOneWidget, reason: 'телефон и сколько ещё номеров');
+    expect(find.text('Baraka Market'), findsOneWidget, reason: 'магазин — отдельной строкой, не обрезается');
+    final shop = tester.getRect(find.byKey(const ValueKey('debtor-shop')));
+    final phone = tester.getRect(find.text('+998 90 123 45 67  +1'));
+    expect(shop.bottom, lessThanOrEqualTo(phone.top + 1), reason: 'магазин над телефоном');
     expect(find.text('600 000 сум'), findsWidgets, reason: 'текущий долг');
     expect(find.text('Сегодня'), findsOneWidget, reason: 'последняя операция — оплата сегодня');
     expect(find.text('2 опер.'), findsOneWidget);
