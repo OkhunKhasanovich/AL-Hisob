@@ -9,6 +9,7 @@ import '../../../core/domain/debt_kind.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/utils/money.dart';
+import '../../../core/utils/dialer.dart';
 import '../../../core/utils/phone.dart';
 import '../data/debtors_repository.dart';
 import '../domain/debt_allocation.dart';
@@ -46,6 +47,16 @@ class _DetailsContent extends ConsumerWidget {
   const _DetailsContent({required this.details});
 
   final DebtorDetails details;
+
+  Future<void> _dial(BuildContext context, WidgetRef ref, String phone) async {
+    HapticFeedback.selectionClick();
+    final opened = await ref.read(phoneDialerProvider)(phone);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(context.l10n.phoneCallFailed)));
+    }
+  }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
@@ -196,7 +207,13 @@ class _DetailsContent extends ConsumerWidget {
                     if (d.shopName != null)
                       _InfoRow(icon: Icons.storefront_rounded, text: d.shopName!),
                     for (final phone in summary.phones)
-                      _InfoRow(icon: Icons.phone_rounded, text: formatPhone(phone)),
+                      _InfoRow(
+                        key: ValueKey('phone-$phone'),
+                        icon: Icons.phone_rounded,
+                        text: formatPhone(phone),
+                        // Нажатие открывает набор этого номера.
+                        onTap: () => _dial(context, ref, phone),
+                      ),
                     if (d.address != null)
                       _InfoRow(icon: Icons.location_on_rounded, text: d.address!),
                     if (d.note != null)
@@ -239,25 +256,37 @@ class _DetailsContent extends ConsumerWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.text});
+  const _InfoRow({super.key, required this.icon, required this.text, this.onTap});
 
   final IconData icon;
   final String text;
 
+  /// Если задан, строка нажимается (например, телефон открывает набор номера).
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Padding(
+    final row = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: onTap == null ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
           Icon(icon, size: 20, color: scheme.primary),
           const SizedBox(width: 12),
-          Expanded(child: SelectableText(text)),
+          Expanded(
+            child: onTap == null
+                ? SelectableText(text)
+                : Text(
+                    text,
+                    style: TextStyle(color: scheme.primary, fontWeight: FontWeight.w600),
+                  ),
+          ),
+          if (onTap != null) Icon(Icons.call_rounded, size: 20, color: scheme.primary),
         ],
       ),
     );
+    return onTap == null ? row : InkWell(onTap: onTap, child: row);
   }
 }
 

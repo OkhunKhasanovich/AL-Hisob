@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/l10n.dart';
 import '../../../core/widgets/settings_group.dart';
+import '../domain/demo_data.dart' show demoDebtorNote;
 import 'debts_providers.dart';
-
-/// Количество тестовых должников, которое добавляет кнопка.
-const demoDebtorCount = 50;
 
 /// Блок «Тестовые данные» на вкладке «Ещё»: наполняет книгу выдуманными должниками
 /// и убирает их одним нажатием.
@@ -33,12 +31,6 @@ class _DemoDataSectionState extends ConsumerState<DemoDataSection> {
       if (mounted) setState(() => _busy = false);
     }
   }
-
-  Future<void> _add() => _run(() async {
-    final l10n = context.l10n;
-    final added = await ref.read(debtorsRepositoryProvider).seedDemoDebtors(count: demoDebtorCount);
-    return l10n.demoDataAdded(added);
-  });
 
   Future<void> _remove() async {
     final l10n = context.l10n;
@@ -69,19 +61,17 @@ class _DemoDataSectionState extends ConsumerState<DemoDataSection> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    // Добавлять тестовых должников больше нельзя (приложение уже в работе у настоящих клиентов).
+    // Если они остались с прошлых проверок, строка для их удаления показывается, пока они есть.
+    final count = ref.watch(debtorSummariesProvider).value?.where((s) => s.debtor.note == demoDebtorNote).length ?? 0;
+    if (count == 0) return const SizedBox.shrink();
     return SettingsGroup(
       title: l10n.demoDataSection,
       children: [
         ListTile(
-          leading: const Icon(Icons.science_rounded),
-          title: Text(l10n.demoDataAdd(demoDebtorCount)),
-          subtitle: Text(l10n.demoDataAddHint),
-          enabled: !_busy,
-          onTap: _add,
-        ),
-        ListTile(
           leading: const Icon(Icons.delete_sweep_rounded),
           title: Text(l10n.demoDataRemove),
+          subtitle: Text('$count'),
           enabled: !_busy,
           onTap: _remove,
         ),

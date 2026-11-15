@@ -375,6 +375,7 @@
     }
   },
   "payFullDebtHint": "Нажмите, чтобы подставить",
+  "phoneCallFailed": "Не удалось открыть набор номера",
   "debtsPayableTitle": "Я должен",
   "debtsPayableTotalLabel": "Вы должны",
   "debtsSwitchToPayable": "Мои долги поставщикам",

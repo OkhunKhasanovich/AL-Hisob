@@ -103,9 +103,10 @@ void main() {
   });
 
   group('кнопки в «Ещё»', () {
-    testWidgets('добавить, затем удалить с подтверждением', (tester) async {
+    testWidgets('«Добавить» больше нет; пока тестовые остались — только удаление с подтверждением', (tester) async {
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(db.close);
+      await tester.runAsync(() => DebtorsRepository(db).seedDemoDebtors(count: 50));
       await tester.pumpWidget(ProviderScope(
         overrides: [appDatabaseProvider.overrideWithValue(db)],
         child: MaterialApp(
@@ -123,9 +124,8 @@ void main() {
         }
       }
 
-      await tester.tap(find.text('Добавить 50 тестовых должников'));
       await settle();
-      expect(find.text('Добавлено: 50'), findsOneWidget);
+      expect(find.textContaining('Добавить'), findsNothing, reason: 'добавлять тестовых больше нельзя');
       expect(await tester.runAsync(() => DebtorsRepository(db).countDemoDebtors()), 50);
 
       await tester.tap(find.text('Удалить тестовых должников'));

@@ -644,6 +644,7 @@
     }
   },
   "payFullDebtHint": "Tap to fill in",
+  "phoneCallFailed": "Couldn’t open the dialer",
   "debtsPayableTitle": "I owe",
   "debtsPayableTotalLabel": "You owe",
   "debtsSwitchToPayable": "My debts to suppliers",

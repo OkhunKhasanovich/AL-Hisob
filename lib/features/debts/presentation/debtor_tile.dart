@@ -70,6 +70,21 @@ class DebtorTile extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                         ),
+                        // Заметка — прямо под именем: по ней сразу видно, кто это (до двух строк).
+                        if (d.note != null && d.note!.trim().isNotEmpty)
+                          Padding(
+                            key: const ValueKey('debtor-note'),
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              d.note!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurface,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
                         if (phone != null || d.shopName != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 2),

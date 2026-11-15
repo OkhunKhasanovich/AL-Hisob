@@ -83,6 +83,11 @@
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE"/>
         </intent>
+        <!-- Набор номера по нажатию на телефон должника (tel:). -->
+        <intent>
+            <action android:name="android.intent.action.DIAL"/>
+            <data android:scheme="tel"/>
+        </intent>
         <!-- Системное окно SMS (запасной способ отправки). -->
         <intent>
             <action android:name="android.intent.action.SENDTO"/>

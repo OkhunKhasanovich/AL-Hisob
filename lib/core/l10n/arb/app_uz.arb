@@ -366,7 +366,7 @@
   },
   "debtShortButton": "Qarzga",
   "paymentShortButton": "To‘lov",
-  "payFullDebtLabel": "Butun qarz: {amount}",
+  "payFullDebtLabel": "Jami qarzdorlik: {amount}",
   "@payFullDebtLabel": {
     "placeholders": {
       "amount": {
@@ -375,6 +375,7 @@
     }
   },
   "payFullDebtHint": "Qo‘yish uchun bosing",
+  "phoneCallFailed": "Raqam terishni ochib bo‘lmadi",
   "debtsPayableTitle": "Men qarzdorman",
   "debtsPayableTotalLabel": "Siz qarzdorsiz",
   "debtsSwitchToPayable": "Yetkazib beruvchilarga qarzlarim",
