@@ -168,22 +168,22 @@ class TestLoginViaBot:
 
     async def test_start_without_payload_shows_help(self, client, telegram):
         await post_update(client, bot_update(text="/start"))
-        assert "бот для входа" in telegram.last["text"]
+        assert "бот Al-Hisob" in telegram.last["text"]
 
     async def test_other_messages_get_help(self, client, telegram):
         await post_update(client, bot_update(text="привет"))
-        assert "бот для входа" in telegram.last["text"]
+        assert "бот Al-Hisob" in telegram.last["text"]
 
     async def test_bot_speaks_user_language(self, client, telegram):
         start = await start_login(client)
         await post_update(client, bot_update(text=f"/start {token_from(start['bot_url'])}", lang="uz"))
         assert "telefon raqamingizni" in telegram.last["text"]
         await post_update(client, bot_update(text="x", lang="en-US"))
-        assert "sign-in bot" in telegram.last["text"]
+        assert "the Al-Hisob bot" in telegram.last["text"]
         await post_update(client, bot_update(text="x", lang="de"))
-        assert "бот для входа" in telegram.last["text"], "неизвестный язык → русский"
+        assert "бот Al-Hisob" in telegram.last["text"], "неизвестный язык → русский"
         await post_update(client, bot_update(text="x", lang=None))
-        assert "бот для входа" in telegram.last["text"]
+        assert "бот Al-Hisob" in telegram.last["text"]
 
     async def test_latest_pending_request_of_the_user_is_approved(self, client):
         old = await start_login(client)

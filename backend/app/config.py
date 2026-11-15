@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     # Куда вести, если приложение не установлено.
     app_download_url: str = "https://github.com/OkhunKhasanovich/AL-Hisob/releases/latest"
 
+    # Откуда бот берёт последнюю версию приложения по команде /app (релизы GitHub, репозиторий публичный).
+    update_repository: str = "OkhunKhasanovich/AL-Hisob"
+    # Не чаще одного ответа на /app от одного человека за столько секунд.
+    app_request_cooldown_seconds: int = Field(default=15, ge=0)
+
     jwt_secret: str = "dev-secret-change-me-please-0123456789abcdef"
     access_token_ttl_minutes: int = 15
     refresh_token_ttl_days: int = 90

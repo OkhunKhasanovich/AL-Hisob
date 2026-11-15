@@ -4,6 +4,7 @@ import sys
 
 from app.config import get_settings
 from app.db import create_pool, run_migrations
+from app.telegram import messages
 from app.telegram.client import HttpTelegramClient
 
 
@@ -23,6 +24,11 @@ async def _set_webhook() -> None:
     url = f"{s.public_base_url.rstrip('/')}/telegram/webhook"
     await HttpTelegramClient(s.telegram_bot_token).set_webhook(url, s.telegram_webhook_secret)
     print("webhook set:", url)
+    client = HttpTelegramClient(s.telegram_bot_token)
+    # Меню команд бота: «/app» — скачать последнюю версию приложения.
+    for lang, key in (("ru", "ru"), ("uz", "uz"), ("en", "en"), (None, "ru")):
+        await client.set_commands([{"command": "app", "description": messages.text(key, "app_menu")}], lang)
+    print("commands set: /app")
 
 
 def main() -> None:

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Header, HTTPException, Request
 from app.auth import service
 from app.security import safe_equal
 from app.telegram import messages
+from app.telegram.app_delivery import AppDelivery
 from app.telegram.client import TelegramClient
 
 log = logging.getLogger("app.telegram")
@@ -21,8 +22,23 @@ def _share_keyboard(lang: str | None) -> dict[str, Any]:
     }
 
 
+_APP_COMMANDS = ("/app", "/apk", "/download", "/yuklash")
+
+
+def _is_app_request(text: str) -> bool:
+    first = text.split(maxsplit=1)[0].lower() if text else ""
+    # «/app@AlHisobot» тоже команда этого бота.
+    return first.split("@")[0] in _APP_COMMANDS or text.lower() in ("app", "apk")
+
+
 async def handle_update(
-    pool: asyncpg.Pool, telegram: TelegramClient, update: dict[str, Any], *, open_url: str | None = None
+    pool: asyncpg.Pool,
+    telegram: TelegramClient,
+    update: dict[str, Any],
+    *,
+    open_url: str | None = None,
+    delivery: AppDelivery | None = None,
+    spawn=None,
 ) -> None:
     message = update.get("message")
     if not isinstance(message, dict):
@@ -41,6 +57,18 @@ async def handle_update(
         return
 
     text = (message.get("text") or "").strip()
+    if delivery is not None and _is_app_request(text):
+        if delivery.too_soon(telegram_id):
+            await telegram.send_message(chat_id, messages.text(lang, "app_cooldown"))
+            return
+        await telegram.send_message(chat_id, messages.text(lang, "app_wait"))
+        job = delivery.send_latest(telegram, chat_id, lang)
+        # Загрузка файла идёт в фоне: Telegram не должен ждать ответ на вебхук дольше нескольких секунд.
+        if spawn is not None:
+            spawn(job)
+        else:
+            await job
+        return
     if text.startswith("/start"):
         payload = text[len("/start"):].strip()
         if not payload:
@@ -100,7 +128,12 @@ def build_webhook_router(settings) -> APIRouter:
             raise HTTPException(status_code=400, detail={"code": "bad_json"}) from None
         try:
             await handle_update(
-                request.app.state.pool, request.app.state.telegram, update, open_url=open_url
+                request.app.state.pool,
+                request.app.state.telegram,
+                update,
+                open_url=open_url,
+                delivery=request.app.state.delivery,
+                spawn=request.app.state.spawn,
             )
         except Exception:  # noqa: BLE001 — Telegram не должен повторять запрос из-за нашей ошибки
             log.exception("failed to handle telegram update")

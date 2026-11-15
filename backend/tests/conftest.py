@@ -19,10 +19,24 @@ class FakeTelegram:
 
     def __init__(self) -> None:
         self.sent: list[dict[str, Any]] = []
+        self.documents: list[dict[str, Any]] = []
+        self.commands: list[tuple[str | None, list[dict[str, str]]]] = []
         self.webhook: tuple[str, str] | None = None
+        self.document_error: Exception | None = None
 
     async def send_message(self, chat_id: int, text: str, reply_markup: dict[str, Any] | None = None) -> None:
         self.sent.append({"chat_id": chat_id, "text": text, "reply_markup": reply_markup})
+
+    async def send_document(self, chat_id, *, document, caption=None, reply_markup=None):
+        if self.document_error is not None:
+            raise self.document_error
+        self.documents.append(
+            {"chat_id": chat_id, "document": document, "caption": caption, "reply_markup": reply_markup}
+        )
+        return f"file-id-{len(self.documents)}"
+
+    async def set_commands(self, commands, language_code=None) -> None:
+        self.commands.append((language_code, commands))
 
     async def set_webhook(self, url: str, secret_token: str) -> None:
         self.webhook = (url, secret_token)
@@ -53,9 +67,45 @@ def telegram() -> FakeTelegram:
     return FakeTelegram()
 
 
+class FakeReleases:
+    """Последняя версия приложения без обращения к GitHub."""
+
+    def __init__(self) -> None:
+        from app.telegram.releases import ApkAsset, Release
+
+        base = "https://github.com/OkhunKhasanovich/AL-Hisob/releases/download/build-54/"
+        self.release = Release(
+            build=54,
+            version="0.1.0",
+            notes="feat: something new",
+            assets={
+                "arm64-v8a": ApkAsset("arm64-v8a", "al-hisob-arm64-v8a.apk", base + "al-hisob-arm64-v8a.apk", 100),
+                "armeabi-v7a": ApkAsset("armeabi-v7a", "al-hisob-armeabi-v7a.apk", base + "al-hisob-armeabi-v7a.apk", 90),
+                "x86_64": ApkAsset("x86_64", "al-hisob-x86_64.apk", base + "al-hisob-x86_64.apk", 110),
+            },
+        )
+        self.downloads = 0
+        self.fail_download = False
+        self.has_release = True
+
+    async def latest(self):
+        return self.release if self.has_release else None
+
+    async def download(self, asset) -> bytes:
+        self.downloads += 1
+        if self.fail_download:
+            raise OSError("network down")
+        return b"APK-BYTES-" + asset.abi.encode()
+
+
+@pytest.fixture
+def releases() -> FakeReleases:
+    return FakeReleases()
+
+
 @pytest_asyncio.fixture
-async def app(settings, telegram):
-    application = create_app(settings, telegram=telegram)
+async def app(settings, telegram, releases):
+    application = create_app(settings, telegram=telegram, releases=releases)
     async with application.router.lifespan_context(application):
         await application.state.pool.execute("truncate users, login_requests, sessions cascade")
         yield application
@@ -91,7 +141,14 @@ def bot_update(*, user_id: int = 111, text: str | None = None, contact: dict | N
 
 async def post_update(client: httpx.AsyncClient, update: dict[str, Any], *, secret: str | None = WEBHOOK_SECRET):
     headers = {"X-Telegram-Bot-Api-Secret-Token": secret} if secret is not None else {}
-    return await client.post("/telegram/webhook", json=update, headers=headers)
+    response = await client.post("/telegram/webhook", json=update, headers=headers)
+    # Отправка файла идёт в фоне: ждём её, чтобы тест видел результат.
+    tasks = getattr(client._transport.app.state, "bg_tasks", None) if hasattr(client._transport, "app") else None
+    if tasks:
+        import asyncio
+
+        await asyncio.gather(*list(tasks))
+    return response
 
 
 async def start_login(client: httpx.AsyncClient) -> dict[str, Any]:

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -8,13 +9,19 @@ from app.config import Settings, get_settings
 from app.db import create_pool, run_migrations
 from app.links.router import build_router as build_links_router
 from app.sync.router import build_router as build_sync_router
+from app.telegram.app_delivery import AppDelivery
 from app.telegram.client import HttpTelegramClient, NullTelegramClient, TelegramClient
+from app.telegram.releases import GithubReleases, ReleaseSource
 from app.telegram.webhook import build_webhook_router
 
 log = logging.getLogger("app")
 
 
-def create_app(settings: Settings | None = None, telegram: TelegramClient | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    telegram: TelegramClient | None = None,
+    releases: ReleaseSource | None = None,
+) -> FastAPI:
     settings = settings or get_settings()
     if telegram is None:
         telegram = HttpTelegramClient(settings.telegram_bot_token) if settings.telegram_bot_token else NullTelegramClient()
@@ -38,6 +45,19 @@ def create_app(settings: Settings | None = None, telegram: TelegramClient | None
     )
     app.state.settings = settings
     app.state.telegram = telegram
+    app.state.delivery = AppDelivery(
+        releases or GithubReleases(settings.update_repository),
+        cooldown=settings.app_request_cooldown_seconds,
+    )
+    # Фоновые задачи бота (отправка файла): ссылки держим, иначе их может собрать сборщик мусора.
+    app.state.bg_tasks = set()
+
+    def spawn(coro) -> None:
+        task = asyncio.get_running_loop().create_task(coro)
+        app.state.bg_tasks.add(task)
+        task.add_done_callback(app.state.bg_tasks.discard)
+
+    app.state.spawn = spawn
 
     @app.get("/health")
     async def health() -> dict[str, object]:
